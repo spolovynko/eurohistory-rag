@@ -4,7 +4,11 @@ version = "0.1.0"
 description = "RAG over a thematic history of 20th-21st century Europe, built from English Wikipedia."
 readme = "README.md"
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "fastapi>=0.141.1",
+    "pydantic-settings>=2.14.2",
+    "uvicorn>=0.52.0",
+]
 
 [build-system]
 requires = ["hatchling"]
@@ -16,6 +20,9 @@ packages = ["src/eurohistory_rag"]
 [tool.ruff]
 line-length = 88
 target-version = "py312"
+# ruff format reaches into Python code blocks inside Markdown. The snippets in
+# docs/ use deliberate alignment for readability, so keep it out.
+exclude = ["docs"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM"]
@@ -30,6 +37,7 @@ testpaths = ["tests"]
 
 [dependency-groups]
 dev = [
+    "httpx>=0.28.1",
     "mypy>=2.3.0",
     "pytest>=9.1.1",
     "ruff>=0.16.0",
