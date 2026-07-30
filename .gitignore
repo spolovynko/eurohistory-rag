@@ -216,3 +216,18 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# --- Project-specific ---
+
+# Planning and working documents (kept local, not versioned)
+/CLAUDE.md
+/docs/plan.md
+/docs/roadmap.md
+/docs/progress.md
+/docs/decisions.md
+
+# Medallion data layers. Only bronze/ is irreplaceable - back it up outside git.
+/data/
+
+# Claude
+.claude/
