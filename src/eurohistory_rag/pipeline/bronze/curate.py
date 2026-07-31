@@ -6,8 +6,8 @@ from collections.abc import Iterable
 
 import mwparserfromhell
 
-from eurohistory_rag.data_ingestion.registry import RegistryEntry, Theme
-from eurohistory_rag.data_ingestion.wikipedia import RevisionSource
+from eurohistory_rag.pipeline.bronze.registry import RegistryEntry, Theme
+from eurohistory_rag.pipeline.bronze.wikipedia import RevisionSource
 
 logger = logging.getLogger(__name__)
 

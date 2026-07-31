@@ -9,9 +9,9 @@ from dataclasses import dataclass
 from itertools import batched
 from pathlib import Path
 
-from eurohistory_rag.data_ingestion import bronze
-from eurohistory_rag.data_ingestion.registry import RegistryEntry
-from eurohistory_rag.data_ingestion.wikipedia import (
+from eurohistory_rag.pipeline.bronze import store
+from eurohistory_rag.pipeline.bronze.registry import RegistryEntry
+from eurohistory_rag.pipeline.bronze.wikipedia import (
     MAX_TITLES_PER_REQUEST,
     RevisionSource,
 )
@@ -49,7 +49,7 @@ def ingest(
 
     started = time.monotonic()
 
-    done = set() if refresh else bronze.ingested_keys(root)
+    done = set() if refresh else store.ingested_keys(root)
     todo = [e for e in entries if (e.theme, e.title) not in done]
     skipped = len(entries) - len(todo)
 
@@ -76,8 +76,8 @@ def ingest(
                 logger.warning("no page for %r (theme %s)", title, theme)
             missing.extend(result.missing)
             if result.revisions:
-                frame = bronze.to_frame(result.revisions, theme, fetched_at)
-                bronze.write_batch(root, frame, fetched_at)
+                frame = store.to_frame(result.revisions, theme, fetched_at)
+                store.write_batch(root, frame, fetched_at)
                 written += len(result.revisions)
             logger.info(
                 "%s: asked %d, got %d (%d/%d done)",

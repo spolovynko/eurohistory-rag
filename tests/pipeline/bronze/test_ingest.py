@@ -12,10 +12,10 @@ from pathlib import Path
 import polars as pl
 import pytest
 
-from eurohistory_rag.data_ingestion.bronze import ingested_keys
-from eurohistory_rag.data_ingestion.ingest import ingest
-from eurohistory_rag.data_ingestion.registry import RegistryEntry
-from eurohistory_rag.data_ingestion.wikipedia import (
+from eurohistory_rag.pipeline.bronze.ingest import ingest
+from eurohistory_rag.pipeline.bronze.registry import RegistryEntry
+from eurohistory_rag.pipeline.bronze.store import ingested_keys
+from eurohistory_rag.pipeline.bronze.wikipedia import (
     MAX_TITLES_PER_REQUEST,
     FetchResult,
     Revision,
@@ -221,7 +221,7 @@ def test_progress_is_logged_not_printed(
     tmp_path: Path, caplog: pytest.LogCaptureFixture
 ) -> None:
     """The core stays silent by default; the CLI decides what is shown."""
-    with caplog.at_level(logging.INFO, logger="eurohistory_rag.data_ingestion.ingest"):
+    with caplog.at_level(logging.INFO, logger="eurohistory_rag.pipeline.bronze.ingest"):
         ingest(
             RecordingSource(), entries("interwar", "A"), tmp_path, fetched_at=FETCHED_AT
         )

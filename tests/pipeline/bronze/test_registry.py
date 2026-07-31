@@ -11,7 +11,7 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from eurohistory_rag.data_ingestion.registry import (
+from eurohistory_rag.pipeline.bronze.registry import (
     RegistryEntry,
     load_registry,
     load_seeds,
