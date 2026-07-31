@@ -1,5 +1,6 @@
 """Command-line entry points for the pipeline."""
 
+import datetime as dt
 import logging
 from pathlib import Path
 from typing import Annotated
@@ -8,17 +9,28 @@ import typer
 
 from eurohistory_rag.core.config import get_settings
 from eurohistory_rag.data_ingestion import curate as curate_module
-from eurohistory_rag.data_ingestion.registry import load_seeds, write_registry
-from eurohistory_rag.data_ingestion.wikipedia import WikipediaClient
+from eurohistory_rag.data_ingestion import ingest as ingest_module
+from eurohistory_rag.data_ingestion.registry import (
+    load_registry,
+    load_seeds,
+    write_registry,
+)
+from eurohistory_rag.data_ingestion.wikipedia import (
+    MAX_TITLES_PER_REQUEST,
+    WikipediaClient,
+)
 
 app = typer.Typer(help="eurohistory-rag pipeline commands.", no_args_is_help=True)
 
 DEFAULT_SEEDS = Path("corpus/seeds.toml")
 DEFAULT_REGISTRY = Path("corpus/registry.csv")
+DEFAULT_BRONZE = Path("data/bronze")
+
 
 @app.callback()
 def main() -> None:
     """eurohistory-rag pipeline commands."""
+
 
 @app.command()
 def curate(
@@ -38,3 +50,39 @@ def curate(
         entries = curate_module.curate(client, themes, min_seeds=min_seeds)
     write_registry(out, entries)
     typer.echo(f"{len(entries)} candidates from {len(themes)} themes -> {out}")
+
+
+@app.command()
+def ingest(
+    registry: Annotated[
+        Path, typer.Option(help="Reviewed registry to read.")
+    ] = DEFAULT_REGISTRY,
+    root: Annotated[Path, typer.Option(help="Bronze root.")] = DEFAULT_BRONZE,
+    batch_size: Annotated[
+        int, typer.Option(help="Titles per request.")
+    ] = MAX_TITLES_PER_REQUEST,
+    refresh: Annotated[
+        bool, typer.Option(help="Refetch entries already in Bronze.")
+    ] = False,
+) -> None:
+    """Fetch every registry entry into data/bronze/.
+
+    Safe to re-run: already-stored entries are skipped unless --refresh.
+    """
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
+    entries = load_registry(registry)
+    with WikipediaClient(get_settings().wikipedia_user_agent) as client:
+        report = ingest_module.ingest(
+            client,
+            entries,
+            root,
+            fetched_at=dt.datetime.now(dt.UTC),
+            batch_size=batch_size,
+            refresh=refresh,
+        )
+    typer.echo(
+        f"{report.written} written, {report.skipped} skipped, "
+        f"{len(report.missing)} missing"
+    )
+    if report.missing:
+        typer.echo("missing: " + ", ".join(sorted(report.missing)))
