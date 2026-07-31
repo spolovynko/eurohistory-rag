@@ -5,7 +5,7 @@ from pathlib import Path
 
 import polars as pl
 
-from eurohistory_rag.data_ingestion.bronze import (
+from eurohistory_rag.pipeline.bronze.store import (
     BRONZE_SCHEMA,
     LICENSE,
     ingested_keys,
@@ -13,7 +13,7 @@ from eurohistory_rag.data_ingestion.bronze import (
     to_frame,
     write_batch,
 )
-from eurohistory_rag.data_ingestion.wikipedia import Revision
+from eurohistory_rag.pipeline.bronze.wikipedia import Revision
 
 FETCHED_AT = dt.datetime(2026, 7, 31, 9, 59, 31, tzinfo=dt.UTC)
 

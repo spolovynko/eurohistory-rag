@@ -13,8 +13,8 @@ from typing import Any
 import httpx
 import pytest
 
-from eurohistory_rag.data_ingestion import wikipedia
-from eurohistory_rag.data_ingestion.wikipedia import (
+from eurohistory_rag.pipeline.bronze import wikipedia
+from eurohistory_rag.pipeline.bronze.wikipedia import (
     MAX_TITLES_PER_REQUEST,
     WikipediaClient,
     WikipediaError,

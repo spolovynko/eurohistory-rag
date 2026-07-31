@@ -9,14 +9,14 @@ from datetime import UTC, datetime
 
 import pytest
 
-from eurohistory_rag.data_ingestion.curate import (
+from eurohistory_rag.pipeline.bronze.curate import (
     curate,
     curate_theme,
     extract_links,
     rank_candidates,
 )
-from eurohistory_rag.data_ingestion.registry import Theme
-from eurohistory_rag.data_ingestion.wikipedia import FetchResult, Revision
+from eurohistory_rag.pipeline.bronze.registry import Theme
+from eurohistory_rag.pipeline.bronze.wikipedia import FetchResult, Revision
 
 
 class FakeSource:

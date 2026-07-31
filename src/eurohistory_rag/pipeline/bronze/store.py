@@ -9,7 +9,7 @@ from uuid import uuid4
 import polars as pl
 from polars.datatypes import DataType, DataTypeClass
 
-from eurohistory_rag.data_ingestion.wikipedia import Revision
+from eurohistory_rag.pipeline.bronze.wikipedia import Revision
 
 logger = logging.getLogger(__name__)
 

@@ -8,14 +8,14 @@ import typer
 
 from eurohistory_rag.core.config import get_settings
 from eurohistory_rag.core.logging import configure_logging
-from eurohistory_rag.data_ingestion import curate as curate_module
-from eurohistory_rag.data_ingestion import ingest as ingest_module
-from eurohistory_rag.data_ingestion.registry import (
+from eurohistory_rag.pipeline.bronze import curate as curate_module
+from eurohistory_rag.pipeline.bronze import ingest as ingest_module
+from eurohistory_rag.pipeline.bronze.registry import (
     load_registry,
     load_seeds,
     write_registry,
 )
-from eurohistory_rag.data_ingestion.wikipedia import (
+from eurohistory_rag.pipeline.bronze.wikipedia import (
     MAX_TITLES_PER_REQUEST,
     WikipediaClient,
 )
