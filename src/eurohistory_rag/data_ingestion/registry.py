@@ -1,11 +1,14 @@
 """Read the seed list and the curated title registry."""
 
 import csv
+import logging
 import tomllib
 from collections.abc import Iterable
 from pathlib import Path
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
+
+logger = logging.getLogger(__name__)
 
 REGISTRY_FIELDS = ("theme", "title", "seed_count")
 
@@ -48,7 +51,9 @@ def load_seeds(path: Path) -> tuple[Theme, ...]:
     """
     with path.open("rb") as f:
         raw = tomllib.load(f)
-    return _SeedFile.model_validate(raw).theme
+    themes = _SeedFile.model_validate(raw).theme
+    logger.info("seeds: %s, %d themes", path, len(themes))
+    return themes
 
 
 class RegistryEntry(BaseModel):
@@ -74,4 +79,6 @@ def write_registry(path: Path, entries: Iterable[RegistryEntry]) -> None:
 def load_registry(path: Path) -> tuple[RegistryEntry, ...]:
     """Read the reviewed, committed registry. The only input ingest reads."""
     with path.open(encoding="utf-8", newline="") as f:
-        return tuple(RegistryEntry.model_validate(row) for row in csv.DictReader(f))
+        entries = tuple(RegistryEntry.model_validate(row) for row in csv.DictReader(f))
+    logger.info("registry: %s, %d entries", path, len(entries))
+    return entries

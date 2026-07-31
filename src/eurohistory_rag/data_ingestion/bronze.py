@@ -1,6 +1,7 @@
 """Bronze: raw wikitext plus provenance. Immutable and append-only."""
 
 import datetime as dt
+import logging
 from collections.abc import Sequence
 from pathlib import Path
 from uuid import uuid4
@@ -9,6 +10,8 @@ import polars as pl
 from polars.datatypes import DataType, DataTypeClass
 
 from eurohistory_rag.data_ingestion.wikipedia import Revision
+
+logger = logging.getLogger(__name__)
 
 LICENSE = "CC BY-SA 4.0"
 _COLUMNS: dict[str, DataType | DataTypeClass] = {
@@ -65,6 +68,7 @@ def write_batch(root: Path, frame: pl.DataFrame, fetched_at: dt.datetime) -> Pat
     directory.mkdir(parents=True, exist_ok=True)
     path = directory / f"part-{uuid4().hex[:12]}.parquet"
     frame.write_parquet(path)
+    logger.debug("wrote %s: %d rows, %d bytes", path, frame.height, path.stat().st_size)
     return path
 
 

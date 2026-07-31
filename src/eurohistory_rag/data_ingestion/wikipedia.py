@@ -8,6 +8,7 @@ Returns raw wikitext plus provenance and makes no cleaning decisions of its own
 -- that is Silver's job. See D-006.
 """
 
+import logging
 import time
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
@@ -26,6 +27,8 @@ MAX_TITLES_PER_REQUEST = 50
 # Worth retrying: rate limiting, and the transient server-side failures. A 400
 # or a 404 is a bug in the request, and retrying it just wastes bandwidth.
 RETRY_STATUS_CODES = frozenset({429, 500, 502, 503, 504})
+
+logger = logging.getLogger(__name__)
 
 
 class WikipediaError(RuntimeError):
@@ -249,9 +252,15 @@ class WikipediaClient:
             if attempt:
                 # Honour Retry-After when the server named a delay; otherwise
                 # back off 1, 2, 4, 8 seconds.
-                time.sleep(
-                    retry_after if retry_after is not None else 2.0 ** (attempt - 1)
+                delay = retry_after if retry_after is not None else 2.0 ** (attempt - 1)
+                logger.warning(
+                    "retry %d/%d in %.0fs after %s",
+                    attempt,
+                    self._max_retries,
+                    delay,
+                    last_failure,
                 )
+                time.sleep(delay)
             retry_after = None
 
             try:
@@ -275,6 +284,11 @@ class WikipediaClient:
 
             return _WireResponse.model_validate(response.json())
 
+        logger.error(
+            "gave up after %d attempts; last failure was %s",
+            self._max_retries + 1,
+            last_failure,
+        )
         raise WikipediaError(
             f"gave up after {self._max_retries + 1} attempts; "
             f"last failure was {last_failure}"

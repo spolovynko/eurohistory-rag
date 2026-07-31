@@ -1,13 +1,13 @@
 """Command-line entry points for the pipeline."""
 
 import datetime as dt
-import logging
 from pathlib import Path
 from typing import Annotated
 
 import typer
 
 from eurohistory_rag.core.config import get_settings
+from eurohistory_rag.core.logging import configure_logging
 from eurohistory_rag.data_ingestion import curate as curate_module
 from eurohistory_rag.data_ingestion import ingest as ingest_module
 from eurohistory_rag.data_ingestion.registry import (
@@ -28,8 +28,13 @@ DEFAULT_BRONZE = Path("data/bronze")
 
 
 @app.callback()
-def main() -> None:
+def main(
+    verbose: Annotated[
+        bool, typer.Option(help="Log at DEBUG instead of INFO.")
+    ] = False,
+) -> None:
     """eurohistory-rag pipeline commands."""
+    configure_logging(verbose=verbose)
 
 
 @app.command()
@@ -44,7 +49,6 @@ def curate(
 
     Overwrites `out`. The result is a draft: review it by hand and commit it.
     """
-    logging.basicConfig(level=logging.INFO, format="%(message)s")
     themes = load_seeds(seeds)
     with WikipediaClient(get_settings().wikipedia_user_agent) as client:
         entries = curate_module.curate(client, themes, min_seeds=min_seeds)
@@ -69,7 +73,6 @@ def ingest(
 
     Safe to re-run: already-stored entries are skipped unless --refresh.
     """
-    logging.basicConfig(level=logging.INFO, format="%(message)s")
     entries = load_registry(registry)
     with WikipediaClient(get_settings().wikipedia_user_agent) as client:
         report = ingest_module.ingest(
