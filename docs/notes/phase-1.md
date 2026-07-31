@@ -1,0 +1,414 @@
+# Phase 1 notes — FastAPI skeleton and typed config
+
+Reference for the concepts Phase 1 requires. Written against the state of this
+repo on 2026-07-30, with fastapi 0.141.1, starlette 1.3.1, uvicorn 0.52.0,
+pydantic 2.13.4, pydantic-settings 2.14.2, httpx 0.28.1.
+
+Everything below is grounded in files that exist here — in `src/`, in `tests/`,
+or in `.venv/Lib/site-packages/`. Where a path is quoted, go look at it.
+
+---
+
+## What Phase 1 built
+
+| File | Purpose |
+|---|---|
+| `src/eurohistory_rag/core/config.py` | `Settings` (3 fields) and a cached `get_settings()` |
+| `src/eurohistory_rag/core/__init__.py` | states the rule: nothing here imports FastAPI |
+| `src/eurohistory_rag/api/main.py` | `create_app()`, `GET /health`, module-level `app` |
+| `tests/conftest.py` | the `client` fixture — a `TestClient` over a fresh app |
+| `tests/api/test_api.py` | `/health` and the generated OpenAPI schema |
+| `tests/core/test_config.py` | defaults, secret masking, fail-fast, source precedence, caching |
+
+Dependencies added: `fastapi`, `uvicorn`, `pydantic-settings` to
+`[project].dependencies`; `httpx` to `[dependency-groups].dev`, because only
+`TestClient` needs it today. Phase 2 moves `httpx` to runtime when it becomes
+the Wikipedia client.
+
+Green on all four gates, plus the server verified by hand.
+
+---
+
+## Part 1 — TCP, HTTP, ASGI
+
+Three layers, each hiding the one below it. Worth keeping straight, because
+"the server" means something different at each level.
+
+### TCP
+
+The physical network moves packets. Packets get lost, arrive out of order, and
+sometimes arrive twice. **TCP is a set of rules that hides all of that**: two
+programs open a connection, and afterwards each can write bytes and read bytes
+with a guarantee that the other side receives every byte, exactly once, in
+order.
+
+Raw packets are a hundred numbered postcards, some of which never arrive. TCP
+is a phone call.
+
+Reaching a specific program needs two things: an **IP address** (which machine)
+and a **port** (which program on it). `uvicorn --port 8000` claims port 8000.
+`http://localhost:6333` in `.env.example` is the same idea aimed at Qdrant.
+
+**The limitation that matters: TCP delivers bytes and nothing else.** It has no
+concept of a request, a header, or JSON.
+
+### HTTP
+
+An agreement about what those bytes *say*. Put this on the wire —
+
+```
+GET /health HTTP/1.1
+Host: localhost:8000
+```
+
+— and both ends agree it means "fetch the thing at `/health`". A convention
+layered on TCP's pipe, nothing more.
+
+### ASGI
+
+Now two separate jobs appear. Somebody must sit on the port, accept TCP
+connections, read raw bytes and recognise them as an HTTP request: that is a
+**web server**, and here it is uvicorn. Somebody else must decide that
+`/health` answers `{"status": "ok"}`: that is the **application**, and here it
+is FastAPI plus the handler.
+
+Different jobs, different packages, different authors. So they need a written
+contract, and **ASGI is that contract and nothing more**.
+
+The predecessor was **WSGI** (1997): an application was a plain function taking
+`(environ, start_response)`. It worked — it is why gunicorn can run any Flask
+or Django app — but it is synchronous by construction. One request holds one
+thread start to finish, and there is no way to express a connection that stays
+open: no WebSockets, no streaming, no server-sent events.
+
+ASGI is the async successor, and the whole spec is: *an application is an async
+callable taking three arguments.* Here is FastAPI actually being one —
+`starlette/applications.py:86`:
+
+```python
+async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+```
+
+And the three types, `starlette/types.py:12-16`:
+
+```python
+Scope   = MutableMapping[str, Any]              # a dict
+Message = MutableMapping[str, Any]
+Receive = Callable[[], Awaitable[Message]]      # await it, get an event in
+Send    = Callable[[Message], Awaitable[None]]  # await it, push an event out
+```
+
+- `scope` — a dict describing this connection:
+  `{"type": "http", "method": "GET", "path": "/health", "headers": [...]}`.
+  `type` is `"http"`, `"websocket"` or `"lifespan"`.
+- `receive` — await it to pull incoming events (body chunks arriving).
+- `send` — await it to push outgoing ones: `{"type": "http.response.start",
+  "status": 200}`, then `{"type": "http.response.body", "body": b"..."}`.
+
+**The division of labour.** uvicorn owns the socket, turns bytes into that
+`scope` dict, and awaits your app. FastAPI is the callable it awaits — it never
+touches a socket, never parses HTTP, and cannot tell whether the bytes came
+from TCP, a Unix socket, or a test harness holding it in memory.
+
+Two consequences:
+
+1. `uvicorn eurohistory_rag.api.main:app` is not magic. That string is an
+   import path to an **object**, and uvicorn's only requirement is that the
+   object be an async callable of three arguments. This is why
+   `api/main.py` ends with `app = create_app()` — a factory is a function, and
+   there would otherwise be nothing named `app` to import. (`--factory` is the
+   alternative; see D-013.)
+2. Anything that can await the callable can drive the app. `TestClient` does
+   exactly that, with no socket and no port. That is not a testing trick — it
+   falls straight out of the contract.
+
+---
+
+## Part 2 — typed configuration
+
+### Why a class instead of `os.environ.get()`
+
+`os.environ.get("QDRANT_URL")` scattered through a codebase has three failure
+modes:
+
+- It returns `str | None`, so every call site handles `None` or crashes later
+  with something unhelpful.
+- Nothing lists what the application needs to run. You find out by grepping.
+- A missing variable fails when it is *used* — possibly twenty minutes into an
+  ingest run.
+
+`Settings` inverts all three: one declaration of everything required, typed so
+mypy checks every use, validated **once at construction** so a missing value
+fails immediately with the field named.
+
+### How a value is found
+
+Nothing in `config.py` opens a file. `SettingsConfigDict(env_file=".env")` is
+the entire instruction. On `Settings()`, pydantic-settings walks every field,
+uppercases the name, and checks sources in a fixed order — **first hit wins**:
+
+| | Source | Example |
+|---|---|---|
+| 1 | constructor arguments | `Settings(qdrant_url="http://other:6333")` |
+| 2 | real environment variables | `QDRANT_URL` in the shell |
+| 3 | the `.env` file | the line in `.env` |
+| 4 | the field default | `"http://localhost:6333"` |
+
+Reaching the bottom with no default is what raises `ValidationError`. That is
+the fail-fast property, and it is entirely a consequence of *not* writing a
+default.
+
+The order also explains deployment: `.env` is a local convenience, and
+production sets real environment variables that override it without editing
+anything.
+
+Two gotchas:
+
+- **`env_file` is resolved relative to the current working directory**, not the
+  module. Run from elsewhere and it silently finds nothing.
+  `tests/core/test_config.py` weaponises this — `monkeypatch.chdir(tmp_path)`
+  is what makes the real `.env` invisible so the missing-field case can be
+  tested.
+- **Encoding.** Without `env_file_encoding="utf-8"`, python-dotenv opens the
+  file in the locale encoding, which on Windows is cp1252.
+
+### `extra="forbid"` is the default
+
+`pydantic_settings/main.py:564`:
+
+```python
+model_config: ClassVar[SettingsConfigDict] = SettingsConfigDict(
+    extra='forbid',
+    case_sensitive=False,
+    ...
+)
+```
+
+A key in `.env` with no matching field is an **error**, not a silent skip.
+(Real OS environment variables are looked up by field name, so extras there are
+ignored; the `.env` file is read wholesale, which is why it is different.)
+
+The consequence: `.env.example` and the field list are a contract, and must be
+updated in the same commit.
+
+### `SecretStr`
+
+`openai_api_key: SecretStr` renders as `SecretStr('**********')` in every
+string form. This matters because Pydantic prints field values in
+`ValidationError` messages and FastAPI prints objects in tracebacks — one
+unhandled exception with a plain `str` puts the key in a log file. Reading it
+requires `.get_secret_value()`, and that friction is deliberate: it makes
+reading a secret a visible act.
+
+### `lru_cache` on `get_settings`
+
+`lru_cache` is memoisation. On a **zero-argument** function with `maxsize=1`
+there is only one possible call, so the effect is: run once, cache the object,
+return the same object thereafter — a lazy singleton built from a stdlib
+decorator.
+
+Three things it gives that `settings = Settings()` at module scope does not:
+
+- **Lazy.** A module-level instance is constructed *at import*. Import that
+  module for any reason — a test that only wants the class, a CLI needing one
+  field — and the environment must be valid or the import raises. With
+  `lru_cache` nothing is constructed until someone calls.
+- **Overridable.** FastAPI's dependency injection keys on the callable:
+  `app.dependency_overrides[get_settings] = lambda: Settings(...)`. A variable
+  is not a hook. `get_settings.cache_clear()` also comes free, and
+  `tests/core/test_config.py` uses it.
+- **Cheap.** Without the cache, every call re-opens `.env` and re-validates.
+
+Importing `get_settings` is free — it binds a name. *Calling* it at module
+scope is what re-creates the problem the cache exists to avoid.
+
+### Why mypy demands arguments to `Settings()`
+
+`pydantic/_internal/_model_construction.py:82` decorates the model metaclass:
+
+```python
+@dataclass_transform(kw_only_default=True, field_specifiers=(...))
+```
+
+That is PEP 681. It tells any type checker: treat classes built by this
+metaclass like dataclasses — synthesise `__init__` from the annotated fields.
+So mypy believes the signature is:
+
+```python
+Settings.__init__(*, openai_api_key: SecretStr, wikipedia_user_agent: str,
+                  qdrant_url: str = ...)
+```
+
+and reports `Missing named argument` on a bare `Settings()`.
+
+**mypy is statically correct and practically wrong** — the values arrive from
+the environment, which no static analyser can see. This is permanent friction
+between `pydantic-settings` and strict typing. The repo answers it with a
+narrow, commented ignore at the single construction point:
+
+```python
+return Settings()  # type: ignore[call-arg]
+```
+
+Narrow (`[call-arg]`, not bare), local, and explained. Giving the fields
+defaults would silence mypy by throwing away the startup validation.
+
+---
+
+## Part 3 — the application
+
+### Why a factory
+
+`app = FastAPI()` at module scope creates the app **at import time**: exactly
+one, made before anyone can influence how. That is fine until a test wants an
+app configured differently — a fake OpenAI client, `QdrantClient(":memory:")`,
+a `Settings` with a test key. There is no seam; the app already exists when the
+test runs, and every test in the process shares it, mutations included.
+
+`create_app()` is a recipe rather than an object. Nothing exists until it is
+called, each call is independent, and the arguments are the injection point.
+`tests/conftest.py` uses it on day one so no test can leak into another.
+
+### What FastAPI does with type hints
+
+`@app.get("/health")` registers the function against a method and path. Then
+FastAPI reads the function's **signature** and derives behaviour from it — that
+is the framework's whole design. Parameters become query parameters, path
+parameters or request bodies according to their types. The **return
+annotation** becomes the response model: FastAPI validates what is returned
+against it, serialises to JSON, and publishes it as an OpenAPI schema.
+
+Which is why `/docs` exists without any documentation being written. Here is
+`/openapi.json` from this repo:
+
+```json
+{"openapi":"3.1.0",
+ "info":{"title":"Eurohistory RAG API","version":"0.1.0"},
+ "paths":{"/health":{"get":{"summary":"Health check endpoint",
+   "description":"Report that the process is alive.\n\nLiveness only: ..."
+```
+
+Every piece traces to something in `api/main.py`: `summary` from the decorator
+argument, `description` from the **handler's docstring**, `version` from
+`eurohistory_rag.__version__`, and the `200` response schema from the
+`dict[str, str]` annotation. Nothing was written twice — the API description
+*is* the code.
+
+### Liveness vs readiness
+
+`/health` checks nothing downstream, deliberately. *Liveness* asks "is this
+process alive?"; *readiness* asks "can it serve traffic — is Qdrant
+reachable?". Different consumers: an orchestrator that restarts a container on
+a failed liveness probe should not restart it because a dependency is slow.
+Deciding this in Phase 1 means Phase 5 adds an endpoint rather than quietly
+changing this one's meaning. See D-014.
+
+---
+
+## Part 4 — testing without a server
+
+`TestClient(create_app())` is handed the FastAPI app — the async callable of
+three arguments. `client.get("/health")` builds the `scope` dict itself, awaits
+the app, collects the events pushed back through `send`, and assembles a
+response object. No TCP, no port, nothing to start or stop. It is a function
+call dressed as an HTTP request, and it only works because ASGI made the app a
+plain callable rather than something welded to a socket.
+
+The practical result: the suite runs in 0.07 s and cannot fail because a port
+was busy.
+
+### `conftest.py`
+
+pytest imports it automatically; it is never imported by name and nothing
+references it. Fixtures defined there are available to every test in that
+directory and below, matched by **parameter name** —
+`test_health_returns_ok(client: TestClient)` receives the fixture purely
+because the parameter is called `client`.
+
+Two details in the fixture:
+
+- It calls `create_app()`, not the module-level `app`.
+- The `with` block runs the ASGI **lifespan**: entering triggers startup,
+  leaving triggers shutdown. Nothing registers on startup yet, but Phase 5's
+  Qdrant client will, and a test skipping the `with` would run against an app
+  whose startup never happened.
+
+### What the config tests actually assert
+
+Not "does Pydantic work" — that is Pydantic's problem. They pin the decisions:
+that the default is real, that `SecretStr` keeps the key out of `repr()`, that
+a missing required field raises at construction, that an environment variable
+beats a default, and that `get_settings()` returns one object. None of them
+depend on a developer's own `.env`; a test that passes on one machine and fails
+on a clean checkout is not a test.
+
+---
+
+## Part 5 — demonstrated
+
+### The app really is an ASGI callable
+
+```
+$ uv run python -c "import inspect; from eurohistory_rag.api.main import app; ..."
+type: FastAPI
+callable: True
+signature: (scope: MutableMapping[str, Any],
+            receive: Callable[[], Awaitable[MutableMapping[str, Any]]],
+            send: Callable[[MutableMapping[str, Any]], Awaitable[None]]) -> None
+is coroutine fn: True
+```
+
+Not a description of ASGI — that is the contract, read off the object this repo
+serves.
+
+### Source precedence, live
+
+```
+$ QDRANT_URL=http://from-the-environment:6333 uv run python -c "..."
+openai_api_key=SecretStr('**********')
+wikipedia_user_agent='eurohistory-rag/0.1 (...)'
+qdrant_url='http://from-the-environment:6333'
+```
+
+Three things visible at once: the environment variable beat the field default,
+`wikipedia_user_agent` came from `.env`, and `SecretStr` masked the key in a
+plain `print()`.
+
+### `extra="forbid"` catching a typo
+
+`config.py` briefly read `opeanai_api_key` — `a` and `n` transposed. One typo,
+two errors:
+
+```
+pydantic_core.ValidationError: 2 validation errors for Settings
+opeanai_api_key
+  Field required [type=missing, ...]
+openai_api_key
+  Extra inputs are not permitted [type=extra_forbidden, ...]
+```
+
+Read together they point straight at the mismatch: pydantic looked for
+`OPEANAI_API_KEY` and found nothing, then read `.env`, found `OPENAI_API_KEY`,
+and had no field for it. With `extra="ignore"` only the first half would have
+appeared — and "this obviously-present key is missing" is a much longer
+debugging session.
+
+**And the tools said nothing.** `mypy` reported `Success: no issues found`;
+ruff passed. `opeanai_api_key: SecretStr` is a perfectly well-typed field, and
+the environment is runtime data no static checker can see. This is the ruff/mypy
+boundary from `phase-0.md` §"ruff vs mypy", met in real code rather than in an
+example.
+
+### The endpoint, over a real socket
+
+```
+$ uv run uvicorn eurohistory_rag.api.main:app --port 8123
+INFO:     Uvicorn running on http://127.0.0.1:8123
+INFO:     127.0.0.1 - "GET /health HTTP/1.1" 200 OK
+{"status":"ok"}
+INFO:     127.0.0.1 - "GET /docs HTTP/1.1" 200 OK
+```
+
+The same app the tests drive in-process, this time with uvicorn holding a real
+TCP port in front of it. Identical code, two front doors — which is the point
+of Part 1.
