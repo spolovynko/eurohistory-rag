@@ -6,9 +6,16 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "fastapi>=0.141.1",
+    "httpx>=0.28.1",
+    "mwparserfromhell>=0.7.2",
+    "polars>=1.43.1",
     "pydantic-settings>=2.14.2",
+    "typer>=0.20.0",
     "uvicorn>=0.52.0",
 ]
+
+[project.scripts]
+eurohistory = "eurohistory_rag.cli.cli:app"
 
 [build-system]
 requires = ["hatchling"]
@@ -37,7 +44,6 @@ testpaths = ["tests"]
 
 [dependency-groups]
 dev = [
-    "httpx>=0.28.1",
     "mypy>=2.3.0",
     "pytest>=9.1.1",
     "ruff>=0.16.0",

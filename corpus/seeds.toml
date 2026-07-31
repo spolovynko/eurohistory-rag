@@ -1,0 +1,43 @@
+# Seed articles -- the hand-curated input to corpus curation.
+#
+# `curate` fetches each seed's wikitext, extracts the wikilinks in its body, and
+# writes the candidates to corpus/registry.csv. That registry is trimmed by hand
+# and committed; `ingest` reads only the committed result. See D-016.
+#
+# A good seed is a survey article whose body links to the sub-topics you want.
+# A bad seed is either too narrow to link anywhere, or so broad it links outside
+# the theme.
+#
+# `slug` lands in the Bronze `theme` column and in partition paths, so it stays
+# lowercase ASCII with hyphens. `name` is for humans.
+
+[[theme]]
+slug = "wwi-and-aftermath"
+name = "First World War and aftermath, 1914-1923"
+seeds = [
+    "World War I",
+    "Aftermath of World War I",
+    "Treaty of Versailles",
+    "Paris Peace Conference (1919)",
+]
+
+[[theme]]
+slug = "interwar"
+name = "Interwar period, fascism and communism"
+seeds = [
+    "Interwar period",
+    "Weimar Republic",
+    "Adolf Hitler's rise to power",
+    "Fascism",
+    "Stalinism",
+]
+
+[[theme]]
+slug = "wwii-and-holocaust"
+name = "Second World War in Europe; the Holocaust"
+seeds = [
+    "European theatre of World War II",
+    "Eastern Front (World War II)",
+    "Nazi Germany",
+    "The Holocaust",
+]
