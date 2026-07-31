@@ -6,7 +6,7 @@ from collections.abc import Iterable
 import mwparserfromhell
 
 from eurohistory_rag.data_ingestion.registry import RegistryEntry, Theme
-from eurohistory_rag.data_ingestion.wikipedia import WikipediaClient
+from eurohistory_rag.data_ingestion.wikipedia import RevisionSource
 
 # Links into these namespaces are metadata or navigation, never article content.
 _NON_ARTICLE_NAMESPACES = frozenset(
@@ -70,10 +70,10 @@ def rank_candidates(
 
 
 def curate_theme(
-    client: WikipediaClient, theme: Theme, *, min_seeds: int = MIN_SEEDS
+    source: RevisionSource, theme: Theme, *, min_seeds: int = MIN_SEEDS
 ) -> list[RegistryEntry]:
     """Fetch one theme's seeds and rank the articles they link to."""
-    result = client.fetch_batch(theme.seeds)
+    result = source.fetch_batch(theme.seeds)
     if result.missing:
         # The seed list is 13 hand-typed lines. A title that does not resolve is
         # a typo to fix, not a data condition to tolerate.
@@ -97,11 +97,11 @@ def curate_theme(
 
 
 def curate(
-    client: WikipediaClient, themes: Iterable[Theme], *, min_seeds: int = MIN_SEEDS
+    source: RevisionSource, themes: Iterable[Theme], *, min_seeds: int = MIN_SEEDS
 ) -> list[RegistryEntry]:
     """Rank candidates for every theme, in file order."""
     return [
         entry
         for theme in themes
-        for entry in curate_theme(client, theme, min_seeds=min_seeds)
+        for entry in curate_theme(source, theme, min_seeds=min_seeds)
     ]
