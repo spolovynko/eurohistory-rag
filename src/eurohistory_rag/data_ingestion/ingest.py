@@ -2,6 +2,7 @@
 
 import datetime as dt
 import logging
+import time
 from collections import defaultdict
 from collections.abc import Sequence
 from dataclasses import dataclass
@@ -46,8 +47,19 @@ def ingest(
     if not 1 <= batch_size <= MAX_TITLES_PER_REQUEST:
         raise ValueError(f"batch_size must be 1..{MAX_TITLES_PER_REQUEST}")
 
+    started = time.monotonic()
+
     done = set() if refresh else bronze.ingested_keys(root)
     todo = [e for e in entries if (e.theme, e.title) not in done]
+    skipped = len(entries) - len(todo)
+
+    logger.info(
+        "start: %d entries, %d already in bronze, batch size %d%s",
+        len(entries),
+        skipped,
+        batch_size,
+        ", refresh" if refresh else "",
+    )
 
     # One batch is one theme, because a Bronze row carries exactly one theme.
     by_theme: dict[str, list[str]] = defaultdict(list)
@@ -60,22 +72,33 @@ def ingest(
     for theme, titles in by_theme.items():
         for batch in batched(titles, batch_size):
             result = source.fetch_batch(batch)
+            for title in result.missing:
+                logger.warning("no page for %r (theme %s)", title, theme)
             missing.extend(result.missing)
             if result.revisions:
                 frame = bronze.to_frame(result.revisions, theme, fetched_at)
                 bronze.write_batch(root, frame, fetched_at)
                 written += len(result.revisions)
             logger.info(
-                "%s: %d/%d fetched, %d missing",
+                "%s: asked %d, got %d (%d/%d done)",
                 theme,
+                len(batch),
+                len(result.revisions),
                 written,
                 len(todo),
-                len(missing),
             )
+
+    logger.info(
+        "done: %d written, %d skipped, %d missing in %.1fs",
+        written,
+        skipped,
+        len(missing),
+        time.monotonic() - started,
+    )
 
     return IngestReport(
         requested=len(entries),
-        skipped=len(entries) - len(todo),
+        skipped=skipped,
         written=written,
         missing=tuple(missing),
     )

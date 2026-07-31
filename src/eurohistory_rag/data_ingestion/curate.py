@@ -1,5 +1,6 @@
 """Turn seed articles into candidate titles by following their wikilinks."""
 
+import logging
 from collections import Counter
 from collections.abc import Iterable
 
@@ -7,6 +8,8 @@ import mwparserfromhell
 
 from eurohistory_rag.data_ingestion.registry import RegistryEntry, Theme
 from eurohistory_rag.data_ingestion.wikipedia import RevisionSource
+
+logger = logging.getLogger(__name__)
 
 # Links into these namespaces are metadata or navigation, never article content.
 _NON_ARTICLE_NAMESPACES = frozenset(
@@ -77,23 +80,34 @@ def curate_theme(
     if result.missing:
         # The seed list is 13 hand-typed lines. A title that does not resolve is
         # a typo to fix, not a data condition to tolerate.
+        logger.error(
+            "%s: seeds not found on Wikipedia: %s",
+            theme.slug,
+            ", ".join(sorted(result.missing)),
+        )
         raise ValueError(
             f"theme {theme.slug!r}: seeds not found on Wikipedia: "
             f"{', '.join(sorted(result.missing))}"
         )
 
-    ranked = rank_candidates(
-        [extract_links(rev.wikitext) for rev in result.revisions],
-        min_seeds=min_seeds,
-    )
+    links_per_seed = [extract_links(rev.wikitext) for rev in result.revisions]
+    ranked = rank_candidates(links_per_seed, min_seeds=min_seeds)
     # A seed is in the corpus by definition, whatever else links to it.
     for rev in result.revisions:
         ranked.setdefault(rev.title, min_seeds)
 
-    return [
+    entries = [
         RegistryEntry(theme=theme.slug, title=title, seed_count=count)
         for title, count in sorted(ranked.items(), key=lambda kv: (-kv[1], kv[0]))
     ]
+    logger.info(
+        "%s: %d seeds, %d links, %d candidates",
+        theme.slug,
+        len(result.revisions),
+        sum(len(links) for links in links_per_seed),
+        len(entries),
+    )
+    return entries
 
 
 def curate(

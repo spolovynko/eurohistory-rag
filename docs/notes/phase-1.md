@@ -14,6 +14,7 @@ or in `.venv/Lib/site-packages/`. Where a path is quoted, go look at it.
 | File | Purpose |
 |---|---|
 | `src/eurohistory_rag/core/config.py` | `Settings` (3 fields) and a cached `get_settings()` |
+| `src/eurohistory_rag/core/logging.py` | `configure_logging()` — added later, see Part 6 |
 | `src/eurohistory_rag/core/__init__.py` | states the rule: nothing here imports FastAPI |
 | `src/eurohistory_rag/api/main.py` | `create_app()`, `GET /health`, module-level `app` |
 | `tests/conftest.py` | the `client` fixture — a `TestClient` over a fresh app |
@@ -412,3 +413,170 @@ INFO:     127.0.0.1 - "GET /docs HTTP/1.1" 200 OK
 The same app the tests drive in-process, this time with uvicorn holding a real
 TCP port in front of it. Identical code, two front doors — which is the point
 of Part 1.
+
+---
+
+## Part 6 — logging
+
+Written on 2026-07-31, one phase late. Logging belongs beside `Settings` — both
+are cross-cutting startup concerns, set once and used everywhere after — but it
+was omitted from the Phase 1 session and only surfaced in Phase 2, when `ingest`
+needed to show progress. See D-020.
+
+### The two halves
+
+Python's `logging` splits into two things that are easy to conflate.
+
+| | What it is | Who touches it |
+|---|---|---|
+| **Logger** | A named object. `logger.info(...)` creates a record and passes it upward. | Every module |
+| **Handler** | The thing that actually writes somewhere. | The entry point, once |
+
+`logging.getLogger(__name__)` in `data_ingestion/ingest.py` returns the logger
+named `eurohistory_rag.data_ingestion.ingest`. That name is a path: a record
+travels up through `eurohistory_rag.data_ingestion`, then `eurohistory_rag`,
+then the root logger, and it is the root that owns the handler doing the
+writing.
+
+**That is why a library module never calls `basicConfig()`.** `ingest.py` has no
+idea whether its caller wants stderr, a file, or silence — a CLI run, a pytest
+run and a future FastAPI worker all want different answers. The module emits
+records and lets whoever owns the process decide. The alternative shows up
+immediately in tests: pytest's `caplog` works by attaching its own handler, which
+a library configuring output for itself would fight.
+
+**And why `print()` would have been wrong** in `ingest.py`: no level (nothing to
+turn off), no logger name (no idea which module spoke), no timestamp, and it
+writes to stdout — mixing a progress line into the stream a caller is parsing.
+
+### The module
+
+`src/eurohistory_rag/core/logging.py` is one function and two constants.
+
+```python
+def configure_logging(*, verbose: bool = False) -> None:
+    logging.basicConfig(
+        level=logging.DEBUG if verbose else logging.INFO,
+        format=LOG_FORMAT,
+        force=True,
+    )
+    for name in NOISY_LIBRARIES:
+        logging.getLogger(name).setLevel(logging.WARNING)
+```
+
+Four decisions in five lines:
+
+| | Why |
+|---|---|
+| `basicConfig`, not a hand-built handler | It attaches a `StreamHandler` and sets the format in one call. Building it by hand is six lines for the same result. |
+| `force=True` | Without it `basicConfig` silently does **nothing** if a handler already exists — so a second call would leave a stale config in place. `force=True` clears first, so calling twice gives one handler, not two. |
+| No `stream=` | `basicConfig` defaults to stderr, which is where diagnostics belong. |
+| `NOISY_LIBRARIES` as a tuple | `httpx` logs one INFO line per request. The extension point is a list entry, not a code change. |
+
+**No `get_logger()` wrapper.** `logging.getLogger(name)` is already a
+process-wide registry returning the same object for the same name; wrapping it
+adds a layer with no behaviour and hides the name hierarchy that makes
+per-module control work. Same reason it is not a singleton class — see D-019.
+
+### Where output goes
+
+**stderr, and nowhere else.** No file handler exists, deliberately: the shell
+already does it.
+
+```bash
+uv run eurohistory ingest > result.txt   # result to a file, logs on screen
+uv run eurohistory ingest 2> run.log     # logs to a file, result on screen
+```
+
+The second command *is* the file handler we chose not to write. A real one would
+cost a path argument, directory creation and a rotation policy.
+
+`typer.echo` in `cli.py` writes the command's **result** to stdout; logs are
+diagnostics on stderr. Keeping them apart is what makes `... | grep` work.
+
+### One line, read
+
+```
+2026-07-31 13:34:41,068 INFO     eurohistory_rag.data_ingestion.registry: registry: corpus\registry.csv, 772 entries
+```
+
+`LOG_FORMAT = "%(asctime)s %(levelname)-8s %(name)s: %(message)s"` — timestamp,
+level padded to 8 so the messages line up, dotted logger name, message. The name
+is the whole point: it tells you which module spoke without the message having
+to say so.
+
+### Adapting it
+
+Everything below is a change in **one** place.
+
+**Silence a chatty library.** Add it to `NOISY_LIBRARIES` in `core/logging.py`.
+Phase 5 will add `openai` and `qdrant_client`, both of which log per request.
+
+**Turn one of our modules up or down.** Add to `configure_logging()`:
+
+```python
+logging.getLogger("eurohistory_rag.data_ingestion.wikipedia").setLevel(logging.DEBUG)
+```
+
+Nothing in `wikipedia.py` changes. This is what the `__name__` hierarchy buys —
+and `"eurohistory_rag.data_ingestion"` would catch the whole package at once.
+
+**See DEBUG.** `uv run eurohistory --verbose ingest`. The flag sits on the Typer
+`@app.callback()`, not on each command, so one definition covers `curate`,
+`ingest` and every command Phases 3-8 add. Cost: it comes *before* the command
+name, like `git --no-pager log`.
+
+**Log from a new module.** Two lines, forever:
+
+```python
+logger = logging.getLogger(__name__)   # module top
+logger.info("fetched %d rows", n)      # at the event
+```
+
+Note `%d`, not an f-string. The placeholder form passes the value to logging,
+which only builds the string if a handler will emit it — an f-string builds it
+every time, including when the level filters the record out. It also keeps the
+message *template* constant across records, which is what log aggregation groups
+on.
+
+**Configure the API entry point.** Not done yet. `create_app()` is the right
+place, but `force=True` would tear out pytest's `caplog` handler on every test
+that builds an app. Phase 5, with a fixture that accounts for it.
+
+### What each module logs
+
+As of Phase 2 (the levels, and the reasoning for each, are in `plan.md`'s
+Phase 1 section):
+
+| Logger | Level | Event |
+|---|---|---|
+| `registry` | INFO | seeds path + theme count; registry path + entry count |
+| `curate` | INFO | per theme: seeds fetched, links extracted, candidates kept |
+| | ERROR | a seed title Wikipedia has no page for — then raises |
+| `ingest` | INFO | run start: entries, already in Bronze, batch size |
+| | INFO | per batch: theme, asked, got, progress |
+| | WARNING | a registry entry Wikipedia has no page for |
+| | INFO | run end: written / skipped / missing, duration |
+| `wikipedia` | WARNING | retry: attempt, delay, what failed |
+| | ERROR | retries exhausted |
+| `bronze` | DEBUG | file written: path, rows, bytes |
+
+Two details worth knowing:
+
+**The retry WARNING sits at the `sleep`, not at the failure.** The failure is
+detected at the bottom of the loop; the delay is only decided at the top of the
+next one. Logging there gets status, attempt and delay on one line —
+`retry 2/4 in 2s after HTTP 503`.
+
+**`ingest` times with `time.monotonic()`, not `datetime.now()`.** Monotonic only
+counts forward; a wall clock can jump backwards when NTP corrects it, printing a
+negative duration. `fetched_at` stays wall-clock because it is *data* — it
+answers how stale the copy is.
+
+### Arguable
+
+`wikipedia._get` and `curate.curate_theme` both log an ERROR immediately before
+raising, so the same words appear twice on stderr — once as a log line, once in
+the traceback. It follows the Phase 1 spec, and four WARNINGs closed by a
+matching ERROR reads as one story in the log where a traceback reads as a
+separate event. Dropping both is defensible; dropping one is not.
