@@ -19,12 +19,14 @@ from eurohistory_rag.pipeline.bronze.wikipedia import (
     MAX_TITLES_PER_REQUEST,
     WikipediaClient,
 )
+from eurohistory_rag.pipeline.silver import build as silver_module
 
 app = typer.Typer(help="eurohistory-rag pipeline commands.", no_args_is_help=True)
 
 DEFAULT_SEEDS = Path("corpus/seeds.toml")
 DEFAULT_REGISTRY = Path("corpus/registry.csv")
 DEFAULT_BRONZE = Path("data/bronze")
+DEFAULT_SILVER = Path("data/silver")
 
 
 @app.callback()
@@ -89,3 +91,20 @@ def ingest(
     )
     if report.missing:
         typer.echo("missing: " + ", ".join(sorted(report.missing)))
+
+
+@app.command()
+def silver(
+    bronze: Annotated[Path, typer.Option(help="Bronze root.")] = DEFAULT_BRONZE,
+    out: Annotated[Path, typer.Option(help="Silver root.")] = DEFAULT_SILVER,
+) -> None:
+    """Rebuild data/silver/ from data/bronze/.
+
+    Always a full rebuild, and it overwrites: Silver is a cache, so there is
+    nothing to resume and nothing to lose.
+    """
+    report = silver_module.build(bronze, out)
+    typer.echo(
+        f"{report.rows} rows from {report.articles - report.skipped} articles, "
+        f"{report.skipped} skipped -> {report.path}"
+    )
