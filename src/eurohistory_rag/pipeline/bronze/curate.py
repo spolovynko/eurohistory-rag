@@ -8,56 +8,20 @@ import mwparserfromhell
 
 from eurohistory_rag.pipeline.bronze.registry import RegistryEntry, Theme
 from eurohistory_rag.pipeline.bronze.wikipedia import RevisionSource
+from eurohistory_rag.pipeline.wikitext import normalise_target
 
 logger = logging.getLogger(__name__)
 
-# Links into these namespaces are metadata or navigation, never article content.
-_NON_ARTICLE_NAMESPACES = frozenset(
-    {
-        "category",
-        "file",
-        "image",
-        "media",
-        "template",
-        "module",
-        "help",
-        "portal",
-        "wikipedia",
-        "wp",
-        "special",
-        "talk",
-        "user",
-        "draft",
-        "mediawiki",
-        "book",
-        "timedtext",
-        "wikt",
-        "commons",
-        "s",
-    }
-)
 MIN_SEEDS = 2
-
-
-def _is_non_article(title: str) -> bool:
-    """True for `Category:1957 in Europe` and friends, false for `Star Trek: TNG`."""
-    prefix, _, rest = title.partition(":")
-    return bool(rest) and prefix.strip().lower() in _NON_ARTICLE_NAMESPACES
 
 
 def extract_links(wikitext: str) -> set[str]:
     """Article titles linked from one article's wikitext."""
-    titles: set[str] = set()
-    for link in mwparserfromhell.parse(wikitext).filter_wikilinks():
-        # `[[:Category:X]]`, `[[Rome#History]]`, `[[World_War_I]]` all normalise.
-        title = str(link.title).strip().lstrip(":")
-        title = title.split("#", 1)[0].strip().replace("_", " ")
-        if not title or _is_non_article(title):
-            continue
-        # MediaWiki capitalises the first letter, so [[tariff]] and [[Tariff]]
-        # are the same page and must not be counted twice.
-        titles.add(title[0].upper() + title[1:])
-    return titles
+    return {
+        target
+        for link in mwparserfromhell.parse(wikitext).filter_wikilinks()
+        if (target := normalise_target(str(link.title))) is not None
+    }
 
 
 def rank_candidates(
