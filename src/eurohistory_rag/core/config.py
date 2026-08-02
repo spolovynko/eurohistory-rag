@@ -26,6 +26,13 @@ class Settings(BaseSettings):
 
     # Defaulted: correct locally, overridden by the environment in deployment.
     qdrant_url: str = "http://localhost:6333"
+    qdrant_collection: str = "chunks"
+
+    # The embedding model and its output size must move together: the Qdrant
+    # collection is created with this size, and a mismatch is only caught when
+    # the first vector is written.
+    embedding_model: str = "text-embedding-3-small"
+    embedding_dimensions: int = 1536
 
 
 @lru_cache(maxsize=1)
