@@ -65,6 +65,7 @@ _TRAILING_WORD = re.compile(r"([\w.]+)\.$")
 CHUNK_SIZE = 1200  # characters of body, prefix excluded. See D-037.
 CHUNK_OVERLAP = 150  # rounded up to whole sentences
 MIN_TAIL_CHARS = 200  # a final chunk smaller than this is merged backwards
+_HEADING_MAX_CHARS = 70
 
 _PARAGRAPH = "\n\n"
 
@@ -129,15 +130,13 @@ def _units(text: str, size: int) -> list[str]:
     does not fit is cut at spaces. Nothing this returns is longer than
     `size`, except a single word that is -- a URL, and rare enough to leave.
     """
+    paragraphs = [p.strip() for p in text.split(_PARAGRAPH) if p.strip()]
     units: list[str] = []
-    for paragraph in text.split(_PARAGRAPH):
-        stripped = paragraph.strip()
-        if not stripped:
+    for paragraph in _attach_headings(paragraphs):
+        if len(paragraph) <= size:
+            units.append(paragraph)
             continue
-        if len(stripped) <= size:
-            units.append(stripped)
-            continue
-        for run in _pack(split_sentences(stripped), size, " "):
+        for run in _pack(split_sentences(paragraph), size, " "):
             if len(run) <= size:
                 units.append(run)
             else:
@@ -208,3 +207,35 @@ def chunk_document(doc: SilverRow, size: int, overlap: int) -> list[Chunk]:
         )
         for position, body in enumerate(bodies)
     ]
+
+
+def _looks_like_a_heading(paragraph: str) -> bool:
+    """True if this paragraph is a subheading Silver left behind as bare text.
+
+    Level-3 headings survive the Silver clean as a short line with no closing
+    punctuation. Nothing else in the prose looks like that.
+    """
+    return len(paragraph) <= _HEADING_MAX_CHARS and not paragraph.endswith(
+        (".", "!", "?", '"', ")")
+    )
+
+
+def _attach_headings(paragraphs: list[str]) -> list[str]:
+    """Glue each bare subheading onto the paragraph it introduces.
+
+    A heading belongs with what follows it, so binding the two before packing
+    makes it impossible for a chunk to end on an orphaned heading whose
+    content is in the next chunk. Consecutive headings travel together; a
+    heading with nothing after it stays as it is rather than being dropped.
+    """
+    attached: list[str] = []
+    pending: list[str] = []
+    for paragraph in paragraphs:
+        if _looks_like_a_heading(paragraph):
+            pending.append(paragraph)
+            continue
+        attached.append("\n".join([*pending, paragraph]))
+        pending = []
+    if pending:
+        attached.append("\n".join(pending))
+    return attached
