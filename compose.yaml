@@ -10,7 +10,9 @@
 
 services:
   qdrant:
-    image: qdrant/qdrant:latest
+    # Pinned, not `latest`: a rebuild months from now must get the same
+    # database, for the same reason uv.lock is committed. Bump deliberately.
+    image: qdrant/qdrant:v1.18.3
     container_name: eurohistory-qdrant
     ports:
       - "6333:6333"   # HTTP API and the web dashboard

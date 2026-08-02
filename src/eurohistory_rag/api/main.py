@@ -2,13 +2,14 @@
 
 from typing import Annotated
 
-from fastapi import Depends, FastAPI, Query
+from fastapi import Depends, FastAPI, HTTPException, Query, status
 from pydantic import BaseModel
 
 from eurohistory_rag import __version__
-from eurohistory_rag.api.dependencies import get_search_service
+from eurohistory_rag.api.dependencies import get_search_service, get_vector_store
 from eurohistory_rag.core.config import CORPUS_LICENSE
 from eurohistory_rag.retrieval.search import DEFAULT_K, SearchResult, SearchService
+from eurohistory_rag.retrieval.vectorstore import VectorStore, VectorStoreUnavailable
 
 # A ceiling on k, so one request cannot ask for the whole corpus.
 MAX_K = 50
@@ -81,6 +82,24 @@ def create_app() -> FastAPI:
         """
         return {"status": "ok"}
 
+    @app.get("/ready", summary="Readiness check — is the vector store reachable?")
+    def ready(
+        store: Annotated[VectorStore, Depends(get_vector_store)],
+    ) -> dict[str, str]:
+        """Report whether this process can actually serve a search.
+
+        The other half of /health, and a deliberately separate endpoint. /health
+        answering "ok" while Qdrant is down is not a bug in /health -- liveness
+        and readiness are different questions, and a restarter that conflates
+        them will keep restarting a healthy process because a database is down.
+        """
+        if not store.is_ready():
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Vector store unreachable or collection missing.",
+            )
+        return {"status": "ready"}
+
     @app.get("/search", summary="Find the chunks that best match a question")
     def search(
         service: Annotated[SearchService, Depends(get_search_service)],
@@ -94,7 +113,15 @@ def create_app() -> FastAPI:
         handler stalls the whole event loop for every other request. Declared
         sync, FastAPI runs it in a thread pool instead.
         """
-        results = service.search(q, k=k)
+        try:
+            results = service.search(q, k=k)
+        except VectorStoreUnavailable as error:
+            # A stack trace tells the caller nothing they can act on, and a 500
+            # says "we are broken" when the honest answer is "come back later".
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Search is temporarily unavailable.",
+            ) from error
         return SearchResponse(
             query=q,
             k=k,
