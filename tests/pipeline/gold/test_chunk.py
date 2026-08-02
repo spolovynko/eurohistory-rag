@@ -110,6 +110,49 @@ def test_prefix_does_not_count_against_the_size_budget() -> None:
     assert len(body_of(chunks[0].text)) == CHUNK_SIZE
 
 
+# --- bare subheadings -------------------------------------------------------
+
+
+def test_a_subheading_travels_with_the_paragraph_below_it() -> None:
+    doc = make_doc(
+        f"{paragraph_of(1000, 'a')}\n\nRefugee status\n\n{paragraph_of(900, 'b')}"
+    )
+    chunks = chunk_document(doc, 1200, 0)
+    assert len(chunks) == 2
+    assert not body_of(chunks[0].text).endswith("Refugee status")
+    assert body_of(chunks[1].text).startswith("Refugee status\n")
+
+
+def test_consecutive_subheadings_travel_together() -> None:
+    headings = "Personal views\n\nPolitical views"
+    doc = make_doc(
+        f"{paragraph_of(1000, 'a')}\n\n{headings}\n\n{paragraph_of(900, 'b')}"
+    )
+    chunks = chunk_document(doc, 1200, 0)
+    assert body_of(chunks[1].text).startswith("Personal views\nPolitical views\n")
+
+
+def test_a_subheading_never_becomes_a_chunk_of_its_own() -> None:
+    doc = make_doc(
+        f"Development\n\n{paragraph_of(1195, 'a')}\n\n{paragraph_of(900, 'b')}"
+    )
+    chunks = chunk_document(doc, 1200, 0)
+    assert all(len(body_of(chunk.text)) > 100 for chunk in chunks)
+
+
+def test_a_trailing_subheading_is_kept_rather_than_dropped() -> None:
+    doc = make_doc(f"{paragraph_of(600, 'a')}\n\nMajor cities and towns")
+    chunks = chunk_document(doc, 1200, 0)
+    assert body_of(chunks[-1].text).endswith("Major cities and towns")
+
+
+def test_a_short_paragraph_that_ends_in_a_stop_is_not_a_heading() -> None:
+    remark = "A short closing remark."
+    doc = make_doc(f"{paragraph_of(1000, 'a')}\n\n{remark}\n\n{paragraph_of(900, 'b')}")
+    chunks = chunk_document(doc, 1200, 0)
+    assert body_of(chunks[0].text).endswith("A short closing remark.")
+
+
 # --- the boundary ladder ----------------------------------------------------
 
 

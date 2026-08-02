@@ -19,6 +19,8 @@ from eurohistory_rag.pipeline.bronze.wikipedia import (
     MAX_TITLES_PER_REQUEST,
     WikipediaClient,
 )
+from eurohistory_rag.pipeline.gold import build as gold_module
+from eurohistory_rag.pipeline.gold.chunk import CHUNK_OVERLAP, CHUNK_SIZE
 from eurohistory_rag.pipeline.silver import build as silver_module
 
 app = typer.Typer(help="eurohistory-rag pipeline commands.", no_args_is_help=True)
@@ -27,6 +29,7 @@ DEFAULT_SEEDS = Path("corpus/seeds.toml")
 DEFAULT_REGISTRY = Path("corpus/registry.csv")
 DEFAULT_BRONZE = Path("data/bronze")
 DEFAULT_SILVER = Path("data/silver")
+DEFAULT_GOLD = Path("data/gold")
 
 
 @app.callback()
@@ -107,4 +110,29 @@ def silver(
     typer.echo(
         f"{report.rows} rows from {report.articles - report.skipped} articles, "
         f"{report.skipped} skipped -> {report.path}"
+    )
+
+
+@app.command()
+def chunk(
+    silver_root: Annotated[
+        Path, typer.Option("--silver", help="Silver root.")
+    ] = DEFAULT_SILVER,
+    out: Annotated[Path, typer.Option(help="Gold root.")] = DEFAULT_GOLD,
+    size: Annotated[
+        int, typer.Option(help="Characters of body per chunk.")
+    ] = CHUNK_SIZE,
+    overlap: Annotated[
+        int, typer.Option(help="Characters carried from the previous chunk.")
+    ] = CHUNK_OVERLAP,
+) -> None:
+    """Rebuild data/gold/ from data/silver/.
+
+    Always a full rebuild, like `silver`. `--size` and `--overlap` default to
+    the settled values and exist so Phase 7 can re-chunk from one command
+    without editing code.
+    """
+    report = gold_module.build(silver_root, out, size, overlap)
+    typer.echo(
+        f"{report.chunks} chunks from {report.documents} documents -> {report.path}"
     )
