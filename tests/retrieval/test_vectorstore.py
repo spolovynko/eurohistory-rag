@@ -63,6 +63,15 @@ def test_recreate_empties_the_collection() -> None:
     assert emptied.count() == 0
 
 
+def test_a_store_with_its_collection_is_ready() -> None:
+    assert store().is_ready() is True
+
+
+def test_a_store_whose_collection_was_never_created_is_not_ready() -> None:
+    """Reachable but empty of structure is still not servable."""
+    assert VectorStore.in_memory("never-created", DIMENSIONS).is_ready() is False
+
+
 # --- writing ----------------------------------------------------------------
 
 

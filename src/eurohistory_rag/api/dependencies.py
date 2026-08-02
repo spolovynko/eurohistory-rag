@@ -14,6 +14,22 @@ from eurohistory_rag.retrieval.vectorstore import VectorStore
 
 
 @lru_cache(maxsize=1)
+def get_vector_store() -> VectorStore:
+    """The one Qdrant connection for this process.
+
+    Its own function rather than a detail of `get_search_service` because
+    /ready needs the store without needing a search: asking "is the database
+    up?" should not require an embedder or an OpenAI key.
+    """
+    settings = get_settings()
+    return VectorStore.connect(
+        settings.qdrant_url,
+        settings.qdrant_collection,
+        settings.embedding_dimensions,
+    )
+
+
+@lru_cache(maxsize=1)
 def get_search_service() -> SearchService:
     """The one SearchService for this process.
 
@@ -28,9 +44,4 @@ def get_search_service() -> SearchService:
         model=settings.embedding_model,
         dimensions=settings.embedding_dimensions,
     )
-    store = VectorStore.connect(
-        settings.qdrant_url,
-        settings.qdrant_collection,
-        settings.embedding_dimensions,
-    )
-    return SearchService(embedder, store)
+    return SearchService(embedder, get_vector_store())

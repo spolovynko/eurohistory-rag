@@ -13,10 +13,22 @@ from dataclasses import dataclass
 from typing import Any, Self
 
 from qdrant_client import QdrantClient, models
+from qdrant_client.http.exceptions import ResponseHandlingException
 
 # Fixed namespace for uuid5. Never change it: every stored point id is derived
 # from it, so a new namespace orphans the entire collection at once.
 NAMESPACE = uuid.UUID("feedefcf-eb15-4e3e-a4b9-b8afba2eb4b4")
+
+
+class VectorStoreUnavailable(RuntimeError):
+    """Qdrant could not be reached.
+
+    Raised instead of letting the client's own exception escape, so callers can
+    answer "the search service is down" without importing `qdrant_client`.
+    Deliberately narrow: it means the server is unreachable, not that a request
+    was wrong. A dimension mismatch or a bad query is a bug and still raises the
+    client's own error, because retrying those would never help.
+    """
 
 
 def point_id(chunk_id: str) -> str:
@@ -101,14 +113,29 @@ class VectorStore:
         )
         return len(found) == len(chunk_ids)
 
+    def is_ready(self) -> bool:
+        """True if Qdrant answers and the collection exists.
+
+        What a readiness probe needs and `/health` deliberately does not check:
+        the process can be perfectly alive while the database it depends on is
+        not running, and answering "ok" in that state is a lie.
+        """
+        try:
+            return self._client.collection_exists(self._collection)
+        except ResponseHandlingException:
+            return False
+
     def search(self, vector: Sequence[float], limit: int) -> list[Hit]:
         """Nearest `limit` chunks to this vector, best first."""
-        response = self._client.query_points(
-            collection_name=self._collection,
-            query=list(vector),
-            limit=limit,
-            with_payload=True,
-        )
+        try:
+            response = self._client.query_points(
+                collection_name=self._collection,
+                query=list(vector),
+                limit=limit,
+                with_payload=True,
+            )
+        except ResponseHandlingException as error:
+            raise VectorStoreUnavailable(str(error)) from error
         return [
             Hit(score=point.score, payload=dict(point.payload or {}))
             for point in response.points

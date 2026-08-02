@@ -13,9 +13,10 @@ from collections.abc import Iterator
 import pytest
 from fastapi.testclient import TestClient
 
-from eurohistory_rag.api.dependencies import get_search_service
+from eurohistory_rag.api.dependencies import get_search_service, get_vector_store
 from eurohistory_rag.api.main import create_app
 from eurohistory_rag.retrieval.search import SearchResult
+from eurohistory_rag.retrieval.vectorstore import VectorStoreUnavailable
 
 # --- helpers ----------------------------------------------------------------
 
@@ -52,9 +53,38 @@ class StubSearchService:
         return self._results[: k or len(self._results)]
 
 
+class UnavailableSearchService:
+    """Stands in for a search whose vector store is down."""
+
+    def search(
+        self,
+        question: str,
+        k: int | None = None,
+        min_score: float | None = None,
+    ) -> list[SearchResult]:
+        raise VectorStoreUnavailable("connection refused")
+
+
+class StubStore:
+    """Stands in for the vector store in readiness checks."""
+
+    def __init__(self, ready: bool) -> None:
+        self._ready = ready
+
+    def is_ready(self) -> bool:
+        return self._ready
+
+
 @pytest.fixture
 def stub() -> StubSearchService:
     return StubSearchService([result("30030:1:0"), result("30030:1:1")])
+
+
+def client_with_store(*, ready: bool) -> TestClient:
+    """A client whose /ready sees a store in the given state."""
+    app = create_app()
+    app.dependency_overrides[get_vector_store] = lambda: StubStore(ready)
+    return TestClient(app)
 
 
 @pytest.fixture
@@ -92,7 +122,33 @@ def test_openapi_schema_describes_both_routes(client: TestClient) -> None:
 
     assert schema["info"]["version"] == "0.1.0"
     assert "/health" in schema["paths"]
+    assert "/ready" in schema["paths"]
     assert "/search" in schema["paths"]
+
+
+# --- readiness --------------------------------------------------------------
+
+
+def test_ready_answers_200_when_the_store_is_reachable() -> None:
+    response = client_with_store(ready=True).get("/ready")
+
+    assert response.status_code == 200
+    assert response.json() == {"status": "ready"}
+
+
+def test_ready_answers_503_when_the_store_is_not() -> None:
+    """503 rather than 500: the process is fine, its dependency is not."""
+    assert client_with_store(ready=False).get("/ready").status_code == 503
+
+
+def test_health_still_answers_ok_when_the_store_is_down() -> None:
+    """Not a bug. Liveness and readiness are different questions, and a
+    restarter that conflates them keeps restarting a healthy process.
+    """
+    response = client_with_store(ready=False).get("/health")
+
+    assert response.status_code == 200
+    assert response.json() == {"status": "ok"}
 
 
 # --- searching --------------------------------------------------------------
@@ -182,3 +238,17 @@ def test_bad_input_never_reaches_the_service(
     searching_client.get("/search", params={"q": "a", "k": 999})
 
     assert stub.questions == []
+
+
+# --- the store being down ---------------------------------------------------
+
+
+def test_search_answers_503_when_the_store_is_unreachable() -> None:
+    """A stack trace tells the caller nothing they can act on."""
+    app = create_app()
+    app.dependency_overrides[get_search_service] = UnavailableSearchService
+    with TestClient(app) as unavailable_client:
+        response = unavailable_client.get("/search", params={"q": "aid"})
+
+    assert response.status_code == 503
+    assert response.json()["detail"] == "Search is temporarily unavailable."
