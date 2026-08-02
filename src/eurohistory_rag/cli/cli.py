@@ -21,7 +21,10 @@ from eurohistory_rag.pipeline.bronze.wikipedia import (
 )
 from eurohistory_rag.pipeline.gold import build as gold_module
 from eurohistory_rag.pipeline.gold.chunk import CHUNK_OVERLAP, CHUNK_SIZE
+from eurohistory_rag.pipeline.index import build as index_module
 from eurohistory_rag.pipeline.silver import build as silver_module
+from eurohistory_rag.retrieval.embedding import OpenAIEmbedder
+from eurohistory_rag.retrieval.vectorstore import VectorStore
 
 app = typer.Typer(help="eurohistory-rag pipeline commands.", no_args_is_help=True)
 
@@ -135,4 +138,42 @@ def chunk(
     report = gold_module.build(silver_root, out, size, overlap)
     typer.echo(
         f"{report.chunks} chunks from {report.documents} documents -> {report.path}"
+    )
+
+
+@app.command()
+def index(
+    gold: Annotated[Path, typer.Option(help="Gold root.")] = DEFAULT_GOLD,
+    batch_size: Annotated[
+        int, typer.Option(help="Chunks per embedding request.")
+    ] = index_module.DEFAULT_BATCH_SIZE,
+    resume: Annotated[
+        bool,
+        typer.Option(help="Keep the collection and skip batches already stored."),
+    ] = False,
+) -> None:
+    """Embed data/gold/ into Qdrant.
+
+    Drops and recreates the collection by default: chunk ids move whenever the
+    chunk size changes, so writing into an old collection leaves points nothing
+    will ever overwrite. Use --resume only to finish an interrupted run.
+
+    This is the one command that costs money. Requires Qdrant running:
+    `docker compose up -d`.
+    """
+    settings = get_settings()
+    embedder = OpenAIEmbedder(
+        api_key=settings.openai_api_key.get_secret_value(),
+        model=settings.embedding_model,
+        dimensions=settings.embedding_dimensions,
+    )
+    store = VectorStore.connect(
+        settings.qdrant_url,
+        settings.qdrant_collection,
+        settings.embedding_dimensions,
+    )
+    report = index_module.build(gold, store, embedder, batch_size, resume=resume)
+    typer.echo(
+        f"{report.indexed} indexed, {report.skipped} skipped, "
+        f"{report.points} points in {settings.qdrant_collection}"
     )
