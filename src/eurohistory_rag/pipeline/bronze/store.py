@@ -9,11 +9,15 @@ from uuid import uuid4
 import polars as pl
 from polars.datatypes import DataType, DataTypeClass
 
+from eurohistory_rag.core.config import CORPUS_LICENSE
 from eurohistory_rag.pipeline.bronze.wikipedia import Revision
 
 logger = logging.getLogger(__name__)
 
-LICENSE = "CC BY-SA 4.0"
+# Re-exported under the name Bronze has always used it by. The string itself
+# lives in core/ because the API must state it too and may not import pipeline/.
+LICENSE = CORPUS_LICENSE
+
 _COLUMNS: dict[str, DataType | DataTypeClass] = {
     "page_id": pl.Int64,  # primary key: titles get renamed, ids do not
     "title": pl.Utf8,  # resolved, after redirects

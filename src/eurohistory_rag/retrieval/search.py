@@ -109,11 +109,13 @@ class SearchService:
         store: VectorStore,
         k: int = DEFAULT_K,
         max_per_document: int = MAX_PER_DOCUMENT,
+        overfetch: int = OVERFETCH,
     ) -> None:
         self._embedder = embedder
         self._store = store
         self._k = k
         self._max_per_document = max_per_document
+        self._overfetch = overfetch
 
     def search(
         self,
@@ -135,7 +137,7 @@ class SearchService:
 
         limit = k if k is not None else self._k
         vector = self._embedder.embed([question])[0]
-        hits = self._store.search(vector, limit=limit * OVERFETCH)
+        hits = self._store.search(vector, limit=limit * self._overfetch)
 
         results = [to_result(hit) for hit in hits]
         if min_score is not None:
