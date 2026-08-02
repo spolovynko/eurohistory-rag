@@ -5,6 +5,10 @@ from functools import lru_cache
 from pydantic import SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+# Wikipedia's licence, not a choice. Stated once here rather than stored on
+# 30,362 identical payloads; the API repeats it with every response.
+CORPUS_LICENSE = "CC BY-SA 4.0"
+
 
 class Settings(BaseSettings):
     """Application configuration, validated at construction.
