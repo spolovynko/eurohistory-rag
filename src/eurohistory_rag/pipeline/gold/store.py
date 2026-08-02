@@ -8,7 +8,7 @@ The column list is deliberately narrow. A chunk carries what a citation needs
 and what a filter might need, and nothing else. Silver's `categories`,
 `infobox` and `link_targets` are left behind because they are article-level:
 carrying them would repeat one article's metadata across all fifty of its
-chunks. Adding a column back costs one rebuild. See D-0xx.
+chunks. Adding a column back costs one rebuild. See D-041.
 """
 
 import datetime as dt

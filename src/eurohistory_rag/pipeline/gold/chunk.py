@@ -62,7 +62,7 @@ _BOUNDARY = re.compile(r"(?<=[.!?])\s+(?=[\"'(\[]?[A-Z0-9])")
 _TRAILING_WORD = re.compile(r"([\w.]+)\.$")
 
 
-CHUNK_SIZE = 1200  # characters of body, prefix excluded. See D-0xx.
+CHUNK_SIZE = 1200  # characters of body, prefix excluded. See D-037.
 CHUNK_OVERLAP = 150  # rounded up to whole sentences
 MIN_TAIL_CHARS = 200  # a final chunk smaller than this is merged backwards
 
