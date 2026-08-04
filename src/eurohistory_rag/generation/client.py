@@ -7,6 +7,7 @@ model in tests or swapping the provider changes nothing else.
 
 import logging
 from collections.abc import Sequence
+from dataclasses import dataclass
 from typing import Protocol, cast
 
 from openai import OpenAI, OpenAIError
@@ -33,16 +34,31 @@ class GenerationUnavailable(RuntimeError):
     """The model could not be reached, or returned nothing usable."""
 
 
+@dataclass(frozen=True, slots=True)
+class Completion:
+    """What the model sent back: the answer, and what it cost.
+
+    The token counts are the only measure of cost this system has, and Phase 7
+    needs them per question. They are optional because a provider is not
+    obliged to report them and a fake never can -- an absent count is honest,
+    where a zero would quietly average into the wrong number.
+    """
+
+    text: str
+    prompt_tokens: int | None = None
+    completion_tokens: int | None = None
+
+
 class Generator(Protocol):
-    """Messages in, answer text out."""
+    """Messages in, answer out."""
 
     @property
     def model(self) -> str:
         """The model that answers, for the record kept on each answer."""
         ...
 
-    def generate(self, messages: Sequence[Message]) -> str:
-        """Return the model's answer to this conversation."""
+    def generate(self, messages: Sequence[Message]) -> Completion:
+        """Return the model's answer to this conversation, and its token cost."""
         ...
 
 
@@ -58,7 +74,7 @@ class OpenAIGenerator:
         """The model that answers, for the record kept on each answer."""
         return self._model
 
-    def generate(self, messages: Sequence[Message]) -> str:
+    def generate(self, messages: Sequence[Message]) -> Completion:
         """Ask the model and return its answer.
 
         Every failure becomes GenerationUnavailable, so no caller ever has to
@@ -79,4 +95,10 @@ class OpenAIGenerator:
         answer = response.choices[0].message.content
         if not answer:
             raise GenerationUnavailable("The model returned an empty answer.")
-        return answer.strip()
+
+        usage = response.usage
+        return Completion(
+            text=answer.strip(),
+            prompt_tokens=usage.prompt_tokens if usage else None,
+            completion_tokens=usage.completion_tokens if usage else None,
+        )

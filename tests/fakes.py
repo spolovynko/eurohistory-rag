@@ -7,7 +7,7 @@ test that touches OpenAI run with no network, no API key and no cost.
 
 from collections.abc import Sequence
 
-from eurohistory_rag.generation.client import GenerationUnavailable
+from eurohistory_rag.generation.client import Completion, GenerationUnavailable
 from eurohistory_rag.generation.messages import Message
 
 # A tiny fixed vocabulary. Real embeddings come from a trained model; these come
@@ -75,10 +75,14 @@ class FakeGenerator:
         """The model name recorded on every answer."""
         return self._model
 
-    def generate(self, messages: Sequence[Message]) -> str:
-        """Return the canned answer, recording the messages it was given."""
+    def generate(self, messages: Sequence[Message]) -> Completion:
+        """Return the canned answer, recording the messages it was given.
+
+        Token counts stay None: a fake cannot know them, and inventing a number
+        would let a test pass against a cost this code never measured.
+        """
         self.calls.append(list(messages))
-        return self._answer
+        return Completion(text=self._answer)
 
 
 class UnavailableGenerator:
@@ -89,6 +93,6 @@ class UnavailableGenerator:
         """Named anyway: a failing generator still knows what it would call."""
         return "fake-model"
 
-    def generate(self, messages: Sequence[Message]) -> str:
+    def generate(self, messages: Sequence[Message]) -> Completion:
         """Always fail, the way an exhausted retry does."""
         raise GenerationUnavailable("connection refused")

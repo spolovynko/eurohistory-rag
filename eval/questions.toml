@@ -1,0 +1,212 @@
+# The evaluation question set -- 30 questions, four kinds.
+#
+# `expected` lists the Silver sections that *should* come back. It is the answer
+# key, and recall is measured against it: a question is a hit at depth k if any
+# listed section appears in the top k. Sections were chosen by reading
+# corpus_map.txt, not by guessing what the corpus contains -- two earlier
+# attempts guessed and both produced "unanswerable" questions the corpus could
+# answer perfectly well.
+#
+# The six unanswerable questions carry no `expected`, by design. Five are
+# plausible 20th-21st century European questions this corpus genuinely cannot
+# answer -- each verified by searching Silver for the topic and finding only
+# passing name-drops. The sixth is out of domain entirely, and exists to
+# establish the score floor that D-047 says we do not yet have.
+
+# ---------------------------------------------------------------- easy (8)
+# Single article, stated plainly, worded close to the source.
+
+[[question]]
+id = "brest-litovsk-terms"
+kind = "easy"
+text = "What territory did Russia give up under the Treaty of Brest-Litovsk?"
+expected = ["31388:3", "31388:2"]
+
+[[question]]
+id = "enabling-act-passage"
+kind = "easy"
+text = "How was the Enabling Act of 1933 passed by the Reichstag?"
+expected = ["218116:5", "218116:2"]
+
+[[question]]
+id = "wannsee-decisions"
+kind = "easy"
+text = "What was discussed and decided at the Wannsee Conference?"
+expected = ["33862:4", "33862:5", "33862:0"]
+
+[[question]]
+id = "barbarossa-aims"
+kind = "easy"
+text = "When did Operation Barbarossa begin and what were its objectives?"
+expected = ["22618:0", "22618:4", "22618:2"]
+
+[[question]]
+id = "weimar-hyperinflation-cause"
+kind = "easy"
+text = "What caused the hyperinflation in the Weimar Republic?"
+expected = ["17285549:4", "17285549:1"]
+
+[[question]]
+id = "munich-agreement-terms"
+kind = "easy"
+text = "What did the Munich Agreement of 1938 give Germany?"
+expected = ["159203:1", "159203:0"]
+
+[[question]]
+id = "mrp-secret-protocol"
+kind = "easy"
+text = "What was in the secret protocol of the Molotov-Ribbentrop Pact?"
+expected = ["20950:3"]
+
+[[question]]
+id = "nuremberg-laws-content"
+kind = "easy"
+text = "What did the Nuremberg Laws of 1935 forbid?"
+expected = ["3191713:3", "3191713:0", "3191713:2"]
+
+# --------------------------------------------------------------- multi (8)
+# The answer needs two or more articles. Phase 5 found retrieval fills every
+# slot with the single strongest topic, so this is the kind expected to fail.
+
+[[question]]
+id = "versailles-vs-trianon"
+kind = "multi"
+text = "How did the Treaty of Trianon differ from the Treaty of Versailles in what it took from the defeated country?"
+expected = ["30030:3", "211393:2", "211393:3"]
+note = "Phase 5 step 14: returned five Versailles chunks and zero Trianon."
+
+[[question]]
+id = "sealion-after-britain"
+kind = "multi"
+text = "Why was Operation Sea Lion never launched after the Battle of Britain?"
+expected = ["22338:1", "57974:9"]
+note = "Phase 5 step 14: five Sea Lion chunks, zero Battle of Britain."
+
+[[question]]
+id = "dawes-vs-young"
+kind = "multi"
+text = "How did the Young Plan change the arrangement the Dawes Plan had set up for German reparations?"
+expected = ["524119:2", "524123:2", "524123:1"]
+
+[[question]]
+id = "mussolini-vs-hitler-power"
+kind = "multi"
+text = "How did Mussolini's march on Rome differ from the way Hitler became chancellor?"
+expected = ["613885:2", "3796622:5", "3796622:6"]
+
+[[question]]
+id = "stalingrad-kursk-turning"
+kind = "multi"
+text = "Why are both Stalingrad and Kursk described as turning points on the Eastern Front?"
+expected = ["4284:11", "33102:7"]
+
+[[question]]
+id = "austria-czechoslovakia-1938"
+kind = "multi"
+text = "How did Germany take control of Austria and then of Czechoslovak territory during 1938?"
+expected = ["18951602:2", "159203:1", "42858:1"]
+
+[[question]]
+id = "dekulakization-and-famine"
+kind = "multi"
+text = "How was the campaign against the kulaks connected to the famine in Ukraine?"
+expected = ["12288502:1", "1007688:2"]
+
+[[question]]
+id = "finland-two-wars"
+kind = "multi"
+text = "Why did Finland end up fighting the Soviet Union twice within five years?"
+expected = ["33924:9", "7712:1"]
+
+# ---------------------------------------------------------- paraphrase (8)
+# The same facts, asked in words the articles do not use. Tests whether the
+# embedding is matching meaning or matching vocabulary.
+
+[[question]]
+id = "army-never-beaten"
+kind = "paraphrase"
+text = "Why did so many Germans come to believe their army had never actually been beaten in the field?"
+expected = ["8594:3", "8594:1"]
+
+[[question]]
+id = "money-became-worthless"
+kind = "paraphrase"
+text = "What made German savings worthless in the early 1920s, so that a loaf of bread cost billions?"
+expected = ["17285549:4", "17285549:1"]
+
+[[question]]
+id = "democracy-to-one-party"
+kind = "paraphrase"
+text = "How did the Nazis take apart a working democracy in a matter of months?"
+expected = ["12213:2", "218116:5"]
+
+[[question]]
+id = "stopped-short-of-moscow"
+kind = "paraphrase"
+text = "What stopped the German advance short of the Soviet capital in the winter of 1941?"
+expected = ["573888:5", "573888:4"]
+
+[[question]]
+id = "france-fell-fast"
+kind = "paraphrase"
+text = "Why did the French army collapse in weeks in 1940 when it had held out for years in the previous war?"
+expected = ["228080:2", "228080:7"]
+
+[[question]]
+id = "killing-became-policy"
+kind = "paraphrase"
+text = "At what point did murdering Europe's Jews become coordinated state policy rather than scattered local violence?"
+expected = ["33862:4", "10160:4", "10160:3"]
+
+[[question]]
+id = "could-germany-afford-it"
+kind = "paraphrase"
+text = "What was Germany made to pay after 1918, and could the country actually afford it?"
+expected = ["33112:3", "33112:4"]
+
+[[question]]
+id = "bolsheviks-held-on"
+kind = "paraphrase"
+text = "How did the Bolsheviks hold on to power when so much of the country was in arms against them?"
+expected = ["26295:3", "25682:1"]
+
+# -------------------------------------------------------- unanswerable (6)
+# No `expected`: the right behaviour is a refusal. Each of the first five was
+# checked against Silver -- the corpus mentions the topic in passing and holds
+# no facts about it. The sixth is out of domain and establishes the floor.
+
+[[question]]
+id = "chernobyl-cause"
+kind = "unanswerable"
+text = "What caused the reactor explosion at Chernobyl in 1986, and how many people died as a result?"
+note = "Verified: Chernobyl appears in 8 sections, all fallout percentages, a museum and reactor types. No cause, no casualties."
+
+[[question]]
+id = "good-friday-agreement"
+kind = "unanswerable"
+text = "What did the Good Friday Agreement change about how Northern Ireland is governed?"
+note = "Verified: zero sections mention it. 'The Troubles' appears once, in passing, in Easter Rising."
+
+[[question]]
+id = "srebrenica-1995"
+kind = "unanswerable"
+text = "What happened at Srebrenica in July 1995?"
+note = "Verified: two mentions, both name-drops -- a list of towns and a conviction date."
+
+[[question]]
+id = "brexit-why"
+kind = "unanswerable"
+text = "Why did a majority of British voters choose to leave the European Union in 2016?"
+note = "Verified: five mentions, all inside newspaper articles describing their own coverage."
+
+[[question]]
+id = "windrush-generation"
+kind = "unanswerable"
+text = "Who were the Windrush generation and why did they come to Britain?"
+note = "Verified: zero sections."
+
+[[question]]
+id = "transformer-attention"
+kind = "unanswerable"
+text = "How does a transformer neural network decide which words to pay attention to?"
+note = "Out of domain on purpose. Phase 5 scored a question like this at 0.253; this is the floor D-047 needs before any min_score can be argued for."
