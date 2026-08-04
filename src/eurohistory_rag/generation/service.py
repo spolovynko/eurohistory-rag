@@ -40,6 +40,11 @@ class Answer:
     text: str
     model: str
     citations: list[Citation]
+    # What the call cost. Carried on the answer rather than logged and dropped,
+    # because Phase 7 reports cost per question and the API layer is free to
+    # ignore fields it does not expose.
+    prompt_tokens: int | None = None
+    completion_tokens: int | None = None
 
 
 def cited(text: str, results: list[SearchResult]) -> list[Citation]:
@@ -74,16 +79,26 @@ class GenerationService:
         rule for that case, and letting one code path handle every refusal
         means there is only one behaviour to test and to fix.
         """
-        results = self._search.search(question, k=k)
-        messages = build_messages(question, results)
-        text = self._generator.generate(messages)
-        citations = cited(text, results)
+        return self.answer_from(question, self._search.search(question, k=k))
+
+    def answer_from(self, question: str, results: list[SearchResult]) -> Answer:
+        """Answer from chunks already retrieved.
+
+        The half of `ask` that does not search. Split out for the evaluation
+        runner, which needs one search of its own to score retrieval and must
+        then generate from exactly the shipped path rather than a copy of it --
+        a copy would drift, and the eval would stop measuring the real system.
+        """
+        completion = self._generator.generate(build_messages(question, results))
+        citations = cited(completion.text, results)
         logger.info(
             "ask %r: %d sources, %d cited", question, len(results), len(citations)
         )
         return Answer(
             question=question,
-            text=text,
+            text=completion.text,
             model=self._generator.model,
             citations=citations,
+            prompt_tokens=completion.prompt_tokens,
+            completion_tokens=completion.completion_tokens,
         )

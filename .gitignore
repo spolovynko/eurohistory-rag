@@ -231,5 +231,6 @@ __marimo__/
 
 # Claude
 .claude/
-# Throwaway exploration scripts
+# Throwaway exploration scripts and what they generate
 /scratch_*.py
+/corpus_map.txt
