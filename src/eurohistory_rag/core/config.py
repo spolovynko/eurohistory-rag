@@ -38,6 +38,9 @@ class Settings(BaseSettings):
     embedding_model: str = "text-embedding-3-small"
     embedding_dimensions: int = 1536
 
+    # LLM model and its output size must move together: the Qdrant collection is
+    generation_model: str = "gpt-5-mini"
+
 
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:

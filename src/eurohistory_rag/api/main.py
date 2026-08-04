@@ -3,11 +3,17 @@
 from typing import Annotated
 
 from fastapi import Depends, FastAPI, HTTPException, Query, status
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from eurohistory_rag import __version__
-from eurohistory_rag.api.dependencies import get_search_service, get_vector_store
+from eurohistory_rag.api.dependencies import (
+    get_generation_service,
+    get_search_service,
+    get_vector_store,
+)
 from eurohistory_rag.core.config import CORPUS_LICENSE
+from eurohistory_rag.generation.client import GenerationUnavailable
+from eurohistory_rag.generation.service import Citation, GenerationService
 from eurohistory_rag.retrieval.search import DEFAULT_K, SearchResult, SearchService
 from eurohistory_rag.retrieval.vectorstore import VectorStore, VectorStoreUnavailable
 
@@ -62,6 +68,55 @@ class SearchResponse(BaseModel):
     count: int
     license: str
     results: list[SearchHit]
+
+
+class AskRequest(BaseModel):
+    """A question, and how widely to search for it."""
+
+    question: str = Field(min_length=1, max_length=500)
+    k: int = Field(default=DEFAULT_K, ge=1, le=MAX_K)
+
+
+class AnswerSource(BaseModel):
+    """One source the answer actually cited.
+
+    `n` is the number that appears in the answer text as [n], which is what
+    lets a client turn a marker into a link.
+    """
+
+    n: int
+    chunk_id: str
+    title: str
+    heading: str
+    source: str
+    url: str
+    score: float
+    text: str
+
+    @classmethod
+    def from_citation(cls, citation: Citation) -> "AnswerSource":
+        """Convert one internal citation into its public form."""
+        result = citation.result
+        return cls(
+            n=citation.number,
+            chunk_id=result.chunk_id,
+            title=result.title,
+            heading=result.heading,
+            source=result.source,
+            url=result.url,
+            score=result.score,
+            text=result.text,
+        )
+
+
+class AskResponse(BaseModel):
+    """A grounded answer and only the sources it used."""
+
+    question: str
+    answer: str
+    model: str
+    license: str
+    sources: list[AnswerSource]
 
 
 def create_app() -> FastAPI:
@@ -128,6 +183,36 @@ def create_app() -> FastAPI:
             count=len(results),
             license=CORPUS_LICENSE,
             results=[SearchHit.from_result(result) for result in results],
+        )
+
+    @app.post("/ask", summary="Answer a question from the corpus, with citations")
+    def ask(
+        service: Annotated[GenerationService, Depends(get_generation_service)],
+        request: AskRequest,
+    ) -> AskResponse:
+        """Answer a question using only the indexed corpus.
+
+        POST rather than GET because a question is input the server acts on,
+        it can be long, and it has no business sitting in a URL that ends up
+        in access logs and browser history.
+        """
+        try:
+            answer = service.ask(request.question, k=request.k)
+        except (VectorStoreUnavailable, GenerationUnavailable) as error:
+            # Two different failures, one message: the caller can do nothing
+            # differently about a dead Qdrant than about a dead OpenAI.
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Answering is temporarily unavailable.",
+            ) from error
+        return AskResponse(
+            question=answer.question,
+            answer=answer.text,
+            model=answer.model,
+            license=CORPUS_LICENSE,
+            sources=[
+                AnswerSource.from_citation(citation) for citation in answer.citations
+            ],
         )
 
     return app

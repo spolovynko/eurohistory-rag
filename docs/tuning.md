@@ -33,8 +33,8 @@ machine settings. See D-037 and the Phase 4 session note.
 
 ## The knobs
 
-Eight numbers. Changing any of them changes what the system retrieves or
-answers.
+Ten entries. Changing any of them changes what the system retrieves or
+answers. Nine are numbers; one is a prompt.
 
 | Knob | Value | File | Decision | What it controls |
 |---|---|---|---|---|
@@ -46,6 +46,8 @@ answers.
 | `DEFAULT_K` | 5 | `retrieval/search.py` | D-047 | How many results a search returns |
 | `MAX_PER_DOCUMENT` | 2 | `retrieval/search.py` | D-047 | Most chunks allowed from any one section, so overlapping neighbours cannot fill the list |
 | `OVERFETCH` | 4 | `retrieval/search.py` | D-047 | Multiplier on `k` when asking the store, so thinning has spares to draw from |
+| `SYSTEM_PROMPT` | `prompt.md` | `generation/prompt.md` | D-054 to D-057 | The standing rules the answering model works under. Not a number, but the single biggest lever on answer quality in this phase |
+| `TEMPERATURE` | 0.0 | `generation/client.py` | D-052 | How much the model varies run to run. 0 so the same question gives the same answer, which is what makes Phase 7's before/after comparable |
 
 ### How to change one
 
@@ -101,7 +103,9 @@ comes back.
 | `API_URL` | `pipeline/bronze/wikipedia.py` | the MediaWiki endpoint |
 | `LICENSE` = `CC BY-SA 4.0` | `pipeline/bronze/store.py` | Wikipedia's licence, not a choice |
 | `MAX_TEXTS_PER_REQUEST` = 256 | `retrieval/embedding.py` | sits inside OpenAI's input and token caps |
-| `MAX_RETRIES` = 5 | `retrieval/embedding.py` | handed to the OpenAI SDK's own backoff |
+| `MAX_RETRIES` = 5 | `retrieval/embedding.py`, `generation/client.py` | handed to the OpenAI SDK's own backoff |
+| `MAX_OUTPUT_TOKENS` = 800 | `generation/client.py` | a ceiling, not a target. The prompt asks for six sentences, so an answer near this limit means the style rules were ignored |
+| `CITATION` regex | `generation/service.py` | must match the marker format the prompt asks for. Change both or neither |
 | `DEFAULT_BATCH_SIZE` = 200 | `pipeline/index/build.py` | speed vs cost-of-a-failed-batch; changes nothing about results |
 | `NAMESPACE` | `retrieval/vectorstore.py` | **never change it** — every stored point id derives from it, so a new namespace orphans the whole collection |
 | `KEEP`, `DROP_TAGS`, `DROP_HEADINGS`, `SKIP_FIELDS` | `pipeline/silver/` | cleaning rules, not numbers. Each has its own decision entry |

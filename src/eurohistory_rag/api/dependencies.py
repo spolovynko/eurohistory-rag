@@ -8,6 +8,8 @@ run the API against fakes.
 from functools import lru_cache
 
 from eurohistory_rag.core.config import get_settings
+from eurohistory_rag.generation.client import OpenAIGenerator
+from eurohistory_rag.generation.service import GenerationService
 from eurohistory_rag.retrieval.embedding import OpenAIEmbedder
 from eurohistory_rag.retrieval.search import SearchService
 from eurohistory_rag.retrieval.vectorstore import VectorStore
@@ -45,3 +47,18 @@ def get_search_service() -> SearchService:
         dimensions=settings.embedding_dimensions,
     )
     return SearchService(embedder, get_vector_store())
+
+
+@lru_cache(maxsize=1)
+def get_generation_service() -> GenerationService:
+    """The one GenerationService for this process.
+
+    Cached like the others: it holds an OpenAI client and a Qdrant connection
+    underneath, and building those per request would be pure waste.
+    """
+    settings = get_settings()
+    generator = OpenAIGenerator(
+        api_key=settings.openai_api_key.get_secret_value(),
+        model=settings.generation_model,
+    )
+    return GenerationService(get_search_service(), generator)
