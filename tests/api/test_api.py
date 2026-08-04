@@ -13,10 +13,16 @@ from collections.abc import Iterator
 import pytest
 from fastapi.testclient import TestClient
 
-from eurohistory_rag.api.dependencies import get_search_service, get_vector_store
+from eurohistory_rag.api.dependencies import (
+    get_generation_service,
+    get_search_service,
+    get_vector_store,
+)
 from eurohistory_rag.api.main import create_app
+from eurohistory_rag.generation.service import GenerationService
 from eurohistory_rag.retrieval.search import SearchResult
 from eurohistory_rag.retrieval.vectorstore import VectorStoreUnavailable
+from tests.fakes import FakeGenerator, UnavailableGenerator
 
 # --- helpers ----------------------------------------------------------------
 
@@ -252,3 +258,107 @@ def test_search_answers_503_when_the_store_is_unreachable() -> None:
 
     assert response.status_code == 503
     assert response.json()["detail"] == "Search is temporarily unavailable."
+
+
+# --- asking -----------------------------------------------------------------
+
+
+def asking_client(answer: str) -> TestClient:
+    """A client whose /ask is wired to a stub search and a canned answer."""
+    app = create_app()
+    search = StubSearchService([result("30030:1:0"), result("30030:1:1")])
+    generator = FakeGenerator(answer=answer)
+    app.dependency_overrides[get_generation_service] = lambda: GenerationService(
+        search,  # type: ignore[arg-type]
+        generator,
+    )
+    return TestClient(app)
+
+
+def test_ask_returns_the_answer_and_the_model_that_wrote_it() -> None:
+    response = asking_client("The programme distributed $13.3 billion [1].").post(
+        "/ask", json={"question": "how much was the Marshall Plan?"}
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["question"] == "how much was the Marshall Plan?"
+    assert body["answer"] == "The programme distributed $13.3 billion [1]."
+    assert body["model"] == "fake-model"
+
+
+def test_a_source_carries_the_number_the_answer_cites() -> None:
+    """`n` is what turns a [1] in the text into a link in a client."""
+    body = asking_client("Aid arrived [2].").post("/ask", json={"question": "?"}).json()
+
+    assert [source["n"] for source in body["sources"]] == [2]
+    assert body["sources"][0]["url"] == (
+        "https://en.wikipedia.org/w/index.php?oldid=30130"
+    )
+
+
+def test_only_cited_sources_are_returned() -> None:
+    """Two chunks were retrieved and one was used."""
+    body = asking_client("Only one [1].").post("/ask", json={"question": "?"}).json()
+
+    assert len(body["sources"]) == 1
+
+
+def test_a_refusal_returns_no_sources() -> None:
+    """The honest answer to an unanswerable question, and the empty list is
+    itself the signal that nothing was used.
+    """
+    body = (
+        asking_client("Not in the sources. The passages cover the Marshall Plan.")
+        .post("/ask", json={"question": "how does a transformer work?"})
+        .json()
+    )
+
+    assert body["answer"].startswith("Not in the sources.")
+    assert body["sources"] == []
+
+
+def test_the_licence_is_stated_on_every_answer() -> None:
+    body = asking_client("Aid arrived [1].").post("/ask", json={"question": "?"}).json()
+
+    assert body["license"] == "CC BY-SA 4.0"
+
+
+def test_a_missing_question_is_rejected_by_ask() -> None:
+    assert asking_client("x").post("/ask", json={}).status_code == 422
+
+
+def test_an_empty_question_is_rejected_by_ask() -> None:
+    assert asking_client("x").post("/ask", json={"question": ""}).status_code == 422
+
+
+def test_a_k_above_the_ceiling_is_rejected_by_ask() -> None:
+    response = asking_client("x").post("/ask", json={"question": "a", "k": 999})
+
+    assert response.status_code == 422
+
+
+def test_ask_answers_503_when_the_model_is_unreachable() -> None:
+    """Qdrant down and OpenAI down are the same event to a caller: try later."""
+    app = create_app()
+    app.dependency_overrides[get_generation_service] = lambda: GenerationService(
+        StubSearchService([result("30030:1:0")]),  # type: ignore[arg-type]
+        UnavailableGenerator(),
+    )
+    with TestClient(app) as unavailable_client:
+        response = unavailable_client.post("/ask", json={"question": "aid"})
+
+    assert response.status_code == 503
+    assert response.json()["detail"] == "Answering is temporarily unavailable."
+
+
+def test_ask_answers_503_when_the_store_is_unreachable() -> None:
+    app = create_app()
+    app.dependency_overrides[get_generation_service] = lambda: GenerationService(
+        UnavailableSearchService(),  # type: ignore[arg-type]
+        FakeGenerator(),
+    )
+    with TestClient(app) as unavailable_client:
+        response = unavailable_client.post("/ask", json={"question": "aid"})
+
+    assert response.status_code == 503

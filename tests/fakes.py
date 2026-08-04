@@ -1,11 +1,14 @@
 """Test doubles used across the suite.
 
-`FakeEmbedder` is the second implementation of `Embedder` that justifies the
-Protocol existing at all: it makes every test that touches embedding run with
-no network, no API key and no cost.
+`FakeEmbedder` and `FakeGenerator` are the second implementations of `Embedder`
+and `Generator` that justify those Protocols existing at all: they make every
+test that touches OpenAI run with no network, no API key and no cost.
 """
 
 from collections.abc import Sequence
+
+from eurohistory_rag.generation.client import GenerationUnavailable
+from eurohistory_rag.generation.messages import Message
 
 # A tiny fixed vocabulary. Real embeddings come from a trained model; these come
 # from counting words, which is enough to give texts sharing words a similar
@@ -48,3 +51,44 @@ class FakeEmbedder:
         """
         words = text.lower().split()
         return [*(float(words.count(term)) for term in self._vocabulary), 1.0]
+
+
+class FakeGenerator:
+    """A Generator that returns a canned answer instead of calling a model.
+
+    Every test of the answer path runs against this: the interesting behaviour
+    in generation is what we do with the model's text, not what the model
+    writes, and a real call would be slow, paid and different every time.
+    """
+
+    def __init__(
+        self,
+        answer: str = "The wall went up in 1961 [1].",
+        model: str = "fake-model",
+    ) -> None:
+        self._answer = answer
+        self._model = model
+        self.calls: list[list[Message]] = []
+
+    @property
+    def model(self) -> str:
+        """The model name recorded on every answer."""
+        return self._model
+
+    def generate(self, messages: Sequence[Message]) -> str:
+        """Return the canned answer, recording the messages it was given."""
+        self.calls.append(list(messages))
+        return self._answer
+
+
+class UnavailableGenerator:
+    """Stands in for a model that cannot be reached."""
+
+    @property
+    def model(self) -> str:
+        """Named anyway: a failing generator still knows what it would call."""
+        return "fake-model"
+
+    def generate(self, messages: Sequence[Message]) -> str:
+        """Always fail, the way an exhausted retry does."""
+        raise GenerationUnavailable("connection refused")
