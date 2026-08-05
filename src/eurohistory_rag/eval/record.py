@@ -36,6 +36,10 @@ class RunMeta:
     k: int
     max_per_document: int
     overfetch: int
+    # The reranker model, or "" when reranking was off. Phase 8's whole
+    # before/after rests on being able to tell the two runs apart later, and a
+    # run directory outlives anyone's memory of which flag was set that day.
+    reranker: str = ""
     note: str = ""
 
 
@@ -58,6 +62,10 @@ class Retrieved:
     # source, and looking each one up by hand is the step that gets skipped.
     # The ranks below the cut-off keep names only -- recall needs no text.
     text: str = ""
+    # None when reranking was off. Kept next to `score` rather than replacing
+    # it: `score` is the cosine number the Phase 7 baseline measured, and
+    # overwriting it would make the two runs' score columns incomparable.
+    rerank_score: float | None = None
 
 
 @dataclass(frozen=True, slots=True)

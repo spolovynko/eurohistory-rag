@@ -33,8 +33,8 @@ machine settings. See D-037 and the Phase 4 session note.
 
 ## The knobs
 
-Ten entries. Changing any of them changes what the system retrieves or
-answers. Nine are numbers; one is a prompt.
+Thirteen entries. Changing any of them changes what the system retrieves or
+answers. Eleven are numbers; one is a prompt; one is a model name.
 
 | Knob | Value | File | Decision | What it controls |
 |---|---|---|---|---|
@@ -46,6 +46,9 @@ answers. Nine are numbers; one is a prompt.
 | `DEFAULT_K` | 5 | `retrieval/search.py` | D-047 | How many results a search returns |
 | `MAX_PER_DOCUMENT` | 2 | `retrieval/search.py` | D-047 | Most chunks allowed from any one section, so overlapping neighbours cannot fill the list |
 | `OVERFETCH` | 4 | `retrieval/search.py` | D-047 | Multiplier on `k` when asking the store, so thinning has spares to draw from |
+| `RERANK_TOP_N` | 20 | `retrieval/search.py` | D-072 | How many candidates the cross-encoder scores. Fixed rather than `k × OVERFETCH`, so the eval and the answer path rerank the same pool |
+| `reranker_enabled` | `false` default, `true` in `.env` | `core/config.py` | D-069 | Whether reranking runs at all. The one knob here that lives in `.env`, because it is the on/off switch a before/after run needs to flip |
+| `reranker_model` | `cross-encoder/ms-marco-MiniLM-L6-v2` | `core/config.py` | D-070, D-071 | Which cross-encoder scores the pool. **Probe any replacement by hand before trusting a run** — see D-071 |
 | `SYSTEM_PROMPT` | `prompt.md` | `generation/prompt.md` | D-054 to D-057 | The standing rules the answering model works under. Not a number, but the single biggest lever on answer quality in this phase |
 | `TEMPERATURE` | 0.0 | `generation/client.py` | D-052 | How much the model varies run to run. 0 so the same question gives the same answer, which is what makes Phase 7's before/after comparable |
 
@@ -62,14 +65,22 @@ uv run eurohistory index
 Re-chunking changes every `chunk_id`, so `index` must be re-run and it rebuilds
 the collection whole. That is by design — see D-046.
 
-**The three retrieval knobs** are constructor arguments with these constants as
+**The four retrieval knobs** are constructor arguments with these constants as
 defaults, so an experiment constructs the service differently:
 
 ```python
-SearchService(embedder, store, k=10, max_per_document=1, overfetch=3)
+SearchService(embedder, store, k=10, max_per_document=1, overfetch=3, rerank_top_n=50)
 ```
 
 That is how Phase 7's eval runner will sweep them: no editing, no env vars.
+
+**The two reranker settings are the exception on this page** — they live in
+`.env`, which everything above says these values should not. The reason is that
+`reranker_enabled` is the switch a before/after run has to flip between two
+otherwise identical runs, and `reranker_model` names a downloaded artefact that
+genuinely does differ per machine. `RunMeta.reranker` records both into every
+run directory, which is what stops an invisible `.env` value from producing an
+unattributable result — and it caught exactly that on its first use.
 
 **`MIN_SEEDS` and `MIN_SECTION_CHARS`** have no flag. Changing either means
 editing the constant and rebuilding from that layer down — `MIN_SEEDS` also
@@ -82,7 +93,8 @@ requires re-curating and re-ingesting, which is the only expensive one here.
 | `MIN_SEEDS` | `curate` → `ingest` → `silver` → `chunk` → `index` | hours; a full Wikipedia fetch |
 | `MIN_SECTION_CHARS` | `silver` → `chunk` → `index` | ~2 min + an embedding pass |
 | `CHUNK_SIZE` / `CHUNK_OVERLAP` / `MIN_TAIL_CHARS` | `chunk` → `index` | seconds + an embedding pass |
-| `DEFAULT_K` / `MAX_PER_DOCUMENT` / `OVERFETCH` | nothing | free, takes effect next query |
+| `DEFAULT_K` / `MAX_PER_DOCUMENT` / `OVERFETCH` / `RERANK_TOP_N` | nothing | free, takes effect next query |
+| `reranker_enabled` / `reranker_model` | nothing | free; a new model downloads once, then ~1 s per query |
 
 The embedding pass over ~30,000 chunks is a few cents and a few minutes. Only
 Bronze is expensive to rebuild, which is the whole point of the medallion

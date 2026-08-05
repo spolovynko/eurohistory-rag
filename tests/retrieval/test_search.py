@@ -8,6 +8,7 @@ only piece here with logic worth isolating.
 from collections.abc import Sequence
 from typing import Any
 
+from eurohistory_rag.retrieval.rerank import Reranker
 from eurohistory_rag.retrieval.search import (
     SearchResult,
     SearchService,
@@ -15,7 +16,7 @@ from eurohistory_rag.retrieval.search import (
     to_result,
 )
 from eurohistory_rag.retrieval.vectorstore import Hit, VectorStore
-from tests.fakes import FakeEmbedder
+from tests.fakes import FakeEmbedder, FakeReranker, UnavailableReranker
 
 # --- helpers ----------------------------------------------------------------
 
@@ -62,7 +63,9 @@ class RecordingStore:
 
 
 def service_over(
-    texts_by_doc: list[tuple[str, str, str]], **kwargs: int
+    texts_by_doc: list[tuple[str, str, str]],
+    reranker: Reranker | None = None,
+    **kwargs: int,
 ) -> tuple[SearchService, FakeEmbedder]:
     """A service backed by a store holding the given (chunk_id, doc_id, text)."""
     embedder = FakeEmbedder()
@@ -75,7 +78,7 @@ def service_over(
         for chunk_id, doc_id, text in texts_by_doc
     ]
     store.upsert(chunk_ids, vectors, payloads)
-    return SearchService(embedder, store, **kwargs), embedder
+    return SearchService(embedder, store, reranker=reranker, **kwargs), embedder
 
 
 # --- one result -------------------------------------------------------------
@@ -199,3 +202,119 @@ def test_min_score_drops_weak_matches_when_asked() -> None:
     )
     assert len(service.search("Berlin blockade", k=5)) == 2
     assert len(service.search("Berlin blockade", k=5, min_score=0.9)) == 1
+
+
+# --- reranking --------------------------------------------------------------
+#
+# Every test here relies on FakeEmbedder and FakeReranker disagreeing: the
+# embedder scores "Berlin blockade" highly and the reranker only counts "wall".
+# That disagreement is the whole point -- if they agreed, a passing test could
+# not tell reranking apart from reranking never having run.
+
+
+DISAGREEING_CORPUS = [
+    ("c0", "d0", "Berlin blockade and the Berlin airlift."),
+    ("c1", "d1", "The Berlin blockade began in 1948."),
+    ("c2", "d2", "A wall divided the city."),
+]
+
+
+def test_the_reranker_decides_the_final_order() -> None:
+    """The wiring guard: without it, a dead reranker looks exactly like none."""
+    service, _ = service_over(DISAGREEING_CORPUS, reranker=FakeReranker(term="wall"))
+    assert service.search("Berlin blockade", k=3)[0].chunk_id == "c2"
+
+
+def test_without_a_reranker_the_vector_order_stands() -> None:
+    """The same corpus, unchanged behaviour -- this is the Phase 7 baseline."""
+    service, _ = service_over(DISAGREEING_CORPUS)
+    assert service.search("Berlin blockade", k=3)[0].chunk_id != "c2"
+
+
+def test_the_reranker_sees_every_candidate_not_just_k() -> None:
+    """The point of over-fetching: rank 3 by vector can become rank 1."""
+    service, _ = service_over(DISAGREEING_CORPUS, reranker=FakeReranker(term="wall"))
+    assert [r.chunk_id for r in service.search("Berlin blockade", k=1)] == ["c2"]
+
+
+def test_the_reranker_is_given_the_question_and_the_chunk_texts() -> None:
+    reranker = FakeReranker(term="wall")
+    service, _ = service_over(DISAGREEING_CORPUS, reranker=reranker)
+    service.search("Berlin blockade", k=3)
+    question, documents = reranker.calls[0]
+    assert question == "Berlin blockade"
+    assert "A wall divided the city." in documents
+
+
+def test_the_rerank_score_is_recorded_alongside_the_cosine_score() -> None:
+    """Both are kept: the cosine number is what the Phase 7 baseline measured."""
+    service, _ = service_over(DISAGREEING_CORPUS, reranker=FakeReranker(term="wall"))
+    top = service.search("Berlin blockade", k=3)[0]
+    assert top.rerank_score == 1.0
+    assert 0.0 < top.score < 1.0
+
+
+def test_the_rerank_score_is_none_when_reranking_is_off() -> None:
+    service, _ = service_over(DISAGREEING_CORPUS)
+    assert all(r.rerank_score is None for r in service.search("Berlin blockade", k=3))
+
+
+def test_an_unreachable_reranker_degrades_to_the_vector_order() -> None:
+    """A missing model should cost ranking quality, not the whole endpoint."""
+    service, _ = service_over(DISAGREEING_CORPUS, reranker=UnavailableReranker())
+    degraded = [r.chunk_id for r in service.search("Berlin blockade", k=3)]
+    unranked, _ = service_over(DISAGREEING_CORPUS)
+    assert degraded == [r.chunk_id for r in unranked.search("Berlin blockade", k=3)]
+
+
+def test_only_the_top_candidates_are_reranked() -> None:
+    """The pool is fixed at rerank_top_n, not derived from k.
+
+    OVERFETCH multiplies k, so the answer path would rerank 20 and the eval 80.
+    A reranker seeing a different pool in each makes the eval measure something
+    production never does.
+    """
+    reranker = FakeReranker(term="wall")
+    service, _ = service_over(
+        [(f"c{i}", f"d{i}", "Berlin blockade.") for i in range(8)],
+        reranker=reranker,
+        rerank_top_n=3,
+    )
+    service.search("Berlin blockade", k=2)
+    _, documents = reranker.calls[0]
+    assert len(documents) == 3
+
+
+def test_candidates_below_the_rerank_pool_keep_their_vector_position() -> None:
+    """A chunk outside the pool must survive, unscored, below the reranked ones."""
+    service, _ = service_over(
+        DISAGREEING_CORPUS, reranker=FakeReranker(term="wall"), rerank_top_n=2
+    )
+    ranked = service.search("Berlin blockade", k=3)
+    assert len(ranked) == 3
+    assert ranked[-1].rerank_score is None
+
+
+def test_reranking_happens_before_thinning() -> None:
+    """Thinning trusts the order it is handed, so it has to run second.
+
+    Two chunks of one section plus one of another. The reranker puts the
+    section's chunks first and second; thinning caps that section at two, so
+    all three survive only if the cap is applied to the reranked order.
+
+    The counts have to differ by a whole word: both fakes split on whitespace,
+    so a term ending a sentence is "wall." and does not count.
+    """
+    service, _ = service_over(
+        [
+            ("c0", "shared", "A wall and another wall stood here."),
+            ("c1", "shared", "A wall stood here."),
+            ("c2", "other", "Berlin blockade."),
+        ],
+        reranker=FakeReranker(term="wall"),
+    )
+    assert [r.chunk_id for r in service.search("Berlin blockade", k=3)] == [
+        "c0",
+        "c1",
+        "c2",
+    ]

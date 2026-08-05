@@ -66,6 +66,9 @@ def to_retrieved(
             source=result.source,
             score=round(result.score, 4),
             text=result.text if rank <= with_text else "",
+            rerank_score=(
+                None if result.rerank_score is None else round(result.rerank_score, 4)
+            ),
         )
         for rank, result in enumerate(results, start=1)
     ]
@@ -179,6 +182,7 @@ def build_meta(
     answer_k: int,
     max_per_document: int,
     overfetch: int,
+    reranker: str = "",
     note: str = "",
 ) -> RunMeta:
     """Capture the conditions this run happened under."""
@@ -193,5 +197,6 @@ def build_meta(
         k=answer_k,
         max_per_document=max_per_document,
         overfetch=overfetch,
+        reranker=reranker,
         note=note,
     )
