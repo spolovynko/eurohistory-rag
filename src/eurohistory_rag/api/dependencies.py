@@ -47,7 +47,12 @@ def get_search_service() -> SearchService:
         model=settings.embedding_model,
         dimensions=settings.embedding_dimensions,
     )
-    return SearchService(embedder, get_vector_store(), reranker=get_reranker())
+    return SearchService(
+        embedder,
+        get_vector_store(),
+        reranker=get_reranker(),
+        hybrid=settings.hybrid_enabled,
+    )
 
 
 @lru_cache(maxsize=1)

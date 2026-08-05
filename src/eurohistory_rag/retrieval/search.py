@@ -6,10 +6,12 @@ copy of those three steps, and so neither of them ever sees a Qdrant object.
 """
 
 import logging
+from collections.abc import Sequence
 from dataclasses import dataclass, replace
 
 from eurohistory_rag.retrieval.embedding import Embedder
 from eurohistory_rag.retrieval.rerank import Reranker, RerankUnavailable
+from eurohistory_rag.retrieval.sparse import query_vector
 from eurohistory_rag.retrieval.vectorstore import Hit, VectorStore
 
 logger = logging.getLogger(__name__)
@@ -33,6 +35,13 @@ OVERFETCH = 4
 # provably enough -- the Phase 7 baseline put recall@20 at 100%.
 RERANK_TOP_N = 20
 
+# The "do not over-trust first place" dial in reciprocal rank fusion. A chunk
+# scores 1/(RRF_K + rank) in each list and the two are added. At 0, rank 1 is
+# worth double rank 2; at 60 the two are nearly equal, so a chunk that both
+# searches like beats one that only the dense search loves. 60 is the value
+# from the original paper, kept because nothing here yet argues for another.
+RRF_K = 60
+
 
 @dataclass(frozen=True, slots=True)
 class SearchResult:
@@ -41,6 +50,12 @@ class SearchResult:
     Carries what a citation needs plus the score. `themes` and
     `revision_timestamp` are deliberately absent: they live in the payload so
     Qdrant can filter on them, not so results can display them.
+
+    `score` is always the cosine score and never anything else. A chunk the
+    keyword search found but the dense search did not carries `score = 0.0`,
+    which means "the dense search never saw it" rather than "orthogonal to the
+    question" -- its real cosine score is unknown and would cost another round
+    trip to learn.
     """
 
     chunk_id: str
@@ -52,6 +67,11 @@ class SearchResult:
     score: float
     revision_id: int
     rerank_score: float | None = None
+    # BM25's score, present only when the keyword search found this chunk. The
+    # two scales are not comparable and are deliberately not merged: reading a
+    # result afterwards, "which search found this, and how strongly" is the
+    # question worth answering, and one blended number cannot answer it.
+    sparse_score: float | None = None
 
     @property
     def source(self) -> str:
@@ -88,6 +108,48 @@ def to_result(hit: Hit) -> SearchResult:
     )
 
 
+def fuse(
+    dense: Sequence[SearchResult],
+    sparse: Sequence[SearchResult],
+    rrf_k: int = RRF_K,
+) -> list[SearchResult]:
+    """Merge the two ranked lists into one, by position rather than by score.
+
+    Reciprocal rank fusion: a chunk earns `1 / (rrf_k + rank)` in each list it
+    appears in, and the two are added. Positions rather than scores because
+    cosine returns about 0.58 for a strong match and BM25 returns about 14 --
+    numbers on different scales that cannot be added, and whose normalisation
+    would be a guess. A rank is comparable by construction.
+
+    What it buys: a chunk both searches like outranks one that only the dense
+    search loves. That is the Trianon failure -- meaning-search buries it under
+    Versailles sections, keyword-search puts it first, and agreement lifts it.
+
+    Ties keep dense order, because Python's sort is stable and dense goes in
+    first. That matters only when nothing has been found twice.
+    """
+    fused: dict[str, float] = {}
+    merged: dict[str, SearchResult] = {}
+
+    for rank, result in enumerate(dense, start=1):
+        fused[result.chunk_id] = fused.get(result.chunk_id, 0.0) + 1 / (rrf_k + rank)
+        merged[result.chunk_id] = result
+
+    for rank, result in enumerate(sparse, start=1):
+        fused[result.chunk_id] = fused.get(result.chunk_id, 0.0) + 1 / (rrf_k + rank)
+        already = merged.get(result.chunk_id)
+        merged[result.chunk_id] = (
+            replace(already, sparse_score=result.score)
+            if already is not None
+            # Found by keyword alone: its cosine score is not known, so the
+            # BM25 score moves to the field that means BM25 and `score` is
+            # left at the "dense never saw it" value.
+            else replace(result, score=0.0, sparse_score=result.score)
+        )
+
+    return sorted(merged.values(), key=lambda r: fused[r.chunk_id], reverse=True)
+
+
 def thin(
     results: list[SearchResult], k: int, max_per_document: int
 ) -> list[SearchResult]:
@@ -121,6 +183,8 @@ class SearchService:
         overfetch: int = OVERFETCH,
         reranker: Reranker | None = None,
         rerank_top_n: int = RERANK_TOP_N,
+        hybrid: bool = True,
+        rrf_k: int = RRF_K,
     ) -> None:
         self._embedder = embedder
         self._store = store
@@ -129,6 +193,8 @@ class SearchService:
         self._overfetch = overfetch
         self._reranker = reranker
         self._rerank_top_n = rerank_top_n
+        self._hybrid = hybrid
+        self._rrf_k = rrf_k
 
     def search(
         self,
@@ -149,18 +215,34 @@ class SearchService:
             return []
 
         limit = k if k is not None else self._k
+        pool = limit * self._overfetch
         vector = self._embedder.embed([question])[0]
-        hits = self._store.search(vector, limit=limit * self._overfetch)
+        results = [to_result(hit) for hit in self._store.search(vector, limit=pool)]
 
-        results = [to_result(hit) for hit in hits]
+        # Applied before fusion, while it still means what it says. After
+        # fusion half the list may carry `score = 0.0` because the dense search
+        # never saw it, and a cosine cut-off would silently delete exactly the
+        # chunks hybrid search exists to find.
         if min_score is not None:
             results = [result for result in results if result.score >= min_score]
+
+        keyword: list[SearchResult] = []
+        if self._hybrid:
+            keyword = [
+                to_result(hit)
+                for hit in self._store.search_sparse(query_vector(question), limit=pool)
+            ]
+            results = fuse(results, keyword, self._rrf_k)
 
         results = self._rerank(question, results)
 
         thinned = thin(results, limit, self._max_per_document)
         logger.debug(
-            "search %r: %d hits, %d after thinning", question, len(hits), len(thinned)
+            "search %r: %d dense, %d keyword, %d after thinning",
+            question,
+            len(results),
+            len(keyword),
+            len(thinned),
         )
         return thinned
 

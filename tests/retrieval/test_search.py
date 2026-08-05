@@ -5,13 +5,15 @@ and no Docker. `thin` is a plain function and is tested on its own -- it is the
 only piece here with logic worth isolating.
 """
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
+from dataclasses import replace
 from typing import Any
 
 from eurohistory_rag.retrieval.rerank import Reranker
 from eurohistory_rag.retrieval.search import (
     SearchResult,
     SearchService,
+    fuse,
     thin,
     to_result,
 )
@@ -53,10 +55,12 @@ def payload(chunk_id: str, heading: str = "Origins") -> dict[str, Any]:
 
 
 class RecordingStore:
-    """A store that remembers the limit it was asked for.
+    """A store that remembers the limits it was asked for.
 
     Only used to check the over-fetch multiplier, which is invisible from the
-    outside: the caller asks for 5 and the store is asked for 20.
+    outside: the caller asks for 5 and the store is asked for 20 -- twice, once
+    per vector, because fusing lists of different lengths would hand one search
+    more chances to place a chunk than the other.
     """
 
     def __init__(self) -> None:
@@ -66,11 +70,15 @@ class RecordingStore:
         self.limits.append(limit)
         return []
 
+    def search_sparse(self, sparse: Mapping[int, float], limit: int) -> list[Hit]:
+        self.limits.append(limit)
+        return []
+
 
 def service_over(
     texts_by_doc: list[tuple[str, str, str]],
     reranker: Reranker | None = None,
-    **kwargs: int,
+    **kwargs: Any,
 ) -> tuple[SearchService, FakeEmbedder]:
     """A service backed by a store holding the given (chunk_id, doc_id, text)."""
     embedder = FakeEmbedder()
@@ -197,7 +205,7 @@ def test_the_store_is_asked_for_more_than_the_caller_wants() -> None:
     store = RecordingStore()
     service = SearchService(FakeEmbedder(), store, overfetch=4)  # type: ignore[arg-type]
     service.search("Marshall plan", k=5)
-    assert store.limits == [20]
+    assert store.limits == [20, 20]
 
 
 def test_min_score_drops_weak_matches_when_asked() -> None:
@@ -326,3 +334,86 @@ def test_reranking_happens_before_thinning() -> None:
         "c1",
         "c2",
     ]
+
+
+# --- fusion -----------------------------------------------------------------
+
+
+def test_fuse_puts_a_chunk_both_searches_like_on_top() -> None:
+    """The whole point, in one case.
+
+    `agreed` is second on meaning and second on words. `dense_first` is first
+    on meaning and absent from the keyword list. Two second places beat one
+    first place, which is what makes agreement the thing that wins.
+    """
+    dense_first = result("dense_first", "d0")
+    agreed = result("agreed", "d1")
+    keyword_first = result("keyword_first", "d2")
+
+    fused = fuse([dense_first, agreed], [keyword_first, agreed])
+    assert fused[0].chunk_id == "agreed"
+
+
+def test_fuse_keeps_a_chunk_only_the_keyword_search_found() -> None:
+    """The rescue case: invisible to cosine, still reaches the list."""
+    fused = fuse([result("dense", "d0")], [result("keyword_only", "d1", score=14.2)])
+    assert {r.chunk_id for r in fused} == {"dense", "keyword_only"}
+
+
+def test_a_keyword_only_chunk_carries_its_bm25_score_and_no_cosine() -> None:
+    """`score` must stay cosine-only or the eval's score column becomes a mix."""
+    fused = fuse([], [result("keyword_only", "d0", score=14.2)])
+    assert fused[0].score == 0.0
+    assert fused[0].sparse_score == 14.2
+
+
+def test_a_chunk_found_twice_keeps_its_cosine_and_gains_the_bm25_score() -> None:
+    both = result("both", "d0", score=0.61)
+    fused = fuse([both], [replace(both, score=14.2)])
+    assert fused[0].score == 0.61
+    assert fused[0].sparse_score == 14.2
+
+
+def test_a_dense_only_chunk_has_no_bm25_score() -> None:
+    fused = fuse([result("dense", "d0", score=0.61)], [])
+    assert fused[0].sparse_score is None
+
+
+def test_fuse_scores_by_position_and_not_by_score() -> None:
+    """BM25 returns about 14 and cosine about 0.6. Adding those would let one
+    search outvote the other by units alone, so only ranks are used."""
+    fused = fuse(
+        [result("weak_cosine", "d0", score=0.40)],
+        [result("huge_bm25", "d1", score=999.0)],
+    )
+    assert [r.chunk_id for r in fused] == ["weak_cosine", "huge_bm25"]
+
+
+def test_a_bigger_rrf_k_flattens_the_advantage_of_first_place() -> None:
+    """What the constant does, made visible.
+
+    Both lists rank `alone` first and `pair` second and third. At k=0 first
+    place is worth double second, so `alone` wins on its two firsts. Raising k
+    flattens the curve until two seconds plus a third outweigh two firsts.
+    """
+    dense = [result("alone", "d0"), result("pair", "d1")]
+    sparse = [result("alone", "d0"), result("pair", "d1"), result("tail", "d2")]
+
+    assert fuse(dense, sparse, rrf_k=0)[0].chunk_id == "alone"
+    assert [r.chunk_id for r in fuse(dense, sparse, rrf_k=60)][:2] == ["alone", "pair"]
+
+
+def test_fuse_of_two_empty_lists_is_empty() -> None:
+    assert fuse([], []) == []
+
+
+def test_hybrid_can_be_switched_off() -> None:
+    """The keyword search must not run at all when the flag is false.
+
+    Phase 8 shipped a switch that did nothing. This asserts the opposite
+    failure is impossible: off means one call to the store, not two.
+    """
+    store = RecordingStore()
+    service = SearchService(FakeEmbedder(), store, hybrid=False)  # type: ignore[arg-type]
+    service.search("Marshall plan", k=5)
+    assert store.limits == [20]
