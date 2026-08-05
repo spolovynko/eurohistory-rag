@@ -229,6 +229,9 @@ __marimo__/
 # Medallion data layers. Only bronze/ is irreplaceable - back it up outside git.
 /data/
 
+# Run logs, written by core/logging.py. Rotated, machine-local, never shared.
+/logs/
+
 # Claude
 .claude/
 # Throwaway exploration scripts and what they generate
