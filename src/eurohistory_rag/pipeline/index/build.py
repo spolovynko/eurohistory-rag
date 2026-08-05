@@ -1,4 +1,4 @@
-"""Gold to Qdrant: read chunks, embed them, store them.
+"""Gold to Qdrant: read chunks, embed them, weight their words, store them.
 
 A pipeline stage like `silver` and `chunk`, and it belongs here rather than in
 `core/` because only the CLI runs it. The two things it needs -- an embedder
@@ -19,6 +19,11 @@ from typing import Any
 import polars as pl
 
 from eurohistory_rag.retrieval.embedding import MAX_TEXTS_PER_REQUEST, Embedder
+from eurohistory_rag.retrieval.sparse import (
+    average_length,
+    document_vector,
+    tokenize,
+)
 from eurohistory_rag.retrieval.vectorstore import VectorStore
 
 logger = logging.getLogger(__name__)
@@ -85,8 +90,21 @@ def build(
     started = time.monotonic()
     chunks = read_chunks(gold_root)
     store.ensure_collection(recreate=not resume)
+
+    # BM25 judges a chunk's length against the corpus average, so that average
+    # has to exist before the first chunk can be weighted. Measured here rather
+    # than inside the loop on purpose: a per-batch average would weight the same
+    # chunk differently depending on which batch it fell into, and `resume`
+    # would then produce a collection no single run could reproduce. The price
+    # is tokenising twice, which is a regex over text already in memory.
+    average = average_length(tokenize(text) for text in chunks["text"])
+
     logger.info(
-        "start: %d chunks, batch=%d, resume=%s", chunks.height, batch_size, resume
+        "start: %d chunks, batch=%d, resume=%s, avg %.0f tokens",
+        chunks.height,
+        batch_size,
+        resume,
+        average,
     )
 
     indexed = 0
@@ -99,9 +117,11 @@ def build(
             skipped += len(chunk_ids)
             continue
 
-        vectors = embedder.embed(batch["text"].to_list())
+        texts = batch["text"].to_list()
+        vectors = embedder.embed(texts)
+        sparse_vectors = [document_vector(tokenize(text), average) for text in texts]
         payloads = [to_payload(row) for row in batch.iter_rows(named=True)]
-        store.upsert(chunk_ids, vectors, payloads)
+        store.upsert(chunk_ids, vectors, sparse_vectors, payloads)
 
         indexed += len(chunk_ids)
         logger.info("batch at %d: %d indexed, %d skipped", offset, indexed, skipped)

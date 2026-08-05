@@ -15,6 +15,11 @@ from eurohistory_rag.retrieval.search import (
     thin,
     to_result,
 )
+from eurohistory_rag.retrieval.sparse import (
+    average_length,
+    document_vector,
+    tokenize,
+)
 from eurohistory_rag.retrieval.vectorstore import Hit, VectorStore
 from tests.fakes import FakeEmbedder, FakeReranker, UnavailableReranker
 
@@ -77,7 +82,10 @@ def service_over(
         {**payload(chunk_id), "doc_id": doc_id, "text": text}
         for chunk_id, doc_id, text in texts_by_doc
     ]
-    store.upsert(chunk_ids, vectors, payloads)
+    tokens = [tokenize(text) for _, _, text in texts_by_doc]
+    average = average_length(tokens)
+    sparse = [document_vector(token_list, average) for token_list in tokens]
+    store.upsert(chunk_ids, vectors, sparse, payloads)
     return SearchService(embedder, store, reranker=reranker, **kwargs), embedder
 
 

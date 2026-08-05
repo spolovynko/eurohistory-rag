@@ -14,6 +14,7 @@ import pytest
 from eurohistory_rag.pipeline.gold.store import Chunk, to_frame, write
 from eurohistory_rag.pipeline.index.build import build, read_chunks, to_payload
 from eurohistory_rag.retrieval.embedding import MAX_TEXTS_PER_REQUEST
+from eurohistory_rag.retrieval.sparse import query_vector
 from eurohistory_rag.retrieval.vectorstore import VectorStore
 from tests.fakes import FakeEmbedder
 
@@ -107,6 +108,26 @@ def test_a_stored_point_can_be_found_by_searching_for_its_own_words(
 
     hits = store.search(embedder.embed(["Berlin blockade"])[0], limit=1)
     assert hits[0].payload["text"] == "Berlin blockade and the airlift."
+
+
+def test_a_stored_point_can_also_be_found_by_keyword(tmp_path: Path) -> None:
+    """The guard against a sparse vector that is written but empty.
+
+    `build` could pass an empty dict for every chunk and nothing else here
+    would notice -- lint, types and every other test would stay green while the
+    keyword half of hybrid search did nothing. That is precisely how Phase 8
+    shipped a reranker that never ran.
+    """
+    write_gold(
+        tmp_path,
+        [chunk(0, "Berlin blockade and the airlift."), chunk(1, "Treaty of Rome.")],
+    )
+    embedder = FakeEmbedder()
+    store = fresh_store(embedder)
+    build(tmp_path, store, embedder)
+
+    hits = store.search_sparse(query_vector("blockade"), limit=5)
+    assert [hit.payload["text"] for hit in hits] == ["Berlin blockade and the airlift."]
 
 
 # --- re-running -------------------------------------------------------------

@@ -8,7 +8,7 @@ client's ":memory:" mode already gives tests the seam they need.
 """
 
 import uuid
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from typing import Any, Self
 
@@ -18,6 +18,10 @@ from qdrant_client.http.exceptions import ResponseHandlingException
 # Fixed namespace for uuid5. Never change it: every stored point id is derived
 # from it, so a new namespace orphans the entire collection at once.
 NAMESPACE = uuid.UUID("feedefcf-eb15-4e3e-a4b9-b8afba2eb4b4")
+# The name of the sparse vector on every point. Sparse vectors must be named;
+# dense stays unnamed because it was there first, and naming it now would mean
+# rewriting how every existing call addresses it.
+SPARSE_VECTOR = "text"
 
 
 class VectorStoreUnavailable(RuntimeError):
@@ -84,18 +88,41 @@ class VectorStore:
                     size=self._dimensions,
                     distance=models.Distance.COSINE,
                 ),
+                sparse_vectors_config={
+                    SPARSE_VECTOR: models.SparseVectorParams(
+                        modifier=models.Modifier.IDF
+                    )
+                },
             )
 
     def upsert(
         self,
         chunk_ids: Sequence[str],
         vectors: Sequence[Sequence[float]],
+        sparse_vectors: Sequence[Mapping[int, float]],
         payloads: Sequence[dict[str, Any]],
     ) -> None:
-        """Write one batch. The three sequences must line up position by position."""
+        """Write one batch. The four sequences must line up position by position.
+
+        `sparse_vectors` is required rather than optional on purpose. An
+        optional argument lets a forgetful caller write dense-only points that
+        no test would notice and no error would report -- which is exactly how
+        Phase 8 shipped a reranker that did nothing.
+        """
         points = [
-            models.PointStruct(id=point_id(cid), vector=list(vec), payload=payload)
-            for cid, vec, payload in zip(chunk_ids, vectors, payloads, strict=True)
+            models.PointStruct(
+                id=point_id(cid),
+                vector={
+                    "": list(vec),
+                    SPARSE_VECTOR: models.SparseVector(
+                        indices=list(sparse.keys()), values=list(sparse.values())
+                    ),
+                },
+                payload=payload,
+            )
+            for cid, vec, sparse, payload in zip(
+                chunk_ids, vectors, sparse_vectors, payloads, strict=True
+            )
         ]
         self._client.upsert(collection_name=self._collection, points=points, wait=True)
 
@@ -125,12 +152,22 @@ class VectorStore:
         except ResponseHandlingException:
             return False
 
-    def search(self, vector: Sequence[float], limit: int) -> list[Hit]:
-        """Nearest `limit` chunks to this vector, best first."""
+    def _query(
+        self,
+        query: list[float] | models.SparseVector,
+        limit: int,
+        using: str | None = None,
+    ) -> list[Hit]:
+        """One search against the collection, in this project's terms.
+
+        Both vectors share it: they differ in what is asked for, not in how a
+        connection failure is reported or how a result is read.
+        """
         try:
             response = self._client.query_points(
                 collection_name=self._collection,
-                query=list(vector),
+                query=query,
+                using=using,
                 limit=limit,
                 with_payload=True,
             )
@@ -140,6 +177,32 @@ class VectorStore:
             Hit(score=point.score, payload=dict(point.payload or {}))
             for point in response.points
         ]
+
+    def search(self, vector: Sequence[float], limit: int) -> list[Hit]:
+        """Nearest `limit` chunks by meaning, best first."""
+        return self._query(list(vector), limit)
+
+    def search_sparse(self, sparse: Mapping[int, float], limit: int) -> list[Hit]:
+        """Nearest `limit` chunks by keyword match, best first.
+
+        A second call rather than one fused query: D-076 keeps the merge in our
+        own code so `RRF_K` is ours and the fusion can be unit-tested. Qdrant
+        supplies the IDF half of BM25 here, from the collection's own
+        document frequencies.
+
+        An empty query returns nothing rather than raising. A question whose
+        every word is unknown has no keywords to look for, and that is a normal
+        outcome, not a failure.
+        """
+        if not sparse:
+            return []
+        return self._query(
+            models.SparseVector(
+                indices=list(sparse.keys()), values=list(sparse.values())
+            ),
+            limit,
+            using=SPARSE_VECTOR,
+        )
 
     def count(self) -> int:
         """How many points are stored. Used to report after indexing."""

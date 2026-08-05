@@ -9,6 +9,11 @@ from eurohistory_rag.eval.run import build_meta, markers_in, run_all, run_questi
 from eurohistory_rag.generation.client import Generator
 from eurohistory_rag.generation.service import GenerationService
 from eurohistory_rag.retrieval.search import SearchService
+from eurohistory_rag.retrieval.sparse import (
+    average_length,
+    document_vector,
+    tokenize,
+)
 from eurohistory_rag.retrieval.vectorstore import VectorStore
 from tests.fakes import FakeEmbedder, FakeGenerator, UnavailableGenerator
 
@@ -43,9 +48,12 @@ def services(generator: Generator) -> tuple[SearchService, GenerationService]:
     embedder = FakeEmbedder()
     store = VectorStore.in_memory("chunks", embedder.dimensions)
     store.ensure_collection(recreate=True)
+    tokens = [tokenize(text) for _, text in CORPUS]
+    average = average_length(tokens)
     store.upsert(
         [f"{doc_id}:0" for doc_id, _ in CORPUS],
         embedder.embed([text for _, text in CORPUS]),
+        [document_vector(token_list, average) for token_list in tokens],
         [payload(doc_id, text) for doc_id, text in CORPUS],
     )
     search = SearchService(embedder, store)
