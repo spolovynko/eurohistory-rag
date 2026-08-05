@@ -46,6 +46,7 @@ from eurohistory_rag.retrieval.search import (
     DEFAULT_K,
     MAX_PER_DOCUMENT,
     OVERFETCH,
+    RRF_K,
     SearchService,
 )
 from eurohistory_rag.retrieval.vectorstore import VectorStore
@@ -240,7 +241,9 @@ def evaluate(
     reranker = (
         LocalReranker(settings.reranker_model) if settings.reranker_enabled else None
     )
-    search = SearchService(embedder, store, reranker=reranker)
+    search = SearchService(
+        embedder, store, reranker=reranker, hybrid=settings.hybrid_enabled
+    )
     generation = GenerationService(
         search,
         OpenAIGenerator(
@@ -260,6 +263,7 @@ def evaluate(
         max_per_document=MAX_PER_DOCUMENT,
         overfetch=OVERFETCH,
         reranker=settings.reranker_model if settings.reranker_enabled else "",
+        hybrid=f"bm25+rrf(k={RRF_K})" if settings.hybrid_enabled else "",
         note=note,
     )
 

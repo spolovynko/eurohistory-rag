@@ -69,6 +69,9 @@ def to_retrieved(
             rerank_score=(
                 None if result.rerank_score is None else round(result.rerank_score, 4)
             ),
+            sparse_score=(
+                None if result.sparse_score is None else round(result.sparse_score, 4)
+            ),
         )
         for rank, result in enumerate(results, start=1)
     ]
@@ -183,6 +186,7 @@ def build_meta(
     max_per_document: int,
     overfetch: int,
     reranker: str = "",
+    hybrid: str = "",
     note: str = "",
 ) -> RunMeta:
     """Capture the conditions this run happened under."""
@@ -198,5 +202,6 @@ def build_meta(
         max_per_document=max_per_document,
         overfetch=overfetch,
         reranker=reranker,
+        hybrid=hybrid,
         note=note,
     )

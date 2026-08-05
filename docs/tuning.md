@@ -49,6 +49,8 @@ answers. Eleven are numbers; one is a prompt; one is a model name.
 | `RERANK_TOP_N` | 20 | `retrieval/search.py` | D-072 | How many candidates the cross-encoder scores. Fixed rather than `k × OVERFETCH`, so the eval and the answer path rerank the same pool |
 | `reranker_enabled` | `false` default, `true` in `.env` | `core/config.py` | D-069 | Whether reranking runs at all. The one knob here that lives in `.env`, because it is the on/off switch a before/after run needs to flip |
 | `reranker_model` | `cross-encoder/ms-marco-MiniLM-L6-v2` | `core/config.py` | D-070, D-071 | Which cross-encoder scores the pool. **Probe any replacement by hand before trusting a run** — see D-071 |
+| `RRF_K` | 60 | `retrieval/search.py` | D-076 | The "do not over-trust first place" dial in fusion. A chunk earns `1/(RRF_K + rank)` in each list. At 0, rank 1 is worth double rank 2; at 60 they are nearly equal, so agreement across both searches outweighs topping one |
+| `hybrid_enabled` | `false` default | `core/config.py` | D-074 | Whether the BM25 keyword search runs and gets fused in. Lives in `.env` for the same reason as `reranker_enabled`: it is the switch a before/after run flips. **Needs an index built with sparse vectors** — turning it on against a pre-Phase-9 collection finds nothing |
 | `SYSTEM_PROMPT` | `prompt.md` | `generation/prompt.md` | D-054 to D-057 | The standing rules the answering model works under. Not a number, but the single biggest lever on answer quality in this phase |
 | `TEMPERATURE` | 0.0 | `generation/client.py` | D-052 | How much the model varies run to run. 0 so the same question gives the same answer, which is what makes Phase 7's before/after comparable |
 
@@ -93,7 +95,8 @@ requires re-curating and re-ingesting, which is the only expensive one here.
 | `MIN_SEEDS` | `curate` → `ingest` → `silver` → `chunk` → `index` | hours; a full Wikipedia fetch |
 | `MIN_SECTION_CHARS` | `silver` → `chunk` → `index` | ~2 min + an embedding pass |
 | `CHUNK_SIZE` / `CHUNK_OVERLAP` / `MIN_TAIL_CHARS` | `chunk` → `index` | seconds + an embedding pass |
-| `DEFAULT_K` / `MAX_PER_DOCUMENT` / `OVERFETCH` / `RERANK_TOP_N` | nothing | free, takes effect next query |
+| `DEFAULT_K` / `MAX_PER_DOCUMENT` / `OVERFETCH` / `RERANK_TOP_N` / `RRF_K` | nothing | free, takes effect next query |
+| `hybrid_enabled` | `index` **if the collection predates Phase 9** | free to flip; a rebuild is a few cents |
 | `reranker_enabled` / `reranker_model` | nothing | free; a new model downloads once, then ~1 s per query |
 
 The embedding pass over ~30,000 chunks is a few cents and a few minutes. Only

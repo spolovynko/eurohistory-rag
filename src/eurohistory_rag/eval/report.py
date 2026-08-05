@@ -80,6 +80,7 @@ def render_transcript(meta: RunMeta, records: Sequence[EvalRecord]) -> str:
         f"collection={meta.collection} ({meta.points:,} points)",
     ]
     out.append(f"reranker: {meta.reranker or 'none'}")
+    out.append(f"retrieval: {meta.hybrid or 'dense only'}")
     if meta.note:
         out.append(f"note: {meta.note}")
 

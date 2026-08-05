@@ -40,6 +40,12 @@ class RunMeta:
     # before/after rests on being able to tell the two runs apart later, and a
     # run directory outlives anyone's memory of which flag was set that day.
     reranker: str = ""
+    # How the candidates were generated, or "" when hybrid search was off. A
+    # description rather than a flag because the RRF constant is part of what
+    # was measured -- "hybrid was on" does not identify a run, "bm25+rrf(k=60)"
+    # does. Phase 8's A/A accident is why this field exists at all: the run
+    # that measured nothing was only detectable because meta.json said so.
+    hybrid: str = ""
     note: str = ""
 
 
@@ -66,6 +72,11 @@ class Retrieved:
     # it: `score` is the cosine number the Phase 7 baseline measured, and
     # overwriting it would make the two runs' score columns incomparable.
     rerank_score: float | None = None
+    # BM25's score, or None when the keyword search did not return this chunk.
+    # With `score` it says which search found a result: both numbers present
+    # means the two agreed, `score = 0.0` means keyword alone put it here.
+    # That is the question worth asking of any chunk that moved this phase.
+    sparse_score: float | None = None
 
 
 @dataclass(frozen=True, slots=True)

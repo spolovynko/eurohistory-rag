@@ -51,6 +51,12 @@ class Settings(BaseSettings):
     # says it should. Phase 8 turns it on in .env, measures, and then decides.
     reranker_enabled: bool = False
 
+    # Hybrid search: BM25 keyword results fused with the dense ones. Off by
+    # default for the same reason as the reranker -- with it off the system
+    # behaves exactly as the Phase 8 run did, so a forgotten flag cannot
+    # quietly contaminate the comparison. Phase 9, D-074.
+    hybrid_enabled: bool = False
+
 
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:
