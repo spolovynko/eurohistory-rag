@@ -451,27 +451,34 @@ writes to stdout — mixing a progress line into the stream a caller is parsing.
 
 ### The module
 
-`src/eurohistory_rag/core/logging.py` is one function and two constants.
+`src/eurohistory_rag/core/logging.py` is one function and a handful of
+constants. It builds two handlers and gives them **different levels** — that
+asymmetry is the whole design:
 
-```python
-def configure_logging(*, verbose: bool = False) -> None:
-    logging.basicConfig(
-        level=logging.DEBUG if verbose else logging.INFO,
-        format=LOG_FORMAT,
-        force=True,
-    )
-    for name in NOISY_LIBRARIES:
-        logging.getLogger(name).setLevel(logging.WARNING)
-```
+| Destination | Level | Because |
+|---|---|---|
+| stderr | INFO, or DEBUG with `--verbose` | You are watching it. Keep it readable. |
+| `logs/eurohistory.log` | always DEBUG | Nobody is watching it, and the run worth reading it for is the one that already went wrong. |
 
-Four decisions in five lines:
+So the terminal stays as short as it was before the file existed, while the file
+quietly keeps the detail you did not know you would need — which a shell
+redirect can never do, because it can only save what was already on screen.
+
+The other decisions:
 
 | | Why |
 |---|---|
-| `basicConfig`, not a hand-built handler | It attaches a `StreamHandler` and sets the format in one call. Building it by hand is six lines for the same result. |
-| `force=True` | Without it `basicConfig` silently does **nothing** if a handler already exists — so a second call would leave a stale config in place. `force=True` clears first, so calling twice gives one handler, not two. |
-| No `stream=` | `basicConfig` defaults to stderr, which is where diagnostics belong. |
-| `NOISY_LIBRARIES` as a tuple | `httpx` logs one INFO line per request. The extension point is a list entry, not a code change. |
+| Root logger set to `DEBUG` | The root is a gate before the handlers. Left at INFO it would drop DEBUG records before the file handler ever saw them, and per-handler levels would be pointless. |
+| Handlers replaced, not added | Configuring twice in one process must not double every line. The old ones are also `close()`d, so a re-run does not leak an open file. |
+| `RotatingFileHandler`, 5 MB × 3 | A plain `FileHandler` appends forever. Fine for a CLI run; not fine for the API process, which logs per request and runs until stopped. |
+| `log_file: Path \| None` | The opt-out. Tests pass `None`, and it is the only way to get the old stderr-only behaviour. |
+| `NOISY_LIBRARIES` as a tuple | The extension point is a list entry, not a code change. |
+
+**`NOISY_LIBRARIES` became load-bearing when the file arrived.** At INFO on
+stderr, `httpcore` and `urllib3` were invisible anyway. With a handler recording
+everything at DEBUG they would write a line per socket operation, and the file
+would be useless within one `index` run. Pinning them to WARNING is what keeps
+it readable.
 
 **No `get_logger()` wrapper.** `logging.getLogger(name)` is already a
 process-wide registry returning the same object for the same name; wrapping it
@@ -480,24 +487,25 @@ per-module control work. Same reason it is not a singleton class — see D-019.
 
 ### Where output goes
 
-**stderr, and nowhere else.** No file handler exists, deliberately: the shell
-already does it.
+Three streams, and keeping them apart is the point:
+
+| Stream | Carries | Written by |
+|---|---|---|
+| stdout | the command's **result** | `typer.echo` in `cli.py` |
+| stderr | diagnostics, INFO and up | the console handler |
+| `logs/eurohistory.log` | diagnostics, everything | the rotating file handler |
+
+`logs/` is gitignored — the logs are machine-local and are never shared. Because
+result and diagnostics are on different streams, this still works:
 
 ```bash
 uv run eurohistory ingest > result.txt   # result to a file, logs on screen
-uv run eurohistory ingest 2> run.log     # logs to a file, result on screen
 ```
-
-The second command *is* the file handler we chose not to write. A real one would
-cost a path argument, directory creation and a rotation policy.
-
-`typer.echo` in `cli.py` writes the command's **result** to stdout; logs are
-diagnostics on stderr. Keeping them apart is what makes `... | grep` work.
 
 ### One line, read
 
 ```
-2026-07-31 13:34:41,068 INFO     eurohistory_rag.data_ingestion.registry: registry: corpus\registry.csv, 772 entries
+2026-08-05 17:23:54,938 INFO     eurohistory_rag.demo: console and file
 ```
 
 `LOG_FORMAT = "%(asctime)s %(levelname)-8s %(name)s: %(message)s"` — timestamp,
@@ -510,16 +518,22 @@ to say so.
 Everything below is a change in **one** place.
 
 **Silence a chatty library.** Add it to `NOISY_LIBRARIES` in `core/logging.py`.
-Phase 5 will add `openai` and `qdrant_client`, both of which log per request.
+It already holds `openai`, `qdrant_client`, `sentence_transformers` and
+`transformers` alongside the HTTP stack.
 
 **Turn one of our modules up or down.** Add to `configure_logging()`:
 
 ```python
-logging.getLogger("eurohistory_rag.data_ingestion.wikipedia").setLevel(logging.DEBUG)
+logging.getLogger("eurohistory_rag.pipeline.bronze.wikipedia").setLevel(logging.DEBUG)
 ```
 
 Nothing in `wikipedia.py` changes. This is what the `__name__` hierarchy buys —
-and `"eurohistory_rag.data_ingestion"` would catch the whole package at once.
+and `"eurohistory_rag.pipeline"` would catch the whole package at once.
+
+**Move, or switch off, the log file.** `LOG_FILE` in `core/logging.py` is the
+default; `configure_logging(log_file=None)` drops the handler entirely. If the
+path ever needs to differ per machine, it becomes a `Settings` field — that is
+the one change here that would not stay inside this module.
 
 **See DEBUG.** `uv run eurohistory --verbose ingest`. The flag sits on the Typer
 `@app.callback()`, not on each command, so one definition covers `curate`,
@@ -539,14 +553,18 @@ every time, including when the level filters the record out. It also keeps the
 message *template* constant across records, which is what log aggregation groups
 on.
 
-**Configure the API entry point.** Not done yet. `create_app()` is the right
-place, but `force=True` would tear out pytest's `caplog` handler on every test
-that builds an app. Phase 5, with a fixture that accounts for it.
+**Configure the API entry point.** Still not done. `create_app()` is the right
+place, but `configure_logging` clears existing handlers — including the one
+pytest's `caplog` installs — so every test that builds an app would lose it.
+It needs a fixture that accounts for that, which is exactly what
+`tests/core/test_logging.py` does for this module.
 
 ### What each module logs
 
-As of Phase 2 (the levels, and the reasoning for each, are in `plan.md`'s
-Phase 1 section):
+The ingestion path, as built in Phase 2 (the levels, and the reasoning for each,
+are in `plan.md`'s Phase 1 section). Every module added since — silver, gold,
+index, retrieval, generation, eval — carries its own
+`logging.getLogger(__name__)` on the same pattern; 15 modules do as of Phase 8:
 
 | Logger | Level | Event |
 |---|---|---|
