@@ -11,6 +11,7 @@ from eurohistory_rag.core.config import get_settings
 from eurohistory_rag.generation.client import OpenAIGenerator
 from eurohistory_rag.generation.service import GenerationService
 from eurohistory_rag.retrieval.embedding import OpenAIEmbedder
+from eurohistory_rag.retrieval.rerank import LocalReranker, Reranker
 from eurohistory_rag.retrieval.search import SearchService
 from eurohistory_rag.retrieval.vectorstore import VectorStore
 
@@ -46,7 +47,7 @@ def get_search_service() -> SearchService:
         model=settings.embedding_model,
         dimensions=settings.embedding_dimensions,
     )
-    return SearchService(embedder, get_vector_store())
+    return SearchService(embedder, get_vector_store(), reranker=get_reranker())
 
 
 @lru_cache(maxsize=1)
@@ -62,3 +63,18 @@ def get_generation_service() -> GenerationService:
         model=settings.generation_model,
     )
     return GenerationService(get_search_service(), generator)
+
+
+@lru_cache(maxsize=1)
+def get_reranker() -> Reranker | None:
+    """The one reranker for this process, or None when it is switched off.
+
+    Its own function, and cached, because building it reads ~280 MB of weights
+    off disk -- doing that per request would cost more than the search it is
+    meant to improve. Returns None rather than raising when disabled, so the
+    off state is an ordinary value the caller passes straight through.
+    """
+    settings = get_settings()
+    if not settings.reranker_enabled:
+        return None
+    return LocalReranker(settings.reranker_model)

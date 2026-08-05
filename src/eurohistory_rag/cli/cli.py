@@ -41,6 +41,7 @@ from eurohistory_rag.pipeline.gold.chunk import CHUNK_OVERLAP, CHUNK_SIZE
 from eurohistory_rag.pipeline.index import build as index_module
 from eurohistory_rag.pipeline.silver import build as silver_module
 from eurohistory_rag.retrieval.embedding import OpenAIEmbedder
+from eurohistory_rag.retrieval.rerank import LocalReranker
 from eurohistory_rag.retrieval.search import (
     DEFAULT_K,
     MAX_PER_DOCUMENT,
@@ -233,7 +234,13 @@ def evaluate(
         settings.qdrant_collection,
         settings.embedding_dimensions,
     )
-    search = SearchService(embedder, store)
+    # Built here rather than taken from api/dependencies.py: the CLI is the
+    # pipeline's trigger and must not import the web layer. The cost is these
+    # three lines, the same trade already made for the embedder above.
+    reranker = (
+        LocalReranker(settings.reranker_model) if settings.reranker_enabled else None
+    )
+    search = SearchService(embedder, store, reranker=reranker)
     generation = GenerationService(
         search,
         OpenAIGenerator(
@@ -252,6 +259,7 @@ def evaluate(
         answer_k=k,
         max_per_document=MAX_PER_DOCUMENT,
         overfetch=OVERFETCH,
+        reranker=settings.reranker_model if settings.reranker_enabled else "",
         note=note,
     )
 

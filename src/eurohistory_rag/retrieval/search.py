@@ -6,9 +6,10 @@ copy of those three steps, and so neither of them ever sees a Qdrant object.
 """
 
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 from eurohistory_rag.retrieval.embedding import Embedder
+from eurohistory_rag.retrieval.rerank import Reranker, RerankUnavailable
 from eurohistory_rag.retrieval.vectorstore import Hit, VectorStore
 
 logger = logging.getLogger(__name__)
@@ -24,6 +25,13 @@ MAX_PER_DOCUMENT = 2
 # Ask the store for this many times k, then thin down. Qdrant is no slower
 # returning 20 than 5, and thinning needs spares to draw from.
 OVERFETCH = 4
+
+# How many candidates the reranker scores. Fixed rather than derived from k,
+# because OVERFETCH multiplies k: the answer path asks for 5 and gets a pool of
+# 20, while the eval asks for 20 and would get 80. Reranking a different pool
+# in each would make the eval measure something the system never does. 20 is
+# provably enough -- the Phase 7 baseline put recall@20 at 100%.
+RERANK_TOP_N = 20
 
 
 @dataclass(frozen=True, slots=True)
@@ -43,6 +51,7 @@ class SearchResult:
     text: str
     score: float
     revision_id: int
+    rerank_score: float | None = None
 
     @property
     def source(self) -> str:
@@ -110,12 +119,16 @@ class SearchService:
         k: int = DEFAULT_K,
         max_per_document: int = MAX_PER_DOCUMENT,
         overfetch: int = OVERFETCH,
+        reranker: Reranker | None = None,
+        rerank_top_n: int = RERANK_TOP_N,
     ) -> None:
         self._embedder = embedder
         self._store = store
         self._k = k
         self._max_per_document = max_per_document
         self._overfetch = overfetch
+        self._reranker = reranker
+        self._rerank_top_n = rerank_top_n
 
     def search(
         self,
@@ -143,8 +156,33 @@ class SearchService:
         if min_score is not None:
             results = [result for result in results if result.score >= min_score]
 
+        results = self._rerank(question, results)
+
         thinned = thin(results, limit, self._max_per_document)
         logger.debug(
             "search %r: %d hits, %d after thinning", question, len(hits), len(thinned)
         )
         return thinned
+
+    def _rerank(self, question: str, results: list[SearchResult]) -> list[SearchResult]:
+        """Reorder candidates by cross-encoder score, best first.
+
+        Only the first `rerank_top_n` candidates are scored; anything below
+        keeps its vector position and follows them. Returns the list untouched
+        when reranking is off or unreachable: a missing model should degrade
+        search to Phase 5's behaviour, not break it.
+        """
+        if self._reranker is None or not results:
+            return results
+
+        head = results[: self._rerank_top_n]
+        tail = results[self._rerank_top_n :]
+        try:
+            scored = self._reranker.rerank(question, [r.text for r in head])
+        except RerankUnavailable:
+            logger.warning("reranker unavailable; keeping vector order")
+            return results
+
+        return [
+            replace(head[index], rerank_score=score) for index, score in scored
+        ] + tail

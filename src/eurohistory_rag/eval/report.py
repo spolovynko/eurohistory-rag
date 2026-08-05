@@ -79,6 +79,7 @@ def render_transcript(meta: RunMeta, records: Sequence[EvalRecord]) -> str:
         f"{meta.git_sha}  {meta.generation_model}  k={meta.k}  "
         f"collection={meta.collection} ({meta.points:,} points)",
     ]
+    out.append(f"reranker: {meta.reranker or 'none'}")
     if meta.note:
         out.append(f"note: {meta.note}")
 

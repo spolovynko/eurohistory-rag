@@ -38,8 +38,18 @@ class Settings(BaseSettings):
     embedding_model: str = "text-embedding-3-small"
     embedding_dimensions: int = 1536
 
-    # LLM model and its output size must move together: the Qdrant collection is
-    generation_model: str = "gpt-5-mini"
+    # D-052 chose gpt-4.1-mini and reversed gpt-5-mini. The default has to match
+    # the decision: a machine without this key in .env runs the rejected model.
+    generation_model: str = "gpt-4.1-mini"
+
+    # The reranker runs locally, so there is no key to hold. Named here rather
+    # than in code because swapping it is an experiment, not a code change --
+    # and it is a per-machine concern: a laptop may want the smaller model.
+    reranker_model: str = "BAAI/bge-reranker-base"
+
+    # Off by default so the system's behaviour does not change until the eval
+    # says it should. Phase 8 turns it on in .env, measures, and then decides.
+    reranker_enabled: bool = False
 
 
 @lru_cache(maxsize=1)

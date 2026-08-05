@@ -1,14 +1,16 @@
 """Test doubles used across the suite.
 
-`FakeEmbedder` and `FakeGenerator` are the second implementations of `Embedder`
-and `Generator` that justify those Protocols existing at all: they make every
-test that touches OpenAI run with no network, no API key and no cost.
+`FakeEmbedder`, `FakeGenerator` and `FakeReranker` are the second
+implementations of `Embedder`, `Generator` and `Reranker` that justify those
+Protocols existing at all: they make every test that touches a model run with
+no network, no API key, no downloaded weights and no cost.
 """
 
 from collections.abc import Sequence
 
 from eurohistory_rag.generation.client import Completion, GenerationUnavailable
 from eurohistory_rag.generation.messages import Message
+from eurohistory_rag.retrieval.rerank import RerankUnavailable
 
 # A tiny fixed vocabulary. Real embeddings come from a trained model; these come
 # from counting words, which is enough to give texts sharing words a similar
@@ -83,6 +85,39 @@ class FakeGenerator:
         """
         self.calls.append(list(messages))
         return Completion(text=self._answer)
+
+
+class FakeReranker:
+    """A Reranker that scores by counting a term instead of running a model.
+
+    Its opinion is deliberately unrelated to FakeEmbedder's: a reranking test is
+    only meaningful when the two disagree, because agreement cannot distinguish
+    "the reranker reordered the list" from "the reranker was never called".
+    """
+
+    def __init__(self, term: str = "wall") -> None:
+        self._term = term
+        self.calls: list[tuple[str, list[str]]] = []
+
+    def rerank(self, query: str, documents: Sequence[str]) -> list[tuple[int, float]]:
+        """Rank by how often `term` appears, recording what it was given."""
+        self.calls.append((query, list(documents)))
+        scored = [
+            (index, float(document.lower().split().count(self._term)))
+            for index, document in enumerate(documents)
+        ]
+        # Stable, so documents scoring equally keep the order the store gave
+        # them -- the same tie-breaking a real reranker's caller relies on.
+        scored.sort(key=lambda pair: pair[1], reverse=True)
+        return scored
+
+
+class UnavailableReranker:
+    """Stands in for a reranker whose model could not be loaded."""
+
+    def rerank(self, query: str, documents: Sequence[str]) -> list[tuple[int, float]]:
+        """Always fail, the way a missing model file does."""
+        raise RerankUnavailable("model not loaded")
 
 
 class UnavailableGenerator:
