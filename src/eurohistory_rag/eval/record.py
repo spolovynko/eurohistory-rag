@@ -46,6 +46,11 @@ class RunMeta:
     # does. Phase 8's A/A accident is why this field exists at all: the run
     # that measured nothing was only detectable because meta.json said so.
     hybrid: str = ""
+    # The model that checked each answer against its sources, or "" when the
+    # groundedness gate was off. Phase 8 ran a whole eval with the reranker flag
+    # still false and only caught it because meta.json recorded the model name;
+    # this field exists so Phase 13 cannot repeat that. D-084.
+    verifier: str = ""
     note: str = ""
 
 
@@ -113,6 +118,13 @@ class EvalRecord:
     search_ms: float
     generate_ms: float
     total_ms: float
+
+    # Whether the groundedness gate changed this answer, and what it replaced.
+    # `draft` is empty unless `revised` is true. At a firing rate of a few
+    # percent no aggregate metric can see this gate, so the pair -- draft next
+    # to revision -- is the measurement rather than a debugging aid. D-084.
+    revised: bool = False
+    draft: str = ""
 
     prompt_tokens: int | None = None
     completion_tokens: int | None = None

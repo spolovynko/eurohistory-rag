@@ -65,6 +65,19 @@ class Settings(BaseSettings):
     # quietly contaminate the comparison. Phase 9, D-074.
     hybrid_enabled: bool = False
 
+    # The groundedness gate: a second call that checks the draft answer against
+    # the sources before it is returned. Off by default for the same reason as
+    # the two above -- with it off the system behaves exactly as the run that
+    # measured 99.0% faithfulness did, so the before in the before/after is
+    # reproducible from a clean checkout. Phase 13, D-084.
+    verify_enabled: bool = False
+
+    # Which model checks the answer. Its own setting because a checker from the
+    # same family shares the writer's blind spots, and this is the one line that
+    # tests that. Defaults to the answering model, so the default carries the
+    # bias and says so rather than hiding it -- the same trade as judge_model.
+    verify_model: str = "gpt-4.1-mini"
+
 
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:

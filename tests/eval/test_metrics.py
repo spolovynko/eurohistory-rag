@@ -82,7 +82,7 @@ def test_reciprocal_rank_is_zero_on_a_miss() -> None:
 
 
 def test_refusal_matches_the_phrase_the_prompt_actually_asks_for() -> None:
-    """Pinned to prompt.md. The first baseline read 0% because it was guessed."""
+    """Pinned to system_prompt.md. The first baseline read 0% because it was guessed."""
     assert refused(make_record(answer="Not in the sources. The corpus covers..."))
     assert not refused(make_record(answer="The wall went up in 1961."))
 
