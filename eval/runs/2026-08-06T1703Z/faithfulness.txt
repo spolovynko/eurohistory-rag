@@ -1,0 +1,42 @@
+judge: gpt-4.1-mini
+
+answers judged   53
+answers skipped  7  (refusals, errors, no claims)
+claims           462
+  supported      455
+  unsupported    7
+  unparseable    0
+mean faithfulness  98.7%
+fully faithful     46/53
+
+==============================================================================
+UNSUPPORTED CLAIMS -- read these, they are the point of the metric
+==============================================================================
+
+[versailles-vs-trianon]
+  UNSUPPORTED: The Treaty of Trianon required Hungary to assume financial obligations for parts of its former territory assigned to Romania, Yugoslavia, and Czechoslovakia.
+    -> "Romania, Yugoslavia and Czechoslovakia had to assume part of the financial obligations" - the treaty required those countries, not Hungary, to assume obligations
+
+[mussolini-vs-hitler-power]
+  UNSUPPORTED: Hitler became chancellor later through political maneuvering rather than a mass demonstration like Mussolini's March on Rome.
+    -> "In 1922, Hitler tried to ask for Mussolini's guidance" - does not state how Hitler became chancellor.
+
+[stalingrad-kursk-turning]
+  UNSUPPORTED: Kursk is described as a turning point because it was the largest battle in history.
+    -> "The Battle of Kursk, also called the Battle of the Kursk Salient, was a major World War II Eastern Front battle" - it is described as the largest battle but not as a turning point because of that fact
+
+[stasi-scale]
+  UNSUPPORTED: In 1989, the Stasi employed 2,000 fully employed unofficial collaborators.
+    -> "In 1989, the Stasi employed 91,015 people full-time, including 2,000 fully employed unofficial collaborators" - attaches the fact to total employees, not just collaborators
+
+[travel-without-showing-papers]
+  UNSUPPORTED: Schengen Area countries have abolished the need to show travel documents and police searches at borders altogether.
+    -> "Schengen Area countries (of which Ireland is not included) have abolished the need to show travel documents, and police searches at borders, altogether." - claim attaches fact to all Schengen countries, source excludes Ireland
+
+[empires-let-go]
+  UNSUPPORTED: The large loan from the United States limited Britain's ability to maintain its empire.
+    -> "Britain was left essentially bankrupt, with insolvency only averted in 1946 after the negotiation of a US$3.75 billion loan" - no mention that the loan limited Britain's ability to maintain its empire
+
+[seveso-1976]
+  UNSUPPORTED: The Seveso chemical accident caused widespread air and water pollution and ecological damage.
+    -> "The natural environment was constantly under strain by unregulated industrial expansion" - pollution and disasters are effects of industrial expansion, not specifically caused by Seveso accident

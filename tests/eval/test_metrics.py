@@ -18,6 +18,7 @@ def make_record(
     *,
     question_id: str = "q",
     kind: str = "easy",
+    suite: str = "golden",
     expected: list[str] | None = None,
     doc_ids: list[str] | None = None,
     page_ids: list[int] | None = None,
@@ -34,6 +35,7 @@ def make_record(
         question_id=question_id,
         question="why?",
         kind=kind,
+        suite=suite,
         expected_doc_ids=expected if expected is not None else ["2:0"],
         retrieved=[
             Retrieved(

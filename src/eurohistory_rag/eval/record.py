@@ -126,6 +126,12 @@ class EvalRecord:
     revised: bool = False
     draft: str = ""
 
+    # Which batch the question was written in -- "golden", "extended" or
+    # "synthetic". Carried into the record rather than looked up from
+    # questions.toml at scoring time, because `rescore` reads a run off disk
+    # months later and the file it was written from may have grown since. D-087.
+    suite: str = "golden"
+
     prompt_tokens: int | None = None
     completion_tokens: int | None = None
     error: str | None = None

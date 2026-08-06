@@ -14,7 +14,7 @@ from eurohistory_rag.eval import report as report_module
 from eurohistory_rag.eval import run as run_module
 from eurohistory_rag.eval import sweep as sweep_module
 from eurohistory_rag.eval import synthetic as synthetic_module
-from eurohistory_rag.eval.metrics import summarise, summarise_by_kind
+from eurohistory_rag.eval.metrics import summarise
 from eurohistory_rag.eval.questions import (
     QUESTIONS_PATH,
     TARGET_COUNTS,
@@ -252,12 +252,16 @@ def evaluate(
     overwritten, because comparing two runs is the entire point.
     """
     questions = load_questions(questions_path)
-    # Only the golden set is held to Phase 7's shape. A synthetic set is 150
-    # questions of one kind by design, and warning about that every run would
-    # train everyone to ignore the line.
-    have = counts(questions)
-    if questions_path == QUESTIONS_PATH and have != TARGET_COUNTS:
-        typer.echo(f"note: question set is {have}, plan asks for {TARGET_COUNTS}")
+    # Only the hand-written sets are held to Phase 7's shape, and each suite is
+    # checked separately: sixty questions in two batches of 8/8/8/6 add up to
+    # 16/16/16/12, which is correct and would fail a check on the total. A
+    # synthetic set is 150 questions of one kind by design, and warning about
+    # that every run would train everyone to ignore the line.
+    if questions_path == QUESTIONS_PATH:
+        for suite in sorted({question.suite for question in questions}):
+            have = counts([q for q in questions if q.suite == suite])
+            if have != TARGET_COUNTS:
+                typer.echo(f"note: {suite} is {have}, plan asks for {TARGET_COUNTS}")
 
     settings = get_settings()
     embedder = _embedder(settings)
@@ -291,7 +295,7 @@ def evaluate(
     )
 
     directory = write_run(meta, records, runs)
-    summary = report_module.render_summary(summarise_by_kind(records))
+    summary = report_module.render_by_suite(records)
     (directory / "summary.txt").write_text(summary + "\n", encoding="utf-8")
     (directory / "transcript.txt").write_text(
         report_module.render_transcript(meta, records), encoding="utf-8"
@@ -452,6 +456,6 @@ def rescore(
     the phrase being matched had been guessed instead of read out of the prompt.
     """
     records = read_records(run)
-    summary = report_module.render_summary(summarise_by_kind(records))
+    summary = report_module.render_by_suite(records)
     (run / "summary.txt").write_text(summary + "\n", encoding="utf-8")
     typer.echo(summary)
