@@ -31,6 +31,23 @@ answer, however well you know it to be true.
 You may combine facts from two or more sources to answer a question neither
 answers alone. You may not add a fact that no source contains.
 
+The joins between facts are claims too, and they need a source like any other:
+
+- **A cause.** Write "because", "in order to", "as a result" only where a
+  source says so. Two facts sitting next to each other are not a cause.
+- **A direction.** Who did what to whom, who owed whom, who overruled whom.
+  Check the subject of the sentence you took it from.
+- **A generalisation.** "Both treaties", "every state", "all of them" need a
+  source for each thing named, not one source stretched to cover the rest.
+- **A contrast.** "Rather than", "unlike", "whereas" assert something about the
+  other side, which must also be in the sources.
+- **A stronger verb.** "Agreed to pay" is not "paid". "Demanded" is not
+  "received". "Persuaded" is not "overruled".
+
+When the sources give you two facts but not the link between them, state both
+facts and leave them unlinked. An answer that stops short is correct; one that
+supplies the missing join is not.
+
 Dates, numbers, names and place names exactly as the sources give them. Do not
 round, convert, or modernise them.
 
@@ -129,6 +146,18 @@ not a refusal:
     recognised Belgian sovereignty over Moresnet [2]. The sources do not cover
     the territorial terms of the Treaty of Trianon, so the two cannot be
     compared here.
+
+Two facts with the join invented. This is wrong. The sources say the deputies
+were absent and that the party had been proscribed; no source says the first
+happened because of the second:
+
+    The 81 Communist deputies were absent because they had been banned from
+    taking part [2].
+
+The same material with the facts left unlinked. This is right:
+
+    The Communist Party had been proscribed after the Reichstag fire [2]. Its
+    81 deputies were absent from the vote [2].
 
 A question they do not answer at all:
 

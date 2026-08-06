@@ -1,0 +1,26 @@
+judge: gpt-4.1-mini
+
+answers judged   26
+answers skipped  4  (refusals, errors, no claims)
+claims           215
+  supported      212
+  unsupported    3
+  unparseable    0
+mean faithfulness  99.0%
+fully faithful     23/26
+
+==============================================================================
+UNSUPPORTED CLAIMS -- read these, they are the point of the metric
+==============================================================================
+
+[weimar-hyperinflation-cause]
+  UNSUPPORTED: The increased supply of German marks led to increased monetary velocity.
+    -> "That increased monetary velocity and caused an ever-faster increase in prices" - the source says increased velocity was caused by something else, not increased supply of marks
+
+[versailles-vs-trianon]
+  UNSUPPORTED: The Treaty of Trianon required Hungary to assume financial obligations for parts of its former territory assigned to Romania, Yugoslavia, and Czechoslovakia.
+    -> "Romania, Yugoslavia and Czechoslovakia had to assume part of the financial obligations" - the treaty required them, not Hungary, to assume obligations.
+
+[killing-became-policy]
+  UNSUPPORTED: The Wannsee Conference marked the implementation of the Final Solution to the Jewish Question.
+    -> "By early 1942, following the Wannsee Conference presided by Reinhard Heydrich, the Nazis' Final Solution was implemented" - the conference preceded implementation, did not mark it
