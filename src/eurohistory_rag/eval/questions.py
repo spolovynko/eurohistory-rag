@@ -10,7 +10,7 @@ import logging
 import tomllib
 from collections.abc import Collection
 from pathlib import Path
-from typing import Annotated, Literal
+from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -37,6 +37,22 @@ TARGET_COUNTS: dict[Kind, int] = {
     "unanswerable": 6,
 }
 
+# Which batch a question was written in. "golden" is Phase 7's original thirty,
+# about a corpus that ran 1914-1945; "extended" is Phase 15's thirty, written
+# after the corpus grew to 1914-2024.
+#
+# This exists so one run can be scored twice: the golden thirty alone, which
+# reproduces every earlier baseline, and the whole set. Phase 14 grew the corpus
+# 81% and no number moved, because the questions all described the old third of
+# it -- and that was only visible per question, never in the total. Splitting
+# the table is what makes it visible in the total. D-087.
+#
+# The default is "golden" so the original thirty stay byte-identical: only the
+# new questions carry the line. A synthetic set names itself, because its kind
+# already decides the answer and a file nobody hand-edits should not have to
+# repeat it.
+Suite = Literal["golden", "extended", "synthetic"]
+
 # Silver builds doc_ids as "{page_id}:{position}". Checking the shape on load
 # catches a mistyped key without this module having to open the corpus.
 DocId = Annotated[str, Field(pattern=r"^\d+:\d+$")]
@@ -53,7 +69,20 @@ class Question(BaseModel):
     kind: Kind
     text: str = Field(min_length=1)
     expected: tuple[DocId, ...] = Field(default=())
+    suite: Suite = "golden"
     note: str = ""
+
+    @model_validator(mode="before")
+    @classmethod
+    def _synthetic_names_its_own_suite(cls, data: Any) -> Any:
+        """A generated question belongs to the generated set, always.
+
+        Decided here rather than in the generated file so that a set written
+        before this field existed still labels itself correctly on load.
+        """
+        if isinstance(data, dict) and data.get("kind") == "synthetic":
+            return {**data, "suite": "synthetic"}
+        return data
 
     @model_validator(mode="after")
     def _ground_truth_matches_kind(self) -> "Question":

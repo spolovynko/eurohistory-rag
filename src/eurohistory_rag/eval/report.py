@@ -12,6 +12,7 @@ from eurohistory_rag.eval.metrics import (
     first_hit_rank,
     invalid_markers,
     refused,
+    summarise_by_kind,
 )
 from eurohistory_rag.eval.record import EvalRecord, RunMeta
 
@@ -55,6 +56,36 @@ def render_summary(summaries: Sequence[Summary]) -> str:
             f"{total.completion_tokens or 0:,} completion",
         ]
     return "\n".join(lines)
+
+
+def render_by_suite(records: Sequence[EvalRecord]) -> str:
+    """One table per question batch, then one for everything together.
+
+    The reason this exists is Phase 14: the corpus grew 81%, every headline
+    number stayed identical, and the cause -- that all thirty questions
+    described the old third of the corpus -- was visible only by reading the
+    per-question table. A total that mixes two batches can only ever report
+    their average. Reported separately, the golden thirty are a control that
+    must reproduce the earlier baseline, and the new thirty are the measurement.
+    """
+    suites = sorted({record.suite for record in records})
+    blocks = []
+    for suite in suites:
+        subset = [record for record in records if record.suite == suite]
+        blocks.append(
+            f"--- {suite} ({len(subset)} questions) "
+            + "-" * max(0, 60 - len(suite))
+            + "\n"
+            + render_summary(summarise_by_kind(subset))
+        )
+    if len(suites) > 1:
+        blocks.append(
+            f"--- all suites ({len(records)} questions) "
+            + "-" * 52
+            + "\n"
+            + render_summary(summarise_by_kind(list(records)))
+        )
+    return "\n\n".join(blocks)
 
 
 def _verdict(record: EvalRecord) -> str:

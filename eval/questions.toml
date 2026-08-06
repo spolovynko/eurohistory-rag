@@ -210,3 +210,247 @@ id = "transformer-attention"
 kind = "unanswerable"
 text = "How does a transformer neural network decide which words to pay attention to?"
 note = "Out of domain on purpose. Phase 5 scored a question like this at 0.253; this is the floor D-047 needs before any min_score can be argued for."
+
+# ==========================================================================
+# The extended set -- 30 questions, added in Phase 15. D-087.
+#
+# Everything above this line is Phase 7's golden thirty and is byte-identical
+# to the file that produced every baseline from 2026-08-04T1623Z onward. That
+# is deliberate: the golden thirty are this phase's control, and a question set
+# that gets "improved" alongside a change can no longer tell you what changed.
+#
+# These thirty cover the six themes added in Phase 14 -- the Cold War, the
+# Eastern Bloc and 1989, European integration, decolonisation, postwar society
+# and economy, and Europe since 1991. Phase 14 grew the corpus 81% and not one
+# retrieval number moved, because all 24 answerable golden questions are about
+# 1914-1945 and all 615 new articles are about 1945-2024.
+#
+# Every `expected` section below was read in full before being written down,
+# not searched for and assumed. The six unanswerable questions were each
+# checked by searching all 8,894 Silver sections for the topic: three return
+# zero sections, two return only a name with no facts attached, and the last is
+# out of domain on purpose, as a second floor point beside transformer-attention.
+
+# ------------------------------------------------------- easy, extended (8)
+
+[[question]]
+id = "berlin-airlift-supply"
+kind = "easy"
+suite = "extended"
+text = "How did the Western allies keep West Berlin supplied during the Soviet blockade of 1948?"
+expected = ["24008586:4", "24008586:3"]
+
+[[question]]
+id = "marshall-plan-aid"
+kind = "easy"
+suite = "extended"
+text = "How much aid did the Marshall Plan provide, and how was it divided between the countries that received it?"
+expected = ["19766:10", "19766:0"]
+note = "The Marshall Plan article was absent in Phase 6 and the answer was assembled from five other articles. It is in the corpus now."
+
+[[question]]
+id = "stasi-scale"
+kind = "easy"
+suite = "extended"
+text = "How many people did the Stasi employ, and how did it recruit its informants?"
+expected = ["29452:3", "29452:0"]
+
+[[question]]
+id = "maastricht-created"
+kind = "easy"
+suite = "extended"
+text = "What did the Maastricht Treaty establish?"
+expected = ["20803:0", "20803:1"]
+
+[[question]]
+id = "prague-invasion-1968"
+kind = "easy"
+suite = "extended"
+text = "Which countries took part in the invasion of Czechoslovakia in August 1968, and how many troops were involved?"
+expected = ["15224410:0", "15224410:5"]
+
+[[question]]
+id = "chernobyl-reactor-four"
+kind = "easy"
+suite = "extended"
+text = "What happened at reactor 4 of the Chernobyl Nuclear Power Plant on 26 April 1986?"
+expected = ["2589713:0", "2589713:1"]
+note = "Replaces the golden chernobyl-cause, which Phase 14 turned from unanswerable into answerable with no answer key behind it."
+
+[[question]]
+id = "suez-nationalisation"
+kind = "easy"
+suite = "extended"
+text = "What did Nasser nationalise in July 1956, and which countries invaded Egypt in response?"
+expected = ["58568:3", "58568:0"]
+
+[[question]]
+id = "beveridge-five-giants"
+kind = "easy"
+suite = "extended"
+text = "What did the Beveridge Report of 1942 recommend?"
+expected = ["14727282:2", "14727282:0"]
+
+# ------------------------------------------------------ multi, extended (8)
+
+[[question]]
+id = "comecon-vs-marshall"
+kind = "multi"
+suite = "extended"
+text = "How did Comecon differ from the Marshall Plan in what it offered the countries of Eastern Europe?"
+expected = ["384307:6", "384307:0", "19766:6"]
+
+[[question]]
+id = "prague-to-brezhnev-doctrine"
+kind = "multi"
+suite = "extended"
+text = "How did the invasion of Czechoslovakia produce the Brezhnev Doctrine, and where was that doctrine applied afterwards?"
+expected = ["4988:0", "4988:3", "15224410:0"]
+
+[[question]]
+id = "poland-vs-czechoslovakia-1989"
+kind = "multi"
+suite = "extended"
+text = "How did the end of communist rule in Poland differ from the way it ended in Czechoslovakia?"
+expected = ["632986:5", "632986:1", "148283:2"]
+
+[[question]]
+id = "wall-vs-inner-border"
+kind = "multi"
+suite = "extended"
+text = "How did the Berlin Wall and the inner German border differ, and what was each one built to stop?"
+expected = ["3722:2", "849186:1", "849186:9"]
+
+[[question]]
+id = "indochina-then-algeria"
+kind = "multi"
+suite = "extended"
+text = "How did France's defeat at Dien Bien Phu affect the war it then fought in Algeria?"
+expected = ["66331:4", "82430:0", "82430:1"]
+
+[[question]]
+id = "maastricht-to-euro"
+kind = "multi"
+suite = "extended"
+text = "How did the Maastricht Treaty lead to the single currency, and what did a country have to do to qualify for it?"
+expected = ["20803:4", "9472:5"]
+
+[[question]]
+id = "croatia-then-bosnia"
+kind = "multi"
+suite = "extended"
+text = "How did the fighting that began in Slovenia and Croatia in 1991 spread into Bosnia?"
+expected = ["2060900:5", "577771:4"]
+
+[[question]]
+id = "gorbachev-to-dissolution"
+kind = "multi"
+suite = "extended"
+text = "How did Gorbachev's reforms contribute to the end of the Soviet Union?"
+expected = ["24143:0", "40494892:1"]
+
+# ------------------------------------------------- paraphrase, extended (8)
+
+[[question]]
+id = "why-life-got-better-fast"
+kind = "paraphrase"
+suite = "extended"
+text = "Why could ordinary families in western Europe suddenly afford cars, holidays and washing machines in the 1950s and 1960s?"
+expected = ["24854552:3", "24854552:2"]
+
+[[question]]
+id = "why-the-east-refused-the-money"
+kind = "paraphrase"
+suite = "extended"
+text = "Why did Stalin stop the countries under his control from taking American money for rebuilding?"
+expected = ["19766:6", "19766:4"]
+
+[[question]]
+id = "travel-without-showing-papers"
+kind = "paraphrase"
+suite = "extended"
+text = "How did it become possible to drive across half a dozen European countries without stopping to show a document?"
+expected = ["16565139:8", "16565139:0", "16565139:1"]
+
+[[question]]
+id = "empires-let-go"
+kind = "paraphrase"
+suite = "extended"
+text = "Why did the European powers give up their overseas possessions in the two decades after 1945?"
+expected = ["1815296:2", "1815296:5", "5068278:2"]
+
+[[question]]
+id = "why-so-many-came-in-2015"
+kind = "paraphrase"
+suite = "extended"
+text = "Why did so many people try to reach Europe by boat and on foot in a single year, and where did they set out from?"
+expected = ["46415102:2", "46415102:3"]
+
+[[question]]
+id = "care-from-cradle-to-grave"
+kind = "paraphrase"
+suite = "extended"
+text = "How did Britain come to promise everyone medical treatment and support from birth to death?"
+expected = ["16462572:1", "1817074:2"]
+
+[[question]]
+id = "when-the-good-years-ended"
+kind = "paraphrase"
+suite = "extended"
+text = "Why did the long run of rising prosperity in western Europe come apart in the 1970s?"
+expected = ["26818:3", "24292743:2", "1817074:4"]
+
+[[question]]
+id = "country-came-apart"
+kind = "paraphrase"
+suite = "extended"
+text = "Why did a country that had held together for forty years break into pieces and then into war?"
+expected = ["2060900:2", "2060900:3"]
+
+# ----------------------------------------------- unanswerable, extended (6)
+# No `expected`: the right behaviour is a refusal. Five are plausible questions
+# about 20th and 21st century Europe, spread across France, Germany, Belgium,
+# Denmark and Finland rather than concentrated in Britain, which was a written
+# weakness of the golden six. The sixth is out of domain.
+
+[[question]]
+id = "yellow-vests"
+kind = "unanswerable"
+suite = "extended"
+text = "What were the Yellow Vests protests in France about, and what did the government concede to them?"
+note = "Verified: zero of 8,894 Silver sections match 'yellow vest' or 'gilets jaunes'."
+
+[[question]]
+id = "vw-emissions-scandal"
+kind = "unanswerable"
+suite = "extended"
+text = "Why was Volkswagen prosecuted over the software fitted to its diesel engines?"
+note = "Verified: zero sections match 'dieselgate' or 'emissions scandal'. Volkswagen appears in 21 sections, always as a company or as the wartime Beetle."
+
+[[question]]
+id = "heysel-1985"
+kind = "unanswerable"
+suite = "extended"
+text = "What happened at the Heysel Stadium in Brussels in 1985?"
+note = "Verified: zero sections."
+
+[[question]]
+id = "seveso-1976"
+kind = "unanswerable"
+suite = "extended"
+text = "What happened at the Seveso chemical plant in Italy, and how were the people living nearby affected?"
+note = "Verified by reading both mentions in full, not their surrounding characters. 'Seveso' appears twice: once in Milan as the name of a river, and once in Italian economic miracle as the four words 'the Seveso chemical accident' in a list of ecological disasters. No date, no substance, no evacuation, no effects. Replaced danish-cartoons, which was written as unanswerable and is not -- Blasphemy 90469:3 carries the editorial rationale, the February 2006 protests, the bomb threat and the 2008 Islamabad embassy bombing, and the system answered it at rank 1 with a fully grounded, cited answer. That question was checked by reading a 200-character window around the regex match instead of the section, which is the identical failure this phase exists to fix, committed inside this phase. See the D-087 verdict."
+
+[[question]]
+id = "nokia-decline"
+kind = "unanswerable"
+suite = "extended"
+text = "Why did Nokia lose its lead in mobile phones after 2007?"
+note = "Verified: two mentions, both one line -- that Nokia fuelled Finnish growth in the late 1990s, and that it is a large employer. Nothing about any decline."
+
+[[question]]
+id = "photosynthesis"
+kind = "unanswerable"
+suite = "extended"
+text = "How does a plant turn sunlight into sugar?"
+note = "Out of domain on purpose, a second floor point beside transformer-attention. Verified: zero sections."
