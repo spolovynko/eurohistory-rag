@@ -67,9 +67,17 @@ class FakeGenerator:
         self,
         answer: str = "The wall went up in 1961 [1].",
         model: str = "fake-model",
+        prompt_tokens: int | None = None,
+        completion_tokens: int | None = None,
     ) -> None:
         self._answer = answer
         self._model = model
+        # Off unless a test asks. The default stays None because a fake cannot
+        # know a real cost, and inventing one would let a test pass against a
+        # number this code never measured. Phase 13 opts in, because the answer
+        # path now makes two calls and the totalling is ours to get wrong.
+        self._prompt_tokens = prompt_tokens
+        self._completion_tokens = completion_tokens
         self.calls: list[list[Message]] = []
 
     @property
@@ -78,13 +86,13 @@ class FakeGenerator:
         return self._model
 
     def generate(self, messages: Sequence[Message]) -> Completion:
-        """Return the canned answer, recording the messages it was given.
-
-        Token counts stay None: a fake cannot know them, and inventing a number
-        would let a test pass against a cost this code never measured.
-        """
+        """Return the canned answer, recording the messages it was given."""
         self.calls.append(list(messages))
-        return Completion(text=self._answer)
+        return Completion(
+            text=self._answer,
+            prompt_tokens=self._prompt_tokens,
+            completion_tokens=self._completion_tokens,
+        )
 
 
 class ScriptedGenerator:

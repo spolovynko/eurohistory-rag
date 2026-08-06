@@ -1,0 +1,22 @@
+judge: gpt-4.1-mini
+
+answers judged   26
+answers skipped  4  (refusals, errors, no claims)
+claims           205
+  supported      203
+  unsupported    2
+  unparseable    0
+mean faithfulness  99.3%
+fully faithful     24/26
+
+==============================================================================
+UNSUPPORTED CLAIMS -- read these, they are the point of the metric
+==============================================================================
+
+[nuremberg-laws-content]
+  UNSUPPORTED: The supplementary laws banned Jews from economic participation.
+    -> "Over the coming years, an additional 13 supplementary laws were promulgated that further marginalised the Jewish community in Germany." - does not specify banning economic participation
+
+[stalingrad-kursk-turning]
+  UNSUPPORTED: Kursk is described as a turning point because it was the largest battle in history.
+    -> "The Battle of Kursk, also called the Battle of the Kursk Salient, was a major World War II Eastern Front battle" - it is described as a turning point but not because it was the largest battle.

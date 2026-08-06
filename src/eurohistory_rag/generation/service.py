@@ -12,6 +12,7 @@ from dataclasses import dataclass
 
 from eurohistory_rag.generation.client import Generator
 from eurohistory_rag.generation.messages import build_messages
+from eurohistory_rag.generation.verify import verify
 from eurohistory_rag.retrieval.search import SearchResult, SearchService
 
 logger = logging.getLogger(__name__)
@@ -45,6 +46,26 @@ class Answer:
     # ignore fields it does not expose.
     prompt_tokens: int | None = None
     completion_tokens: int | None = None
+    # Whether the groundedness gate changed anything. False also means "the
+    # gate was off", and the two are told apart by meta.json rather than here:
+    # the eval needs a firing rate, and an answer does not need to know why it
+    # was left alone. Phase 13, D-084.
+    revised: bool = False
+    # The pre-gate text, kept only when the gate changed something. Reading a
+    # revision means putting it next to what it replaced, and at a firing rate
+    # of a few percent no aggregate metric can see the gate at all -- so the
+    # pair is the measurement. Empty when nothing was revised.
+    draft: str = ""
+
+
+def _total(first: int | None, second: int | None) -> int | None:
+    """One question's token cost across both calls, or None if either is unknown.
+
+    An absent count stays absent rather than becoming a zero, for the same
+    reason Completion keeps them optional: a wrong number averages into the
+    cost-per-question figure and a missing one does not.
+    """
+    return None if first is None else first + (second or 0)
 
 
 def cited(text: str, results: list[SearchResult]) -> list[Citation]:
@@ -68,9 +89,19 @@ def cited(text: str, results: list[SearchResult]) -> list[Citation]:
 class GenerationService:
     """Answers a question from the corpus, with citations."""
 
-    def __init__(self, search: SearchService, generator: Generator) -> None:
+    def __init__(
+        self,
+        search: SearchService,
+        generator: Generator,
+        verifier: Generator | None = None,
+    ) -> None:
         self._search = search
         self._generator = generator
+        # The groundedness gate, or None when it is off. Presence rather than a
+        # boolean plus a client: one concept to reason about, one thing that can
+        # be forgotten. It is a `Generator` because checking is the same shape
+        # as answering -- messages in, text out -- with a different prompt.
+        self._verifier = verifier
 
     def ask(self, question: str, k: int | None = None) -> Answer:
         """Find the chunks, ask the model, return the answer and its sources.
@@ -90,15 +121,37 @@ class GenerationService:
         a copy would drift, and the eval would stop measuring the real system.
         """
         completion = self._generator.generate(build_messages(question, results))
-        citations = cited(completion.text, results)
+        text = completion.text
+        prompt_tokens = completion.prompt_tokens
+        completion_tokens = completion.completion_tokens
+        revised = False
+
+        if self._verifier is not None:
+            checked = verify(self._verifier, question, results, completion.text)
+            text = checked.text
+            revised = checked.changed
+            prompt_tokens = _total(prompt_tokens, checked.prompt_tokens)
+            completion_tokens = _total(completion_tokens, checked.completion_tokens)
+
+        # Read back out of the *shipped* text, not the draft: the gate may have
+        # deleted a sentence, and a citation list naming a source no longer
+        # referred to is the kind of quiet inconsistency nobody notices until a
+        # reader clicks the link.
+        citations = cited(text, results)
         logger.info(
-            "ask %r: %d sources, %d cited", question, len(results), len(citations)
+            "ask %r: %d sources, %d cited, revised=%s",
+            question,
+            len(results),
+            len(citations),
+            revised,
         )
         return Answer(
             question=question,
-            text=completion.text,
+            text=text,
             model=self._generator.model,
             citations=citations,
-            prompt_tokens=completion.prompt_tokens,
-            completion_tokens=completion.completion_tokens,
+            prompt_tokens=prompt_tokens,
+            completion_tokens=completion_tokens,
+            revised=revised,
+            draft=completion.text if revised else "",
         )

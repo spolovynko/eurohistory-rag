@@ -108,7 +108,7 @@ def test_no_sources_says_so_rather_than_leaving_a_gap() -> None:
 
 def test_the_prompt_file_was_actually_loaded() -> None:
     """Guards the one thing moving the prompt into markdown put at risk: a
-    missing or unpackaged prompt.md would leave this empty.
+    missing or unpackaged system_prompt.md would leave this empty.
     """
     assert "# ROLE" in SYSTEM_PROMPT
     assert "Not in the sources." in SYSTEM_PROMPT

@@ -11,7 +11,7 @@ from statistics import mean
 
 from eurohistory_rag.eval.record import EvalRecord
 
-# The exact phrase prompt.md tells the model to open a refusal with. Matching on
+# The exact phrase system_prompt.md tells the model to open a refusal with. Matching on
 # it is crude and it is the only automatic way to ask "did it refuse?" -- and it
 # is coupled to the prompt: the first baseline reported 0% refusals because this
 # constant was guessed rather than read, which is worth remembering before

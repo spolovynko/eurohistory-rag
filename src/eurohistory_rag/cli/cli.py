@@ -267,8 +267,11 @@ def evaluate(
     search = SearchService(
         embedder, store, reranker=_reranker(settings), hybrid=settings.hybrid_enabled
     )
+    verifier = (
+        _generator(settings, settings.verify_model) if settings.verify_enabled else None
+    )
     generation = GenerationService(
-        search, _generator(settings, settings.generation_model)
+        search, _generator(settings, settings.generation_model), verifier=verifier
     )
 
     records = run_module.run_all(questions, search, generation, answer_k=k)
@@ -283,6 +286,7 @@ def evaluate(
         overfetch=OVERFETCH,
         reranker=settings.reranker_model if settings.reranker_enabled else "",
         hybrid=f"bm25+rrf(k={RRF_K})" if settings.hybrid_enabled else "",
+        verifier=settings.verify_model if settings.verify_enabled else "",
         note=note,
     )
 

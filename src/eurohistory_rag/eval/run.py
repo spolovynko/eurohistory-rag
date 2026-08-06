@@ -135,6 +135,8 @@ def run_question(
         expected_doc_ids=list(question.expected),
         retrieved=to_retrieved(results, with_text=answer_k),
         answer=answer.text,
+        revised=answer.revised,
+        draft=answer.draft,
         generation_model=answer.model,
         sources_sent=len(sent),
         markers_found=markers_in(answer.text),
@@ -187,6 +189,7 @@ def build_meta(
     overfetch: int,
     reranker: str = "",
     hybrid: str = "",
+    verifier: str = "",
     note: str = "",
 ) -> RunMeta:
     """Capture the conditions this run happened under."""
@@ -203,5 +206,6 @@ def build_meta(
         overfetch=overfetch,
         reranker=reranker,
         hybrid=hybrid,
+        verifier=verifier,
         note=note,
     )

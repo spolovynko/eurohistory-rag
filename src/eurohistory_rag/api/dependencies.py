@@ -67,7 +67,23 @@ def get_generation_service() -> GenerationService:
         api_key=settings.openai_api_key.get_secret_value(),
         model=settings.generation_model,
     )
-    return GenerationService(get_search_service(), generator)
+    return GenerationService(get_search_service(), generator, verifier=get_verifier())
+
+
+@lru_cache(maxsize=1)
+def get_verifier() -> OpenAIGenerator | None:
+    """The groundedness gate's client, or None when the gate is off.
+
+    Its own function so that "the gate is off" is one value in one place, and
+    so a different checking model needs no change here. Phase 13, D-084.
+    """
+    settings = get_settings()
+    if not settings.verify_enabled:
+        return None
+    return OpenAIGenerator(
+        api_key=settings.openai_api_key.get_secret_value(),
+        model=settings.verify_model,
+    )
 
 
 @lru_cache(maxsize=1)

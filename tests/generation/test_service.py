@@ -195,3 +195,90 @@ def test_a_dead_model_surfaces_as_generation_unavailable(
 
     with pytest.raises(GenerationUnavailable):
         generation.ask("why?")
+
+
+# --- the groundedness gate on the answer path -------------------------------
+
+# A checker reply in the shape verify_prompt.md asks for: the working out
+# first, then the answer. A fake returning bare text would test a reply the
+# real prompt never produces.
+CHECKED = """<check>
+a claim -- SUPPORTED -- the source words
+</check>
+<answer>
+{}
+</answer>"""
+
+
+def test_no_verifier_means_no_second_call(results: list[SearchResult]) -> None:
+    """The default. A clean checkout must behave exactly as the run that
+    measured 99.0% faithfulness did, or the before in the before/after moves.
+    """
+    generation, _ = service(results, "The wall went up in 1961 [1].")
+
+    answer = generation.ask("when?")
+
+    assert answer.revised is False
+    assert answer.text == "The wall went up in 1961 [1]."
+
+
+def test_the_verified_text_is_what_the_caller_gets(
+    results: list[SearchResult],
+) -> None:
+    """The dead-switch test for the wiring. Phase 8 shipped a reranker that was
+    unreachable and 337 tests passed, because every one of them asserted
+    something true whether or not the feature ran. This one is false unless the
+    verifier's text reaches the Answer.
+    """
+    checker = FakeGenerator(
+        answer=CHECKED.format("The wall went up in August 1961 [1].")
+    )
+    generation = GenerationService(
+        StubSearchService(results),  # type: ignore[arg-type]
+        FakeGenerator(answer="The wall went up in 1961 [1]."),
+        verifier=checker,
+    )
+
+    answer = generation.ask("when?")
+
+    assert answer.text == "The wall went up in August 1961 [1]."
+    assert answer.revised is True
+    assert len(checker.calls) == 1
+
+
+def test_both_calls_are_paid_for_in_one_number(results: list[SearchResult]) -> None:
+    """Cost per question stays a true total, so metrics.py needs no change and
+    the eval cannot under-report what this phase costs.
+    """
+    generation = GenerationService(
+        StubSearchService(results),  # type: ignore[arg-type]
+        FakeGenerator(answer="Draft [1].", prompt_tokens=100, completion_tokens=10),
+        verifier=FakeGenerator(
+            answer=CHECKED.format("Draft [1]."),
+            prompt_tokens=200,
+            completion_tokens=20,
+        ),
+    )
+
+    answer = generation.ask("when?")
+
+    assert answer.prompt_tokens == 300
+    assert answer.completion_tokens == 30
+
+
+def test_citations_follow_the_shipped_text_not_the_draft(
+    results: list[SearchResult],
+) -> None:
+    """The gate may delete a sentence, and its marker goes with it. A citation
+    list naming a source the answer no longer refers to is the kind of quiet
+    inconsistency nobody notices until a reader clicks the link.
+    """
+    generation = GenerationService(
+        StubSearchService(results),  # type: ignore[arg-type]
+        FakeGenerator(answer="Berlin [1]. Something unsupported [2]."),
+        verifier=FakeGenerator(answer=CHECKED.format("Berlin [1].")),
+    )
+
+    answer = generation.ask("when?")
+
+    assert [citation.number for citation in answer.citations] == [1]
