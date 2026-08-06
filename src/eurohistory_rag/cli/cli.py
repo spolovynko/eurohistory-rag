@@ -6,11 +6,15 @@ from typing import Annotated
 
 import typer
 
-from eurohistory_rag.core.config import get_settings
+from eurohistory_rag.core.config import Settings, get_settings
 from eurohistory_rag.core.logging import configure_logging
+from eurohistory_rag.eval import judge as judge_module
+from eurohistory_rag.eval import probes as probes_module
 from eurohistory_rag.eval import report as report_module
 from eurohistory_rag.eval import run as run_module
-from eurohistory_rag.eval.metrics import summarise_by_kind
+from eurohistory_rag.eval import sweep as sweep_module
+from eurohistory_rag.eval import synthetic as synthetic_module
+from eurohistory_rag.eval.metrics import summarise, summarise_by_kind
 from eurohistory_rag.eval.questions import (
     QUESTIONS_PATH,
     TARGET_COUNTS,
@@ -39,6 +43,7 @@ from eurohistory_rag.pipeline.bronze.wikipedia import (
 from eurohistory_rag.pipeline.gold import build as gold_module
 from eurohistory_rag.pipeline.gold.chunk import CHUNK_OVERLAP, CHUNK_SIZE
 from eurohistory_rag.pipeline.index import build as index_module
+from eurohistory_rag.pipeline.index.build import read_chunks
 from eurohistory_rag.pipeline.silver import build as silver_module
 from eurohistory_rag.retrieval.embedding import OpenAIEmbedder
 from eurohistory_rag.retrieval.rerank import LocalReranker
@@ -58,6 +63,41 @@ DEFAULT_REGISTRY = Path("corpus/registry.csv")
 DEFAULT_BRONZE = Path("data/bronze")
 DEFAULT_SILVER = Path("data/silver")
 DEFAULT_GOLD = Path("data/gold")
+DEFAULT_SYNTHETIC = Path("eval/synthetic.toml")
+
+
+# The retrieval stack, built from settings in one place. Four commands need
+# some of it now, and the three that need all of it must agree exactly: a
+# reranker built one way in the eval and another way in the API is how Phase 8
+# came to measure a pool the answer path never sees.
+def _embedder(settings: Settings) -> OpenAIEmbedder:
+    """The embedder every command shares."""
+    return OpenAIEmbedder(
+        api_key=settings.openai_api_key.get_secret_value(),
+        model=settings.embedding_model,
+        dimensions=settings.embedding_dimensions,
+    )
+
+
+def _store(settings: Settings) -> VectorStore:
+    """A connection to the configured collection."""
+    return VectorStore.connect(
+        settings.qdrant_url,
+        settings.qdrant_collection,
+        settings.embedding_dimensions,
+    )
+
+
+def _reranker(settings: Settings) -> LocalReranker | None:
+    """The reranker, or None when it is switched off."""
+    return LocalReranker(settings.reranker_model) if settings.reranker_enabled else None
+
+
+def _generator(settings: Settings, model: str) -> OpenAIGenerator:
+    """A generation client for `model`, which may not be the answering model."""
+    return OpenAIGenerator(
+        api_key=settings.openai_api_key.get_secret_value(), model=model
+    )
 
 
 @app.callback()
@@ -187,16 +227,8 @@ def index(
     `docker compose up -d`.
     """
     settings = get_settings()
-    embedder = OpenAIEmbedder(
-        api_key=settings.openai_api_key.get_secret_value(),
-        model=settings.embedding_model,
-        dimensions=settings.embedding_dimensions,
-    )
-    store = VectorStore.connect(
-        settings.qdrant_url,
-        settings.qdrant_collection,
-        settings.embedding_dimensions,
-    )
+    embedder = _embedder(settings)
+    store = _store(settings)
     report = index_module.build(gold, store, embedder, batch_size, resume=resume)
     typer.echo(
         f"{report.indexed} indexed, {report.skipped} skipped, "
@@ -220,36 +252,23 @@ def evaluate(
     overwritten, because comparing two runs is the entire point.
     """
     questions = load_questions(questions_path)
+    # Only the golden set is held to Phase 7's shape. A synthetic set is 150
+    # questions of one kind by design, and warning about that every run would
+    # train everyone to ignore the line.
     have = counts(questions)
-    if have != TARGET_COUNTS:
+    if questions_path == QUESTIONS_PATH and have != TARGET_COUNTS:
         typer.echo(f"note: question set is {have}, plan asks for {TARGET_COUNTS}")
 
     settings = get_settings()
-    embedder = OpenAIEmbedder(
-        api_key=settings.openai_api_key.get_secret_value(),
-        model=settings.embedding_model,
-        dimensions=settings.embedding_dimensions,
-    )
-    store = VectorStore.connect(
-        settings.qdrant_url,
-        settings.qdrant_collection,
-        settings.embedding_dimensions,
-    )
+    embedder = _embedder(settings)
+    store = _store(settings)
     # Built here rather than taken from api/dependencies.py: the CLI is the
-    # pipeline's trigger and must not import the web layer. The cost is these
-    # three lines, the same trade already made for the embedder above.
-    reranker = (
-        LocalReranker(settings.reranker_model) if settings.reranker_enabled else None
-    )
+    # pipeline's trigger and must not import the web layer.
     search = SearchService(
-        embedder, store, reranker=reranker, hybrid=settings.hybrid_enabled
+        embedder, store, reranker=_reranker(settings), hybrid=settings.hybrid_enabled
     )
     generation = GenerationService(
-        search,
-        OpenAIGenerator(
-            api_key=settings.openai_api_key.get_secret_value(),
-            model=settings.generation_model,
-        ),
+        search, _generator(settings, settings.generation_model)
     )
 
     records = run_module.run_all(questions, search, generation, answer_k=k)
@@ -276,6 +295,135 @@ def evaluate(
 
     typer.echo(summary)
     typer.echo(f"\n{len(records)} questions -> {directory}")
+
+
+@app.command()
+def synthesize(
+    gold: Annotated[Path, typer.Option(help="Gold root.")] = DEFAULT_GOLD,
+    out: Annotated[
+        Path, typer.Option(help="Question file to write.")
+    ] = DEFAULT_SYNTHETIC,
+    count: Annotated[
+        int, typer.Option(help="How many chunks to ask about.")
+    ] = synthetic_module.DEFAULT_COUNT,
+    seed: Annotated[
+        int, typer.Option(help="Sampling seed; fixed so the set is reproducible.")
+    ] = synthetic_module.SAMPLE_SEED,
+) -> None:
+    """Write a synthetic question set from Gold chunks.
+
+    Costs money -- one small completion per chunk -- but needs no Qdrant: the
+    questions come from the chunk file, not from search. Overwrites `out`, and
+    doing so invalidates comparisons against runs made with the old set, so
+    regenerate deliberately rather than casually.
+
+    These questions are easier than the golden thirty and their scores are not
+    comparable to them. They exist to notice a regression in the long tail.
+    """
+    settings = get_settings()
+    chunks = synthetic_module.sample_chunks(read_chunks(gold), count, seed)
+    typer.echo(f"{len(chunks)} chunks sampled, asking {settings.generation_model}...")
+
+    report = synthetic_module.generate(
+        chunks, _generator(settings, settings.generation_model)
+    )
+    path = synthetic_module.write(out, report.questions, settings.generation_model)
+    typer.echo(
+        f"{len(report.questions)} questions -> {path}  "
+        f"({report.skipped} skipped by the model, {report.rejected} rejected by "
+        f"the rules, {report.failed} failed)"
+    )
+
+
+@app.command()
+def judge(
+    run: Annotated[Path, typer.Argument(help="A run directory under eval/runs/.")],
+) -> None:
+    """Check every claim in a run's answers against the sources it was shown.
+
+    Costs money and needs no Qdrant: it reads the run off disk. Writes
+    `judgements.jsonl` and `faithfulness.txt` into the run directory and never
+    touches `records.jsonl`, so a re-judge with a better prompt cannot damage
+    the run it read.
+
+    Run `judge-probe` first. An unvalidated judge produces a number nobody
+    should act on.
+    """
+    settings = get_settings()
+    records = read_records(run)
+    judgements = judge_module.judge_all(
+        records, _generator(settings, settings.judge_model)
+    )
+
+    summary = judge_module.summarise(judgements)
+    report = judge_module.render(judgements, summary)
+    judge_module.write(run, judgements)
+    (run / "faithfulness.txt").write_text(report, encoding="utf-8")
+
+    typer.echo(report)
+    typer.echo(f"{len(judgements)} answers -> {run}")
+
+
+@app.command("judge-probe")
+def judge_probe(
+    path: Annotated[
+        Path, typer.Option("--probes", help="Probe file to run.")
+    ] = probes_module.PROBES_PATH,
+) -> None:
+    """Put the faithfulness judge against claims whose verdict is already known.
+
+    A few cents. Run it before trusting any faithfulness number and after any
+    edit to the judge prompt -- Phase 7 shipped a metric that lied and Phase 8
+    shipped a reranker that was broken, and both were the same failure: a
+    component whose output looks plausible whether or not it works.
+    """
+    settings = get_settings()
+    results = probes_module.run_probes(
+        probes_module.load_probes(path), _generator(settings, settings.judge_model)
+    )
+    typer.echo(f"judge: {settings.judge_model}\n")
+    typer.echo(probes_module.render(results))
+    if not all(result.passed for result in results):
+        raise typer.Exit(code=1)
+
+
+@app.command()
+def sweep(
+    questions_path: Annotated[
+        Path, typer.Option("--questions", help="Question set to sweep.")
+    ] = QUESTIONS_PATH,
+    baseline: Annotated[
+        Path | None,
+        typer.Option(help="A run directory the control row must reproduce."),
+    ] = None,
+) -> None:
+    """Measure many retrieval settings at once, without generating anything.
+
+    Costs one embedding per question and needs Qdrant. Retrieval is
+    deterministic, so this is the cheap instrument: a dozen configurations for
+    less than a single eval run.
+
+    Pass `--baseline eval/runs/<id>` and the control row is checked against
+    that run before the table is printed. Without it the table is unverified.
+    """
+    settings = get_settings()
+    questions = [q for q in load_questions(questions_path) if q.expected]
+    pools = sweep_module.collect_pools(
+        questions, _embedder(settings), _store(settings), _reranker(settings)
+    )
+    rows = sweep_module.sweep(sweep_module.DEFAULT_CONFIGS, questions, pools)
+
+    if baseline is not None:
+        wanted = summarise([r for r in read_records(baseline) if r.expected_doc_ids])
+        if sweep_module.control_matches(rows[0][1], wanted):
+            typer.echo(f"control reproduces {baseline.name}\n")
+        else:
+            typer.echo(
+                f"CONTROL FAILED: the harness does not reproduce {baseline.name}. "
+                "The table below is not evidence of anything.\n"
+            )
+
+    typer.echo(sweep_module.render(rows))
 
 
 @app.command()

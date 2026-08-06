@@ -42,6 +42,14 @@ class Settings(BaseSettings):
     # the decision: a machine without this key in .env runs the rejected model.
     generation_model: str = "gpt-4.1-mini"
 
+    # Which model grades faithfulness. Its own setting rather than reusing
+    # generation_model, because "the model that answers also marks its own
+    # homework" is a known bias and this is the one line that fixes it. It
+    # defaults to the same model, so by default the bias is present and the
+    # number carries that caveat -- an honest default beats a flattering one.
+    # Phase 10, D-079.
+    judge_model: str = "gpt-4.1-mini"
+
     # The reranker runs locally, so there is no key to hold. Named here rather
     # than in code because swapping it is an experiment, not a code change --
     # and it is a per-machine concern: a laptop may want the smaller model.

@@ -1,0 +1,36 @@
+judge: gpt-4.1-mini
+
+answers judged   25
+answers skipped  5  (refusals, errors, no claims)
+claims           185
+  supported      178
+  unsupported    7
+  unparseable    0
+mean faithfulness  97.7%
+fully faithful     21/25
+
+==============================================================================
+UNSUPPORTED CLAIMS -- read these, they are the point of the metric
+==============================================================================
+
+[enabling-act-passage]
+  UNSUPPORTED: The 81 Communist deputies were absent because they had been banned from participation.
+    -> "The Reichstag, led by its president, Hermann Göring, changed its rules of procedure" - says they were absent, not banned from participation
+  UNSUPPORTED: The Nazis and their ally the DNVP obtained the two-thirds majority by surrounding the Reichstag with SA members.
+    -> "Even with the proscription of the Communists, the Nazis and their ally the DNVP still controlled well below the number of votes required for this majority." - surrounding with SA was part of intimidation, not the sole method to obtain majority
+
+[versailles-vs-trianon]
+  UNSUPPORTED: The Treaty of Trianon required Hungary to assume financial obligations on parts of its former territory assigned to Romania, Yugoslavia, and Czechoslovakia.
+    -> "Romania, Yugoslavia and Czechoslovakia had to assume part of the financial obligations" - the claim reverses who assumed the obligations
+  UNSUPPORTED: Both the Treaty of Trianon and the Treaty of Versailles disbanded the defeated countries' military forces.
+    -> "After the war, the Austro-Hungarian navy, air force and army were disbanded." - only Austro-Hungarian forces disbanded, no mention of Versailles disbanding military forces
+
+[mussolini-vs-hitler-power]
+  UNSUPPORTED: After the Prime Minister wished to declare a state of siege, the King persuaded him to resign.
+    -> "Prime Minister Luigi Facta wished to declare a state of siege, but this was overruled by King Victor Emmanuel III" - the King overruled, not persuaded to resign
+  UNSUPPORTED: Hitler became chancellor later through political maneuvering rather than a mass demonstration like Mussolini's march.
+    -> "In 1922, Hitler tried to ask for Mussolini's guidance" - does not state how Hitler became chancellor.
+
+[stalingrad-kursk-turning]
+  UNSUPPORTED: The Soviet Union's larger industrial potential and manpower allowed it to firmly pass the initiative to the Red Army at Kursk.
+    -> "The Soviet Union's larger industrial potential and pool of manpower allowed them to absorb and replace its losses." - this sentence states absorption of losses, not passing initiative; "With victory, the initiative firmly passed to the Red Army." attaches initiative passing to victory, not industrial potential and manpower

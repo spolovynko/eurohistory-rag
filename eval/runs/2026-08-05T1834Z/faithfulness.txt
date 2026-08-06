@@ -1,0 +1,92 @@
+judge: gpt-4.1-mini
+
+answers judged   124
+answers skipped  0  (refusals, errors, no claims)
+claims           813
+  supported      791
+  unsupported    22
+  unparseable    0
+mean faithfulness  98.0%
+fully faithful     107/124
+
+==============================================================================
+UNSUPPORTED CLAIMS -- read these, they are the point of the metric
+==============================================================================
+
+[syn-5195347-1-10]
+  UNSUPPORTED: The uprising was marked by state-sanctioned repression.
+    -> "The period following the CEDA's victory, called 'black biennium', was marked by escalating clashes" - clashes, not the uprising, were marked by repression
+
+[syn-26282927-3-3]
+  UNSUPPORTED: The sinking of the Blücher and the threat from the fortress caused the German cruiser Lützow to withdraw.
+    -> "The cruiser , also damaged in the attack and believing Blücher had entered a minefield, withdrew" - it withdrew due to believing in a minefield, not the fortress threat
+  UNSUPPORTED: The German cruiser Lützow mistakenly believed mines had contributed to the sinking of the Blücher.
+    -> "The damaged cruiser was sunk by a salvo of antiquated, 40-year-old torpedoes" - the source says the cruiser Blücher was sunk, not Lützow, and Lützow is not mentioned as believing mines contributed.
+
+[syn-440815-0-1]
+  UNSUPPORTED: The 1952 amendment also narrowed the scope to cover only Australian service personnel.
+    -> "Perhaps inadvertently this also narrowed the scope of the Memorial to cover only Australian service personnel" - this is a consequence, not explicitly stated as the 1952 amendment's effect
+
+[syn-1376379-0-0]
+  UNSUPPORTED: The Madagascar Plan was abandoned following the commencement of Operation Barbarossa.
+    -> "Once planning for Operation Barbarossa commenced, Hitler asked Himmler to draft a new plan" - it does not say the Madagascar Plan was abandoned then
+
+[syn-549297-0-0]
+  UNSUPPORTED: Maximilian von Weichs later led the 2nd Army in the Balkans Campaign.
+    -> "Leading his army, Weichs later took part in the Balkans Campaign" - he took part, not led the 2nd Army there
+
+[syn-193786-5-14]
+  UNSUPPORTED: Kolchak promised to join the League of Nations.
+    -> "Promise to join the League of Nations. Promise to pay all of Russia's debts." - fragmentary statement without clear attachment to Kolchak or a verb indicating promise
+  UNSUPPORTED: Kolchak promised to pay all of Russia's debts.
+    -> "Promise to join the League of Nations. Promise to pay all of Russia's debts." - statement is presented as a promise, not as a fulfilled action or agreement by Kolchak
+
+[syn-73412793-1-2]
+  UNSUPPORTED: The new president would have the authority to dismiss Adolf Hitler.
+    -> "Hitler, who had been appointed Reich Chancellor on 30 January 1933, now saw this arrangement as a potential threat, since the new president would have the authority to dismiss him." - the sentence expresses Hitler's perception, not a factual statement of authority.
+
+[syn-17888-11-4]
+  UNSUPPORTED: Leon Trotsky's opposition to achieving revolution via military conquest is evidenced by his proposed armistice with the Entente.
+    -> "According to Deutscher, Trotsky supported revolution through proletarian internationalism but opposed achieving it via military conquest." - the sentence attaches opposition to military conquest to Trotsky generally, but the proposed armistice is cited as evidence, not as a direct action by Trotsky himself.
+  UNSUPPORTED: Leon Trotsky's opposition to achieving revolution via military conquest is evidenced by his temperance regarding staging anti-British revolts in the Middle East.
+    -> "According to Deutscher, Trotsky supported revolution through proletarian internationalism but opposed achieving it via military conquest." - opposition is stated, but temperance regarding revolts is an example, not evidence of opposition
+
+[syn-543175-4-1]
+  UNSUPPORTED: Wilhelm Ritter von Leeb was sentenced to three years' imprisonment.
+    -> "He was sentenced to three years' imprisonment time served" - the sentence was time served, not a three-year sentence.
+
+[syn-754367-3-3]
+  UNSUPPORTED: General Mannerheim promised that Yudenich would recognize Finland's independence.
+    -> "Yudenich would have recognized Finland's independence" - Mannerheim did not promise, it is conditional
+
+[syn-551953-4-8]
+  UNSUPPORTED: The Penguin Specials series was widely believed to be left-leaning because its editor was the communist John Lehmann.
+    -> "Whereas the Left Book Club was avowedly pro-Soviet, Penguin and Lane expressed no political preference as their editorial policy" - belief was widespread but not stated as fact about Lehmann's communism
+
+[syn-11702744-5-5]
+  UNSUPPORTED: Assault howitzers were supported by artillery and mortar fire.
+    -> "Much greater emphasis was placed on artillery and mortar support, and assault howitzers were to be used" - the source states assault howitzers were supported, not the other way around
+
+[syn-69840-2-32]
+  UNSUPPORTED: Victor Emmanuel III affirmed that he desired a parliamentary initiative to dismiss Mussolini.
+    -> "The king affirmed that 'the Chamber and the Senate were his eyes and ears', desiring a parliamentary initiative" - he desired a parliamentary initiative, not specifically to dismiss Mussolini.
+
+[syn-101616-3-4]
+  UNSUPPORTED: Boris Godunov constructed a stone kremlin between 1597 and 1602.
+    -> "The stone kremlin constructed in 1597–1602 is the largest in Russia." - does not say Boris Godunov constructed it
+
+[syn-31371717-1-10]
+  UNSUPPORTED: Cavour dismissed these plans as "nonsense".
+    -> "Cavour clearly considered those plans vain things" - source uses "vain things" not "nonsense"
+  UNSUPPORTED: Cavour unified Italy through diplomatic and military actions alongside Giuseppe Garibaldi.
+    -> "The statesman Daniele Manin seems to have believed in Italian unification years before Camillo Benso of Cavour, who actually unified the country with Giuseppe Garibaldi through diplomatic and military actions." - claim attaches unification to Cavour and Garibaldi, source attaches it to Cavour only
+
+[syn-14653-3-4]
+  UNSUPPORTED: The Supreme Leader has the final say on all matters, including the power to dismiss the president.
+    -> "The president is responsible for the implementation of the constitution" - final say is on matters directly related to the Rahbar, not all; "The council's members are chosen by the Leader" - Leader chooses Guardian Council members who approve candidates, but no direct mention of power to dismiss president
+  UNSUPPORTED: The president appoints ministers subject to the approval of the Parliament and the Supreme Leader.
+    -> "The president appoints ministers, subject to the approval of the Parliament and the Rahbar" - Rahbar, not Supreme Leader, is used in the source
+
+[syn-13909887-3-0]
+  UNSUPPORTED: The League of Nations Council had the right and obligation to raise complaints of violations of the Minority Treaties.
+    -> "The procedure was centered on the Council of the League (rather than the more encompassing Assembly) which had the right and obligation to raise complaints of treaty violations." - the Council had the right and obligation to raise complaints, not specifically of violations of the Minority Treaties

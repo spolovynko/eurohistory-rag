@@ -23,7 +23,13 @@ QUESTIONS_PATH = Path("eval/questions.toml")
 # The four kinds Phase 7 requires, and how many of each it asks for. Not
 # enforced -- a set of 29 should still run -- but reported, so a set that has
 # drifted away from the plan says so out loud.
-Kind = Literal["easy", "multi", "paraphrase", "unanswerable"]
+#
+# "synthetic" is Phase 10's fifth kind and belongs to a different file. It is a
+# kind rather than a separate model so that one loader, one validator and one
+# runner serve both sets -- but a synthetic question is easier than any of the
+# four above and its score is not comparable to theirs, which is why it has its
+# own name in every table it appears in. See eval/synthetic.py.
+Kind = Literal["easy", "multi", "paraphrase", "unanswerable", "synthetic"]
 TARGET_COUNTS: dict[Kind, int] = {
     "easy": 8,
     "multi": 8,
