@@ -14,7 +14,7 @@ import pytest
 
 from eurohistory_rag.pipeline.bronze.ingest import ingest
 from eurohistory_rag.pipeline.bronze.registry import RegistryEntry
-from eurohistory_rag.pipeline.bronze.store import ingested_keys
+from eurohistory_rag.pipeline.bronze.store import MISSING_FILENAME, ingested_keys
 from eurohistory_rag.pipeline.bronze.wikipedia import (
     MAX_TITLES_PER_REQUEST,
     FetchResult,
@@ -212,6 +212,47 @@ def test_a_batch_of_only_missing_titles_writes_no_file(tmp_path: Path) -> None:
     ingest(source, entries("interwar", "Deleted"), tmp_path, fetched_at=FETCHED_AT)
 
     assert list(tmp_path.rglob("*.parquet")) == []
+
+
+def test_missing_titles_are_written_to_a_file(tmp_path: Path) -> None:
+    """The report dies with the process; this is the durable record of it."""
+    source = RecordingSource(missing=frozenset({"Deleted"}))
+
+    ingest(source, entries("interwar", "A", "Deleted"), tmp_path, fetched_at=FETCHED_AT)
+
+    lines = (tmp_path / MISSING_FILENAME).read_text(encoding="utf-8").splitlines()
+    assert lines[0] == "theme,title,fetched_at"
+    assert lines[1] == f"interwar,Deleted,{FETCHED_AT.isoformat()}"
+    assert len(lines) == 2
+
+
+def test_the_missing_file_is_rewritten_when_nothing_is_missing(
+    tmp_path: Path,
+) -> None:
+    """A stale list from an earlier run must not read as this run's result."""
+    ingest(
+        RecordingSource(missing=frozenset({"Deleted"})),
+        entries("interwar", "Deleted"),
+        tmp_path,
+        fetched_at=FETCHED_AT,
+    )
+
+    ingest(RecordingSource(), entries("interwar", "A"), tmp_path, fetched_at=FETCHED_AT)
+
+    lines = (tmp_path / MISSING_FILENAME).read_text(encoding="utf-8").splitlines()
+    assert lines == ["theme,title,fetched_at"]
+
+
+def test_the_missing_file_is_not_read_as_bronze_data(tmp_path: Path) -> None:
+    """It sits in the Bronze root, so it must stay out of the Parquet glob."""
+    ingest(
+        RecordingSource(missing=frozenset({"Deleted"})),
+        entries("interwar", "A", "Deleted"),
+        tmp_path,
+        fetched_at=FETCHED_AT,
+    )
+
+    assert ingested_keys(tmp_path) == {("interwar", "A")}
 
 
 # --- logging ---------------------------------------------------------------

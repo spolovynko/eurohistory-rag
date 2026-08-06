@@ -1,8 +1,9 @@
 """Bronze: raw wikitext plus provenance. Immutable and append-only."""
 
+import csv
 import datetime as dt
 import logging
-from collections.abc import Sequence
+from collections.abc import Iterable, Sequence
 from pathlib import Path
 from uuid import uuid4
 
@@ -73,6 +74,33 @@ def write_batch(root: Path, frame: pl.DataFrame, fetched_at: dt.datetime) -> Pat
     path = directory / f"part-{uuid4().hex[:12]}.parquet"
     frame.write_parquet(path)
     logger.debug("wrote %s: %d rows, %d bytes", path, frame.height, path.stat().st_size)
+    return path
+
+
+MISSING_FIELDS = ("theme", "title", "fetched_at")
+MISSING_FILENAME = "_missing.csv"
+
+
+def write_missing(
+    root: Path, rows: Iterable[tuple[str, str]], fetched_at: dt.datetime
+) -> Path:
+    """Record the registry entries Wikipedia had no page for, as data.
+
+    Overwritten every run, because it describes the run that just happened
+    rather than the history of them -- an empty file is the correct answer when
+    nothing was missing. The underscore keeps it out of the Parquet glob that
+    every reader of Bronze uses.
+
+    This exists because the fact had nowhere to live: it was logged and returned
+    in the report, and both are gone once the process exits.
+    """
+    root.mkdir(parents=True, exist_ok=True)
+    path = root / MISSING_FILENAME
+    with path.open("w", encoding="utf-8", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerow(MISSING_FIELDS)
+        for theme, title in rows:
+            writer.writerow([theme, title, fetched_at.isoformat()])
     return path
 
 

@@ -152,6 +152,27 @@ def _parse_retry_after(value: str | None) -> float | None:
         return None
 
 
+def _to_revision(page: _Page, requested: str) -> Revision | None:
+    """One API page as a Revision, or None if it is not a fetchable article.
+
+    A page can come back unusable in three ways -- no page id (the title does
+    not exist), no revisions, or no main slot -- and all three mean the same
+    thing to the caller, so they collapse into one None.
+    """
+    revision = page.revisions[0] if page.revisions else None
+    slot = revision.slots.get("main") if revision is not None else None
+    if page.pageid is None or revision is None or slot is None:
+        return None
+    return Revision(
+        page_id=page.pageid,
+        title=page.title,
+        requested_title=requested,
+        revision_id=revision.revid,
+        revision_timestamp=revision.timestamp,
+        wikitext=slot.content,
+    )
+
+
 class WikipediaClient:
     """Fetches raw wikitext. One method call, one HTTP request.
 
@@ -224,22 +245,11 @@ class WikipediaClient:
 
         for page in payload.query.pages:
             requested = final_to_requested.get(page.title, page.title)
-            revision = page.revisions[0] if page.revisions else None
-            slot = revision.slots.get("main") if revision is not None else None
-
-            if page.pageid is None or revision is None or slot is None:
+            revision = _to_revision(page, requested)
+            if revision is None:
                 missing.append(requested)
             else:
-                revisions.append(
-                    Revision(
-                        page_id=page.pageid,
-                        title=page.title,
-                        requested_title=requested,
-                        revision_id=revision.revid,
-                        revision_timestamp=revision.timestamp,
-                        wikitext=slot.content,
-                    )
-                )
+                revisions.append(revision)
 
         return FetchResult(revisions=tuple(revisions), missing=tuple(missing))
 
