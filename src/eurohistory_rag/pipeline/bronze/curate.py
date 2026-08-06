@@ -6,7 +6,8 @@ from collections.abc import Iterable
 
 import mwparserfromhell
 
-from eurohistory_rag.pipeline.bronze.registry import RegistryEntry, Theme
+from eurohistory_rag.pipeline.bronze.registry import RegistryEntry
+from eurohistory_rag.pipeline.bronze.seeds import Theme
 from eurohistory_rag.pipeline.bronze.wikipedia import RevisionSource
 from eurohistory_rag.pipeline.wikitext import normalise_target
 

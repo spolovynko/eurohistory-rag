@@ -33,9 +33,9 @@ from eurohistory_rag.pipeline.bronze import curate as curate_module
 from eurohistory_rag.pipeline.bronze import ingest as ingest_module
 from eurohistory_rag.pipeline.bronze.registry import (
     load_registry,
-    load_seeds,
     write_registry,
 )
+from eurohistory_rag.pipeline.bronze.seeds import load_seeds
 from eurohistory_rag.pipeline.bronze.wikipedia import (
     MAX_TITLES_PER_REQUEST,
     WikipediaClient,

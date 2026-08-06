@@ -1,0 +1,26 @@
+judge: gpt-4.1-mini
+
+answers judged   28
+answers skipped  2  (refusals, errors, no claims)
+claims           246
+  supported      243
+  unsupported    3
+  unparseable    0
+mean faithfulness  99.1%
+fully faithful     25/28
+
+==============================================================================
+UNSUPPORTED CLAIMS -- read these, they are the point of the metric
+==============================================================================
+
+[versailles-vs-trianon]
+  UNSUPPORTED: The Treaty of Trianon required Hungary to assume financial obligations for parts of its former territory assigned to Romania, Yugoslavia, and Czechoslovakia.
+    -> "Romania, Yugoslavia and Czechoslovakia had to assume part of the financial obligations" - the treaty required them, not Hungary, to assume obligations
+
+[mussolini-vs-hitler-power]
+  UNSUPPORTED: Hitler initially gained power through an unsuccessful coup attempt.
+    -> "In 1922, Hitler tried to ask for Mussolini's guidance" - no mention of Hitler gaining power or coup attempt
+
+[finland-two-wars]
+  UNSUPPORTED: In the Moscow Peace Treaty, Finland repelled the Soviet invasion.
+    -> "The League of Nations deemed the attack illegal" - the treaty is not said to have repelled the invasion

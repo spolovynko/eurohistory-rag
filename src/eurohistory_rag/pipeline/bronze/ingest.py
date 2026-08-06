@@ -67,14 +67,16 @@ def ingest(
         by_theme[entry.theme].append(entry.title)
 
     written = 0
-    missing: list[str] = []
+    # (theme, title), so the file can say which theme lost an article. The
+    # report keeps only the titles, derived from this, so there is one list.
+    missing: list[tuple[str, str]] = []
 
     for theme, titles in by_theme.items():
         for batch in batched(titles, batch_size):
             result = source.fetch_batch(batch)
             for title in result.missing:
                 logger.warning("no page for %r (theme %s)", title, theme)
-            missing.extend(result.missing)
+            missing.extend((theme, title) for title in result.missing)
             if result.revisions:
                 frame = store.to_frame(result.revisions, theme, fetched_at)
                 store.write_batch(root, frame, fetched_at)
@@ -88,17 +90,20 @@ def ingest(
                 len(todo),
             )
 
+    path = store.write_missing(root, missing, fetched_at)
+
     logger.info(
-        "done: %d written, %d skipped, %d missing in %.1fs",
+        "done: %d written, %d skipped, %d missing in %.1fs (missing -> %s)",
         written,
         skipped,
         len(missing),
         time.monotonic() - started,
+        path,
     )
 
     return IngestReport(
         requested=len(entries),
         skipped=skipped,
         written=written,
-        missing=tuple(missing),
+        missing=tuple(title for _, title in missing),
     )

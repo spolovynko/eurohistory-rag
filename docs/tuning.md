@@ -38,7 +38,8 @@ answers — or, for the last two, what the measurement of it says.
 
 | Knob | Value | File | Decision | What it controls |
 |---|---|---|---|---|
-| `MIN_SEEDS` | 2 | `pipeline/bronze/curate.py` | D-016 | How many seed articles must link a title before it enters the registry. Lower = bigger, noisier corpus |
+| `[[theme]]` blocks | 9 themes, 35 seeds | `corpus/seeds.toml` | D-086 | **What the corpus is about.** The largest knob in this table and the one with no default: three themes covered 1914-1945, nine cover 1914-2024. Adding one is `curate` → hand trim → `ingest` → `silver` → `chunk` → `index` |
+| `MIN_SEEDS` | 2 | `pipeline/bronze/curate.py` | D-016 | How many seed articles must link a title before it enters the registry. Lower = bigger, noisier corpus. **Assumes the seeds are topically close** — six disparate seeds returned 62 candidates against 232-372 for tighter themes (D-086) |
 | `MIN_SECTION_CHARS` | 200 | `pipeline/silver/sections.py` | D-034 | Shortest section that becomes a Silver row. Below this it is usually leftover apparatus, not a claim |
 | `CHUNK_SIZE` | 1200 | `pipeline/gold/chunk.py` | D-037 | Characters of body per chunk, prefix excluded. The single biggest lever on retrieval quality |
 | `CHUNK_OVERLAP` | 150 | `pipeline/gold/chunk.py` | D-038 | Characters carried from the previous chunk, rounded up to whole sentences |
@@ -96,10 +97,15 @@ requires re-curating and re-ingesting, which is the only expensive one here.
 
 ### What a change costs
 
+**One embedding pass is $0.26 and 12 minutes** at the nine-theme corpus (54,903
+chunks, 52.1 M characters). It was $0.14 at three themes; budget it as scaling
+with the corpus, not as a fixed cost.
+
 | Change | Rebuild needed | Rough cost |
 |---|---|---|
+| A `[[theme]]` block | `curate` → hand trim → `ingest` → `silver` → `chunk` → `index` | ~20 min of reading to trim the candidates, then ~20 min of machine time and one embedding pass. The fetch itself is free and took 22 s for 618 articles |
 | `MIN_SEEDS` | `curate` → `ingest` → `silver` → `chunk` → `index` | hours; a full Wikipedia fetch |
-| `MIN_SECTION_CHARS` | `silver` → `chunk` → `index` | ~2 min + an embedding pass |
+| `MIN_SECTION_CHARS` | `silver` → `chunk` → `index` | ~5 min + an embedding pass |
 | `CHUNK_SIZE` / `CHUNK_OVERLAP` / `MIN_TAIL_CHARS` | `chunk` → `index` | seconds + an embedding pass |
 | `DEFAULT_K` / `MAX_PER_DOCUMENT` / `OVERFETCH` / `RERANK_TOP_N` / `RRF_K` | nothing | free, takes effect next query |
 | `hybrid_enabled` | `index` **if the collection predates Phase 9** | free to flip; a rebuild is a few cents |

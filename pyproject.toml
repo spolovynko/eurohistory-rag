@@ -48,6 +48,10 @@ testpaths = ["tests"]
 
 [dependency-groups]
 dev = [
+    # starlette's TestClient wants httpx2 and warns on every run without it.
+    # Test-only on purpose: the runtime HTTP client is httpx, in
+    # pipeline/bronze/wikipedia.py, and migrating that is not housekeeping.
+    "httpx2>=0.1.0",
     "mypy>=2.3.0",
     "pytest>=9.1.1",
     "ruff>=0.16.0",

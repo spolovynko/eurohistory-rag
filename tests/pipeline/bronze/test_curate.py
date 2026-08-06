@@ -15,7 +15,7 @@ from eurohistory_rag.pipeline.bronze.curate import (
     extract_links,
     rank_candidates,
 )
-from eurohistory_rag.pipeline.bronze.registry import Theme
+from eurohistory_rag.pipeline.bronze.seeds import Theme
 from eurohistory_rag.pipeline.bronze.wikipedia import FetchResult, Revision
 
 

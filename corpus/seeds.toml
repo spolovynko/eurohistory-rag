@@ -41,3 +41,90 @@ seeds = [
     "Nazi Germany",
     "The Holocaust",
 ]
+
+# Themes 4-9, added in Phase 14. See D-086. The three above stop in 1945; these
+# carry the corpus to the present, which is what the project claims to be about.
+
+[[theme]]
+slug = "cold-war-divided-europe"
+name = "The Cold War and a divided Europe, 1945-1991"
+seeds = [
+    "Cold War",
+    "Iron Curtain",
+    "Berlin Blockade",
+    "Marshall Plan",
+    "NATO",
+    "Warsaw Pact",
+]
+
+[[theme]]
+slug = "eastern-bloc-and-1989"
+name = "Communist Eastern Europe and its collapse"
+seeds = [
+    "Eastern Bloc",
+    "Hungarian Revolution of 1956",
+    "Prague Spring",
+    "Solidarity (Polish trade union)",
+    "Revolutions of 1989",
+    "Dissolution of the Soviet Union",
+]
+
+[[theme]]
+slug = "european-integration"
+name = "European integration, from the ECSC to the EU"
+seeds = [
+    "European integration",
+    "History of the European Union",
+    "European Union",
+    "Maastricht Treaty",
+    "Euro",
+    "Brexit",
+]
+
+[[theme]]
+slug = "decolonisation-and-migration"
+name = "The end of the European empires, and the migration that followed"
+seeds = [
+    "Decolonization",
+    "Decolonisation of Africa",
+    "Suez Crisis",
+    "Algerian War",
+    "Immigration to Europe",
+]
+
+[[theme]]
+slug = "postwar-society-and-economy"
+name = "Postwar society and economy: the boom, the welfare state, 1968"
+seeds = [
+    # Sixteen rather than six. The first six were too disparate to link to each
+    # other, so the >=2-seed rule kept almost nothing: 62 candidates against
+    # 232-372 for the other themes. Ten more seeds took it to 433.
+    "Post–World War II economic expansion",
+    "Wirtschaftswunder",
+    "Trente Glorieuses",
+    "Welfare state",
+    "Protests of 1968",
+    "Second-wave feminism",
+    "May 68",
+    "Sexual revolution",
+    "Counterculture of the 1960s",
+    "1973 oil crisis",
+    "Post-war consensus",
+    "Nordic model",
+    "Social democracy",
+    "Christian democracy",
+    "Secularization",
+    "Women's liberation movement",
+]
+
+[[theme]]
+slug = "europe-since-1991"
+name = "Europe since 1991: the Balkans, enlargement, crisis, war"
+seeds = [
+    "Yugoslav Wars",
+    "Breakup of Yugoslavia",
+    "Enlargement of the European Union",
+    "European debt crisis",
+    "2015 European migrant crisis",
+    "Russo-Ukrainian War",
+]
