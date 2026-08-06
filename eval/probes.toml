@@ -1,0 +1,88 @@
+# Probes for the faithfulness judge -- claims whose verdict is already known.
+#
+# Every `sources` block below is copied verbatim from
+# eval/runs/2026-08-05T1311Z/transcript.txt, so the judge is tested against text
+# the system really retrieved rather than against text written to make it look
+# good.
+#
+# Six cases, chosen to fail in both directions:
+#
+#   two SUPPORTED   -- one near-verbatim, one reworded. A judge that only
+#                      matches words fails the second; a judge that is simply
+#                      strict about everything fails both.
+#   four NOT SUPPORTED -- an outright error, a wrong name, and *two of the real
+#                      Phase 6 defect*: a fact that is genuinely present but
+#                      attached to the wrong document or the wrong verb.
+#
+# The last two are the ones that matter. If the judge calls them SUPPORTED it is
+# a word-overlap detector, and it would have graded the two answers Phase 6
+# caught by hand as perfect. See D-079.
+
+[[probe]]
+id = "brest-territory-verbatim"
+expect = true
+why = "the source states this almost word for word"
+claim = "Under the Treaty of Brest-Litovsk, Russia lost control of Ukraine, Poland, Belarus, Lithuania, Latvia and Estonia."
+sources = """
+<source id="1" title="Treaty of Brest-Litovsk">
+Under the terms of the treaty, Russia lost control of Ukraine, Poland, Belarus, Lithuania, Latvia, Estonia, and its Caucasian province of Kars and Batum. The lands comprised 34% of the former empire's population, 54% of its industrial land, 89% of its coalfields, and 26% of its railways. The Soviet government also confirmed the independence of Finland, which it had recognized in January 1918, and pledged to end its war with the Ukrainian People's Republic, which the Central Powers had recognized under the prior Treaty of Brest-Litovsk (9 February 1918). A supplementary protocol signed in August 1918 required Russia to pay Germany war reparations of six billion marks.
+</source>
+"""
+
+[[probe]]
+id = "brest-finland-reworded"
+expect = true
+why = "same meaning and same qualifiers, different words -- meaning, not matching"
+claim = "Moscow reaffirmed that Finland was independent, having already recognised it at the start of 1918."
+sources = """
+<source id="1" title="Treaty of Brest-Litovsk">
+Under the terms of the treaty, Russia lost control of Ukraine, Poland, Belarus, Lithuania, Latvia, Estonia, and its Caucasian province of Kars and Batum. The Soviet government also confirmed the independence of Finland, which it had recognized in January 1918, and pledged to end its war with the Ukrainian People's Republic, which the Central Powers had recognized under the prior Treaty of Brest-Litovsk (9 February 1918).
+</source>
+"""
+
+[[probe]]
+id = "brest-wrong-year"
+expect = false
+why = "the source says 3 March 1918, not 1917"
+claim = "The Treaty of Brest-Litovsk was signed on 3 March 1917."
+sources = """
+<source id="2" title="Treaty of Brest-Litovsk — Terms">
+Signing
+The Treaty of Brest-Litovsk was signed on 3 March 1918. The signatories were Soviet Russia signed by Grigori Sokolnikov on the one side and Germany, Austria-Hungary, Bulgaria, and the Ottoman Empire on the other.
+</source>
+"""
+
+[[probe]]
+id = "brest-wrong-signatory"
+expect = false
+why = "the source names Sokolnikov; Lenin is true-sounding and absent"
+claim = "Lenin signed the Treaty of Brest-Litovsk on behalf of Soviet Russia."
+sources = """
+<source id="2" title="Treaty of Brest-Litovsk — Terms">
+Signing
+The Treaty of Brest-Litovsk was signed on 3 March 1918. The signatories were Soviet Russia signed by Grigori Sokolnikov on the one side and Germany, Austria-Hungary, Bulgaria, and the Ottoman Empire on the other.
+</source>
+"""
+
+[[probe]]
+id = "brest-reparations-attribution"
+expect = false
+why = "a supplementary protocol of August 1918 required it, not the treaty -- the real Phase 6 defect"
+claim = "The Treaty of Brest-Litovsk required Russia to pay Germany war reparations of six billion marks."
+sources = """
+<source id="1" title="Treaty of Brest-Litovsk">
+Under the terms of the treaty, Russia lost control of Ukraine, Poland, Belarus, Lithuania, Latvia, Estonia, and its Caucasian province of Kars and Batum. The Soviet government also confirmed the independence of Finland, which it had recognized in January 1918. A supplementary protocol signed in August 1918 required Russia to pay Germany war reparations of six billion marks. The treaty was controversial in Russia, giving a unifying cause to the White movement and opening a rift between the Bolsheviks and the Left Socialist-Revolutionaries.
+</source>
+"""
+
+[[probe]]
+id = "brest-compensation-agreed"
+expect = false
+why = "the source says the Soviets agreed to pay; that they paid is not stated"
+claim = "Russia paid Germany six billion marks in compensation after the August 1918 agreement."
+sources = """
+<source id="3" title="Treaty of Brest-Litovsk — Terms">
+Soviet-German financial agreement of August 1918
+In the wake of Soviet repudiation of Tsarist bonds, the nationalisation of foreign-owned property and confiscation of foreign assets, and Entente forces landing on Russian territory, the Soviets and Germany signed an additional agreement on 27 August 1918. The Soviets agreed to pay six billion marks in compensation for German losses.
+</source>
+"""

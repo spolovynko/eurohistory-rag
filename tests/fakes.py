@@ -87,6 +87,40 @@ class FakeGenerator:
         return Completion(text=self._answer)
 
 
+class ScriptedGenerator:
+    """A Generator that returns a different canned answer on each call.
+
+    Phase 10 needs it: writing a question set and judging an answer are both
+    loops of one call per item, and a fake with a single fixed reply cannot
+    tell a loop that ran three times from one that ran once and repeated
+    itself.
+    """
+
+    def __init__(self, replies: Sequence[str], model: str = "fake-judge") -> None:
+        self._replies = list(replies)
+        self._model = model
+        self.calls: list[list[Message]] = []
+
+    @property
+    def model(self) -> str:
+        """The model name recorded on every answer."""
+        return self._model
+
+    def generate(self, messages: Sequence[Message]) -> Completion:
+        """Return the next scripted reply, failing loudly when they run out.
+
+        Running out is a test bug worth an exception rather than a repeat: a
+        silent wrap-around would let a test assert a count the code never
+        produced.
+        """
+        self.calls.append(list(messages))
+        if len(self.calls) > len(self._replies):
+            raise AssertionError(
+                f"ScriptedGenerator: call {len(self.calls)} of {len(self._replies)}"
+            )
+        return Completion(text=self._replies[len(self.calls) - 1])
+
+
 class FakeReranker:
     """A Reranker that scores by counting a term instead of running a model.
 

@@ -1,0 +1,879 @@
+# Generated questions -- NOT the golden set.
+#
+# Written by gpt-4.1-mini from single Gold chunks, one question per
+# chunk, at most one chunk per article. `expected` is the section the
+# chunk was cut from, so the answer key is free and also narrower than a
+# hand-written one.
+#
+# These are systematically easier than the thirty in questions.toml: a
+# question written from a passage borrows the passage's words. Use them
+# to notice a regression, never to judge quality. Regenerating this file
+# invalidates comparisons against runs made with the old one.
+
+[[question]]
+id = "syn-2788558-9-0"
+kind = "synthetic"
+text = "What are some of the main theatres and cultural institutions in Kharkiv, Ukraine, and how have recent events affected them?"
+expected = ["2788558:9"]
+note = "generated from 2788558:9:0 (Kharkiv — Culture)"
+
+[[question]]
+id = "syn-16547-4-9"
+kind = "synthetic"
+text = "What controversial statement did Joachim von Ribbentrop make at the 1937 Leipzig Trade Fair that caused negative reactions in the British press?"
+expected = ["16547:4"]
+note = "generated from 16547:4:9 (Joachim von Ribbentrop — Ambassador to the United Kingdom)"
+
+[[question]]
+id = "syn-18951602-1-2"
+kind = "synthetic"
+text = "What ethnic groups were included in the Austro-Hungarian Empire under Franz Joseph I according to the historical background of the Anschluss?"
+expected = ["18951602:1"]
+note = "generated from 18951602:1:2 (Anschluss — Historical background)"
+
+[[question]]
+id = "syn-8509308-2-1"
+kind = "synthetic"
+text = "What were the main features of the 1920 Constitution of the First Czechoslovak Republic regarding its political structure and executive power?"
+expected = ["8509308:2"]
+note = "generated from 8509308:2:1 (First Czechoslovak Republic — Politics)"
+
+[[question]]
+id = "syn-900340-1-0"
+kind = "synthetic"
+text = "What details are known about Magda Goebbels' early family life and paternity?"
+expected = ["900340:1"]
+note = "generated from 900340:1:0 (Magda Goebbels — Early life)"
+
+[[question]]
+id = "syn-326944-3-2"
+kind = "synthetic"
+text = "Which military units and commanders were involved in the German, Finnish, and Italian forces during the establishment of the Siege of Leningrad?"
+expected = ["326944:3"]
+note = "generated from 326944:3:2 (Siege of Leningrad — Establishment)"
+
+[[question]]
+id = "syn-38872-3-2"
+kind = "synthetic"
+text = "Which tribes invaded the Bessarabia region between the 3rd and 11th centuries during the Early Middle Ages?"
+expected = ["38872:3"]
+note = "generated from 38872:3:2 (Bessarabia — History)"
+
+[[question]]
+id = "syn-754133-2-0"
+kind = "synthetic"
+text = "What role did Nikolai Vatutin play in the defense of Leningrad against German Army Group North during World War II?"
+expected = ["754133:2"]
+note = "generated from 754133:2:0 (Nikolai Vatutin — The battles in the Northwest)"
+
+[[question]]
+id = "syn-1041515-4-0"
+kind = "synthetic"
+text = "Who were the rulers of the Habsburg monarchy from 1508 to 1918, and which two houses did they belong to?"
+expected = ["1041515:4"]
+note = "generated from 1041515:4:0 (Habsburg monarchy — Rulers, 1508–1918)"
+
+[[question]]
+id = "syn-4952298-5-0"
+kind = "synthetic"
+text = "What were the key outcomes of the 1919 Treaty of Versailles and the subsequent political changes in Europe following World War I?"
+expected = ["4952298:5"]
+note = "generated from 4952298:5:0 (European theatre of World War I — Aftermath)"
+
+[[question]]
+id = "syn-5195347-1-10"
+kind = "synthetic"
+text = "What events occurred in Asturias during the 1934 revolt following the inclusion of CEDA ministers in the Spanish government?"
+expected = ["5195347:1"]
+note = "generated from 5195347:1:10 (Second Spanish Republic — History)"
+
+[[question]]
+id = "syn-14045789-2-3"
+kind = "synthetic"
+text = "What was the purpose of the Hunger Plan in Nazi Germany's strategy during the invasion of the Soviet Union?"
+expected = ["14045789:2"]
+note = "generated from 14045789:2:3 (Hunger Plan — Plan)"
+
+[[question]]
+id = "syn-87229-3-3"
+kind = "synthetic"
+text = "How did H. H. Asquith's role in the Parnell Commission of Enquiry in 1889 impact his legal career and reputation?"
+expected = ["87229:3"]
+note = "generated from 87229:3:3 (H. H. Asquith — Member of Parliament: 1886–1908)"
+
+[[question]]
+id = "syn-86224-0-0"
+kind = "synthetic"
+text = "Which city hosted the 1928 Summer Olympics and what was notable about its previous bids for the Games?"
+expected = ["86224:0"]
+note = "generated from 86224:0:0 (1928 Summer Olympics)"
+
+[[question]]
+id = "syn-58031-2-2"
+kind = "synthetic"
+text = "How did the Industrial Revolution influence the social stratification of the bourgeoisie by the mid-19th century?"
+expected = ["58031:2"]
+note = "generated from 58031:2:2 (Bourgeoisie — History)"
+
+[[question]]
+id = "syn-219299-3-1"
+kind = "synthetic"
+text = "What recommendations did Alan Bullock's 1977 Bullock Report make regarding workers' control in large companies?"
+expected = ["219299:3"]
+note = "generated from 219299:3:1 (Alan Bullock — Other works)"
+
+[[question]]
+id = "syn-19279158-1-24"
+kind = "synthetic"
+text = "What were some of the key social reforms and political achievements of the UK Labour Party during Tony Blair's government following their 1997 election victory?"
+expected = ["19279158:1"]
+note = "generated from 19279158:1:24 (Labour Party (UK) — History)"
+
+[[question]]
+id = "syn-28243166-4-4"
+kind = "synthetic"
+text = "What was Adolf Hitler's envisioned role for Britain in the Greater Germanic Reich after the invasion of Russia?"
+expected = ["28243166:4"]
+note = "generated from 28243166:4:4 (Greater Germanic Reich — Role of Britain)"
+
+[[question]]
+id = "syn-84508-4-1"
+kind = "synthetic"
+text = "How did Josef Mengele avoid immediate identification and capture as a major war criminal after being taken prisoner by the Americans in 1945?"
+expected = ["84508:4"]
+note = "generated from 84508:4:1 (Josef Mengele — After Auschwitz)"
+
+[[question]]
+id = "syn-24319082-4-2"
+kind = "synthetic"
+text = "What historical changes in control and modifications to the Oder River are described in relation to German Ostsiedlung and navigation improvements?"
+expected = ["24319082:4"]
+note = "generated from 24319082:4:2 (Oder — History)"
+
+[[question]]
+id = "syn-298775-3-0"
+kind = "synthetic"
+text = "What were some of the policies and actions implemented by Wilhelm Solf during the German colonial administration of Samoa starting in 1900?"
+expected = ["298775:3"]
+note = "generated from 298775:3:0 (German Samoa — History)"
+
+[[question]]
+id = "syn-26282927-3-3"
+kind = "synthetic"
+text = "What was the significance of the Oscarsborg Fortress during the German invasion of Norway in Operation Weserübung?"
+expected = ["26282927:3"]
+note = "generated from 26282927:3:3 (Operation Weserübung — Invasion of Norway)"
+
+[[question]]
+id = "syn-47155-5-1"
+kind = "synthetic"
+text = "What distinguishes the capitalist, communist, and mixed economic system modes of production in terms of ownership and control of the means of production?"
+expected = ["47155:5"]
+note = "generated from 47155:5:1 (Means of production — Related terms)"
+
+[[question]]
+id = "syn-1406373-4-0"
+kind = "synthetic"
+text = "What actions did Ottoman interior minister Talaat Pasha order regarding the Assyrians living near the Persian border in 1914?"
+expected = ["1406373:4"]
+note = "generated from 1406373:4:0 (Sayfo — Ethnic cleansing of Hakkari)"
+
+[[question]]
+id = "syn-16774-2-2"
+kind = "synthetic"
+text = "What were Karl Dönitz's views on submarine production and which type of submarine did he consider ideal during the interwar period?"
+expected = ["16774:2"]
+note = "generated from 16774:2:2 (Karl Dönitz — Interwar period)"
+
+[[question]]
+id = "syn-43154268-1-0"
+kind = "synthetic"
+text = "What event does Orpen's painting of the Treaty of Versailles depict, and how does it portray the politicians involved?"
+expected = ["43154268:1"]
+note = "generated from 43154268:1:0 (The Signing of Peace in the Hall of Mirrors — Background)"
+
+[[question]]
+id = "syn-440815-0-1"
+kind = "synthetic"
+text = "How has the scope of the Australian War Memorial's commemoration changed since its inception?"
+expected = ["440815:0"]
+note = "generated from 440815:0:1 (Australian War Memorial)"
+
+[[question]]
+id = "syn-2117647-4-18"
+kind = "synthetic"
+text = "What concerns did German leaders have about supporting Austria-Hungary's war with Serbia during the July Crisis of 1914?"
+expected = ["2117647:4"]
+note = "generated from 2117647:4:18 (July Crisis — Austria-Hungary considers an ultimatum (7–23 July))"
+
+[[question]]
+id = "syn-2520313-4-0"
+kind = "synthetic"
+text = "How did the May 1924 German federal election affect the seat distribution among moderate centre parties, the SPD, and far-right and far-left parties?"
+expected = ["2520313:4"]
+note = "generated from 2520313:4:0 (May 1924 German federal election — Results)"
+
+[[question]]
+id = "syn-197051-2-1"
+kind = "synthetic"
+text = "What were the main challenges and developments in the economic growth of German East Africa during the early 20th century?"
+expected = ["197051:2"]
+note = "generated from 197051:2:1 (German East Africa — Economic development)"
+
+[[question]]
+id = "syn-1376379-0-0"
+kind = "synthetic"
+text = "What was the Madagascar Plan proposed by Nazi Germany in 1940 regarding the Jewish population of Europe?"
+expected = ["1376379:0"]
+note = "generated from 1376379:0:0 (Madagascar Plan)"
+
+[[question]]
+id = "syn-46391-1-0"
+kind = "synthetic"
+text = "What were the circumstances of Ramsay MacDonald's birth and early family background in Lossiemouth, Scotland?"
+expected = ["46391:1"]
+note = "generated from 46391:1:0 (Ramsay MacDonald — Early life)"
+
+[[question]]
+id = "syn-848308-3-2"
+kind = "synthetic"
+text = "What were the key events and diplomatic actions involving Wellington Koo during his political career in the early 1920s?"
+expected = ["848308:3"]
+note = "generated from 848308:3:2 (Wellington Koo — Political career)"
+
+[[question]]
+id = "syn-549297-0-0"
+kind = "synthetic"
+text = "What roles and commands did Maximilian von Weichs hold in the German military during World War II?"
+expected = ["549297:0"]
+note = "generated from 549297:0:0 (Maximilian von Weichs)"
+
+[[question]]
+id = "syn-30853-2-0"
+kind = "synthetic"
+text = "Which peoples and empires controlled the territory of Transylvania from the Agathyrsi to the Gepids during ancient and early medieval times?"
+expected = ["30853:2"]
+note = "generated from 30853:2:0 (Transylvania — History)"
+
+[[question]]
+id = "syn-2958405-1-1"
+kind = "synthetic"
+text = "How did the Golden Twenties in Weimar Germany influence the integration of art, craft, and technology, and which notable Jewish intellectuals contributed to German academia during this period?"
+expected = ["2958405:1"]
+note = "generated from 2958405:1:1 (Golden Twenties — Culture of Weimar Germany)"
+
+[[question]]
+id = "syn-39359616-2-0"
+kind = "synthetic"
+text = "What events and warnings indicated the impending German invasion of Luxembourg in early May 1940?"
+expected = ["39359616:2"]
+note = "generated from 39359616:2:0 (German invasion of Luxembourg — Prelude)"
+
+[[question]]
+id = "syn-730658-4-3"
+kind = "synthetic"
+text = "What impact did the United States' strategic bombing campaign have on Japanese cities and Emperor Hirohito's decision to pursue peace during World War II?"
+expected = ["730658:4"]
+note = "generated from 730658:4:3 (Strategic bombing during World War II — Asia)"
+
+[[question]]
+id = "syn-33060-1-17"
+kind = "synthetic"
+text = "What factors contributed to Warren G. Harding's loss in the 1910 Ohio gubernatorial election?"
+expected = ["33060:1"]
+note = "generated from 33060:1:17 (Warren G. Harding — Early life and career)"
+
+[[question]]
+id = "syn-1251625-2-3"
+kind = "synthetic"
+text = "What events led to the siege and recapture of Le Bourget during the Siege of Paris in 1870–1871?"
+expected = ["1251625:2"]
+note = "generated from 1251625:2:3 (Siege of Paris (1870–1871) — Siege)"
+
+[[question]]
+id = "syn-193786-5-14"
+kind = "synthetic"
+text = "What conditions did the Allies impose on Admiral Alexander Kolchak in exchange for military aid during the Russian Civil War?"
+expected = ["193786:5"]
+note = "generated from 193786:5:14 (Fourteen Points — Implementation)"
+
+[[question]]
+id = "syn-1739695-1-3"
+kind = "synthetic"
+text = "What actions did Japan take against German possessions in the Pacific during World War I following its declaration of war in August 1914?"
+expected = ["1739695:1"]
+note = "generated from 1739695:1:3 (South Seas Mandate — Origin)"
+
+[[question]]
+id = "syn-14543141-1-2"
+kind = "synthetic"
+text = "What territorial and political recommendations did The Inquiry make regarding Finland, Poland, and Crimea after World War I?"
+expected = ["14543141:1"]
+note = "generated from 14543141:1:2 (The Inquiry — Recommendations)"
+
+[[question]]
+id = "syn-394312-2-3"
+kind = "synthetic"
+text = "What role did Lutz Graf Schwerin von Krosigk play in the German government immediately following Hitler's death in 1945?"
+expected = ["394312:2"]
+note = "generated from 394312:2:3 (Lutz Graf Schwerin von Krosigk — Nazi years)"
+
+[[question]]
+id = "syn-797310-2-1"
+kind = "synthetic"
+text = "What actions did Adolf Hitler take in response to the Soviet Vistula–Oder offensive in January 1945?"
+expected = ["797310:2"]
+note = "generated from 797310:2:1 (Operation Spring Awakening — German plan)"
+
+[[question]]
+id = "syn-236970-2-2"
+kind = "synthetic"
+text = "What role did Alfred von Tirpitz play in the development of torpedoes and torpedo boats in the German Imperial Navy after 1871?"
+expected = ["236970:2"]
+note = "generated from 236970:2:2 (Alfred von Tirpitz — Naval career)"
+
+[[question]]
+id = "syn-60585-2-3"
+kind = "synthetic"
+text = "What are the main ideological wings within the Social Democratic Party of Germany and how do they differ in their views on policies like Agenda 2010?"
+expected = ["60585:2"]
+note = "generated from 60585:2:3 (Social Democratic Party of Germany — Ideology and platform)"
+
+[[question]]
+id = "syn-154955-11-3"
+kind = "synthetic"
+text = "What were some of the health challenges and physical characteristics experienced by Billy Hughes during his lifetime?"
+expected = ["154955:11"]
+note = "generated from 154955:11:3 (Billy Hughes — Personal life)"
+
+[[question]]
+id = "syn-73412793-1-2"
+kind = "synthetic"
+text = "Why did Adolf Hitler begin planning to change the rules of succession for the German presidency in 1934?"
+expected = ["73412793:1"]
+note = "generated from 73412793:1:2 (Law Concerning the Head of State of the German Reich — Background)"
+
+[[question]]
+id = "syn-61098-2-1"
+kind = "synthetic"
+text = "Why has Gregory Stanton criticized the use of the term \"ethnic cleansing\" in relation to events that should be called genocide?"
+expected = ["61098:2"]
+note = "generated from 61098:2:1 (Ethnic cleansing — Definitions)"
+
+[[question]]
+id = "syn-17888-11-4"
+kind = "synthetic"
+text = "How did Leon Trotsky's theory of permanent revolution explain the role of the bourgeoisie in backward countries and what was his stance on achieving revolution through military conquest?"
+expected = ["17888:11"]
+note = "generated from 17888:11:4 (Leon Trotsky — Political ideology and contributions to Marxism)"
+
+[[question]]
+id = "syn-145516-5-7"
+kind = "synthetic"
+text = "How did Free France gain control over Syria and Lebanon during World War II, and what challenges did they face in increasing their forces?"
+expected = ["145516:5"]
+note = "generated from 145516:5:7 (Free France — Struggle for control of the French colonies)"
+
+[[question]]
+id = "syn-216862-4-2"
+kind = "synthetic"
+text = "What factors contributed to the relatively low levels of French emigration to the Americas during the period of the French colonial empire?"
+expected = ["216862:4"]
+note = "generated from 216862:4:2 (French colonial empire — Demographics)"
+
+[[question]]
+id = "syn-2378869-14-0"
+kind = "synthetic"
+text = "How did the Jewish population in Hungary change from after World War I to 2010, and what historical events contributed to these changes?"
+expected = ["2378869:14"]
+note = "generated from 2378869:14:0 (History of the Jews in Hungary — From the 1990s)"
+
+[[question]]
+id = "syn-202614-2-3"
+kind = "synthetic"
+text = "What changes occurred to the Finnish population and administrative status of the Karelian Isthmus between 1917 and 1936?"
+expected = ["202614:2"]
+note = "generated from 202614:2:3 (Karelian Isthmus — History)"
+
+[[question]]
+id = "syn-543175-4-1"
+kind = "synthetic"
+text = "What was Wilhelm Ritter von Leeb convicted of during his trial and what was the outcome of his sentence?"
+expected = ["543175:4"]
+note = "generated from 543175:4:1 (Wilhelm Ritter von Leeb — Trial and conviction)"
+
+[[question]]
+id = "syn-28222445-3-6"
+kind = "synthetic"
+text = "What are the national bird and national flower of Estonia, and what percentage of Estonia's land area is covered by forests as of 2023?"
+expected = ["28222445:3"]
+note = "generated from 28222445:3:6 (Estonia — Geography)"
+
+[[question]]
+id = "syn-1012623-3-0"
+kind = "synthetic"
+text = "What measures did the Nazi leadership take to remove evidence of the killings at Majdanek following Soviet advances on the Eastern Front?"
+expected = ["1012623:3"]
+note = "generated from 1012623:3:0 (Operation Harvest Festival — Coverup)"
+
+[[question]]
+id = "syn-4296727-3-10"
+kind = "synthetic"
+text = "What actions did Ottoman official Rafet Bey reportedly take during the Greek genocide according to the Austrian consul in Samsun?"
+expected = ["4296727:3"]
+note = "generated from 4296727:3:10 (Greek genocide — Events)"
+
+[[question]]
+id = "syn-29269-3-38"
+kind = "synthetic"
+text = "How does the United States government recognize and define the sovereignty of Native American tribes within its legal framework?"
+expected = ["29269:3"]
+note = "generated from 29269:3:38 (Self-determination — Notable cases)"
+
+[[question]]
+id = "syn-142788-1-0"
+kind = "synthetic"
+text = "What were the historical uses and developments of gas chambers from the 19th century through the Holocaust and beyond?"
+expected = ["142788:1"]
+note = "generated from 142788:1:0 (Gas chamber — History)"
+
+[[question]]
+id = "syn-754367-3-3"
+kind = "synthetic"
+text = "What was the stance of Nikolai Yudenich's Northwestern Army regarding Finland's independence and ethnic separatism during their 1919 campaign against Petrograd?"
+expected = ["754367:3"]
+note = "generated from 754367:3:3 (Nikolai Yudenich — White Army)"
+
+[[question]]
+id = "syn-551953-4-8"
+kind = "synthetic"
+text = "What was the purpose and editorial approach of Penguin Books' Penguin Specials series inaugurated in 1937?"
+expected = ["551953:4"]
+note = "generated from 551953:4:8 (Penguin Books — Imprints and series)"
+
+[[question]]
+id = "syn-1025103-4-0"
+kind = "synthetic"
+text = "What were the main ethnic groups and native languages in Zhytomyr according to the 2001 census and a 2023 language survey?"
+expected = ["1025103:4"]
+note = "generated from 1025103:4:0 (Zhytomyr — Population)"
+
+[[question]]
+id = "syn-31756-4-16"
+kind = "synthetic"
+text = "What are the purposes and procedures of congressional investigations conducted by the United States Congress?"
+expected = ["31756:4"]
+note = "generated from 31756:4:16 (United States Congress — Role)"
+
+[[question]]
+id = "syn-42056-5-0"
+kind = "synthetic"
+text = "What does the archaeogenetic study by Lazaridis et al. (2017) reveal about the genetic relationship between Minoans, Mycenaean Greeks, and modern Greeks?"
+expected = ["42056:5"]
+note = "generated from 42056:5:0 (Greeks — Genetics)"
+
+[[question]]
+id = "syn-1035114-2-11"
+kind = "synthetic"
+text = "How did the Nazi concept of Volksgemeinschaft justify the one-party state and the exclusion of Jews from political life according to Carl Schmitt?"
+expected = ["1035114:2"]
+note = "generated from 1035114:2:11 (Volksgemeinschaft — Nazi Volksgemeinschaft)"
+
+[[question]]
+id = "syn-42402-3-1"
+kind = "synthetic"
+text = "How did Nazi Germany, particularly under Himmler, perceive and justify the persecution of homosexuals within the national community?"
+expected = ["42402:3"]
+note = "generated from 42402:3:1 (Persecution of homosexuals in Nazi Germany — Nazi views of homosexuality)"
+
+[[question]]
+id = "syn-20611504-1-25"
+kind = "synthetic"
+text = "What were the main consequences and conditions of the Emancipation Reform of 1861 in the Russian Empire?"
+expected = ["20611504:1"]
+note = "generated from 20611504:1:25 (Russian Empire — History)"
+
+[[question]]
+id = "syn-613885-1-4"
+kind = "synthetic"
+text = "How did Benito Mussolini and the Fascist Party respond to the socialist general strike in Italy in August 1922?"
+expected = ["613885:1"]
+note = "generated from 613885:1:4 (March on Rome — Background)"
+
+[[question]]
+id = "syn-3612475-1-24"
+kind = "synthetic"
+text = "What territorial gains did Bulgaria achieve during World War II under Prime Minister Bogdan Filov?"
+expected = ["3612475:1"]
+note = "generated from 3612475:1:24 (Kingdom of Bulgaria — History)"
+
+[[question]]
+id = "syn-11015252-3-10"
+kind = "synthetic"
+text = "What criticisms did international socialists and Marxists like Karl Kautsky, Rosa Luxemburg, and Peter Kropotkin make about Vladimir Lenin's government in Russia?"
+expected = ["11015252:3"]
+note = "generated from 11015252:3:10 (Vladimir Lenin — Lenin's government)"
+
+[[question]]
+id = "syn-18842471-11-5"
+kind = "synthetic"
+text = "What were some of the major atrocities committed by Nationalist forces during the Spanish Civil War, including specific cities and estimated numbers of victims?"
+expected = ["18842471:11"]
+note = "generated from 18842471:11:5 (Spanish Civil War — Atrocities)"
+
+[[question]]
+id = "syn-11702744-5-5"
+kind = "synthetic"
+text = "How did the German Army between 1935 and 1945 use infiltration tactics and assault guns in their infantry attacks?"
+expected = ["11702744:5"]
+note = "generated from 11702744:5:5 (German Army (1935–1945) — Tactics)"
+
+[[question]]
+id = "syn-102459-0-2"
+kind = "synthetic"
+text = "How do one-party states use elections to maintain power and gather information about local officials and the population?"
+expected = ["102459:0"]
+note = "generated from 102459:0:2 (One-party state)"
+
+[[question]]
+id = "syn-44555-1-5"
+kind = "synthetic"
+text = "What role did the Union of South Africa's constitution assign to the national government regarding native affairs?"
+expected = ["44555:1"]
+note = "generated from 44555:1:5 (Union of South Africa — Constitution)"
+
+[[question]]
+id = "syn-443150-4-3"
+kind = "synthetic"
+text = "What controversies have arisen around war memorials commemorating Aboriginal resistance to colonisation in Australia?"
+expected = ["443150:4"]
+note = "generated from 443150:4:3 (War memorial — Controversy)"
+
+[[question]]
+id = "syn-11137012-2-8"
+kind = "synthetic"
+text = "How did the Soviet Union use the Potsdam Agreement to justify expropriation of Austrian economic assets during the first year of Allied occupation in Austria?"
+expected = ["11137012:2"]
+note = "generated from 11137012:2:8 (Allied-occupied Austria — 1945–1946: First year of occupation)"
+
+[[question]]
+id = "syn-51485-1-5"
+kind = "synthetic"
+text = "How did Adolf Hitler contribute to the German Workers' Party's efforts to attract working-class Germans during 1919-1920?"
+expected = ["51485:1"]
+note = "generated from 51485:1:5 (German Workers' Party — History)"
+
+[[question]]
+id = "syn-1387508-0-3"
+kind = "synthetic"
+text = "What were the key outcomes and strategic consequences of the German Case Blue offensive during World War II?"
+expected = ["1387508:0"]
+note = "generated from 1387508:0:3 (Case Blue)"
+
+[[question]]
+id = "syn-69840-2-32"
+kind = "synthetic"
+text = "Why did Victor Emmanuel III hesitate to dismiss Mussolini despite pressure from the Italian elite during his reign?"
+expected = ["69840:2"]
+note = "generated from 69840:2:32 (Victor Emmanuel III — Reign)"
+
+[[question]]
+id = "syn-48343-3-3"
+kind = "synthetic"
+text = "What were the options offered by Japan to Thailand regarding military cooperation during the invasion on 8 December 1941, and which option did Thailand choose?"
+expected = ["48343:3"]
+note = "generated from 48343:3:3 (Tripartite Pact — Potential signatories)"
+
+[[question]]
+id = "syn-25955086-4-21"
+kind = "synthetic"
+text = "How did Jewish communities establish themselves in the Americas during the 17th and 18th centuries, and what role did they play in the American Revolution?"
+expected = ["25955086:4"]
+note = "generated from 25955086:4:21 (Jews — History)"
+
+[[question]]
+id = "syn-556220-2-1"
+kind = "synthetic"
+text = "What roles did Odilo Globocnik hold within the Nazi Party and SS during the 1930s leading up to and following the Anschluss of Austria?"
+expected = ["556220:2"]
+note = "generated from 556220:2:1 (Odilo Globocnik — Nazi Party and SS career)"
+
+[[question]]
+id = "syn-27040-4-9"
+kind = "synthetic"
+text = "How was the SS-Totenkopfverbände (SS-TV) organized by 1944, and what impact did the rotation of SS members have on the organization's knowledge of concentration camp activities?"
+expected = ["27040:4"]
+note = "generated from 27040:4:9 (Schutzstaffel — War in the east)"
+
+[[question]]
+id = "syn-6675-5-2"
+kind = "synthetic"
+text = "How does political scientist Karen Stenner explain conservatives' attitudes toward diversity and authoritarianism?"
+expected = ["6675:5"]
+note = "generated from 6675:5:2 (Conservatism — Psychology)"
+
+[[question]]
+id = "syn-262120-0-2"
+kind = "synthetic"
+text = "What was the outcome of Operation Uranus and how did Adolf Hitler respond to the encirclement of Axis forces at Stalingrad?"
+expected = ["262120:0"]
+note = "generated from 262120:0:2 (Operation Uranus)"
+
+[[question]]
+id = "syn-676824-4-2"
+kind = "synthetic"
+text = "What was William Donovan's role at the International Military Tribunal and his perspective on the trials of German officials after World War II?"
+expected = ["676824:4"]
+note = "generated from 676824:4:2 (Franz Halder — Post-war)"
+
+[[question]]
+id = "syn-7625929-3-1"
+kind = "synthetic"
+text = "What role did Vittorio Emanuele Orlando play at the Paris Peace Conference and how did his actions there affect his political career?"
+expected = ["7625929:3"]
+note = "generated from 7625929:3:1 (Vittorio Emanuele Orlando — Paris Peace Conference)"
+
+[[question]]
+id = "syn-331863-3-4"
+kind = "synthetic"
+text = "What roles and criticisms did Ferdinand Foch face during World War I, including his command positions and the reactions of British officers to his leadership?"
+expected = ["331863:3"]
+note = "generated from 331863:3:4 (Ferdinand Foch — World War I)"
+
+[[question]]
+id = "syn-322031-2-2"
+kind = "synthetic"
+text = "What ancient city was the archaeological site of Triport identified with, and what role did it play during the Roman Empire?"
+expected = ["322031:2"]
+note = "generated from 322031:2:2 (Vlorë — History)"
+
+[[question]]
+id = "syn-101616-3-4"
+kind = "synthetic"
+text = "What measures did Boris Godunov take to fortify Smolensk, and what was the outcome of these fortifications during the Polish–Lithuanian siege in 1611?"
+expected = ["101616:3"]
+note = "generated from 101616:3:4 (Smolensk — History)"
+
+[[question]]
+id = "syn-832112-3-1"
+kind = "synthetic"
+text = "What were the goals and activities of the secret societies like Bund Wiking, Organisation Consul, and Schwarze Reichswehr during the Weimar Republic?"
+expected = ["832112:3"]
+note = "generated from 832112:3:1 (Weimar political parties — Other Organizations)"
+
+[[question]]
+id = "syn-31130-5-0"
+kind = "synthetic"
+text = "Which political parties achieved their first-ever first place finishes in Thuringia state elections, and in which years did these occur?"
+expected = ["31130:5"]
+note = "generated from 31130:5:0 (Thuringia — Politics)"
+
+[[question]]
+id = "syn-31371717-1-10"
+kind = "synthetic"
+text = "How did the National Society and key figures like Daniele Manin and Camillo Benso of Cavour contribute to the unification of Italy during the 19th century?"
+expected = ["31371717:1"]
+note = "generated from 31371717:1:10 (Italian nationalism — History)"
+
+[[question]]
+id = "syn-103695-7-2"
+kind = "synthetic"
+text = "How is the concept of a \"master race\" depicted in the 1948 film Rope and the Doctor Who series?"
+expected = ["103695:7"]
+note = "generated from 103695:7:2 (Master race — Cultural influences)"
+
+[[question]]
+id = "syn-57297576-2-2"
+kind = "synthetic"
+text = "How did Erich Ludendorff's concept of the war of annihilation expand on the idea of Total War in terms of societal priorities and the use of resources?"
+expected = ["57297576:2"]
+note = "generated from 57297576:2:2 (War of annihilation — Development)"
+
+[[question]]
+id = "syn-577704-1-3"
+kind = "synthetic"
+text = "How did Salazar's Estado Novo regime in Portugal differ from the preceding First Republic in terms of political and economic stability?"
+expected = ["577704:1"]
+note = "generated from 577704:1:3 (Estado Novo (Portugal) — Prelude)"
+
+[[question]]
+id = "syn-282291-5-44"
+kind = "synthetic"
+text = "What territorial and political gains did Japan receive at the 1919 Paris Peace Conference following World War I?"
+expected = ["282291:5"]
+note = "generated from 282291:5:44 (Aftermath of World War I — Political upheavals)"
+
+[[question]]
+id = "syn-590135-3-1"
+kind = "synthetic"
+text = "What was the outcome of the Soviet Operation Bagration launched on 22 June 1944 against the German Army Group Centre?"
+expected = ["590135:3"]
+note = "generated from 590135:3:1 (Army Group Centre — Destruction of Army Group Centre)"
+
+[[question]]
+id = "syn-271319-3-5"
+kind = "synthetic"
+text = "What was the administrative status and demographic composition of the Banat region under Ottoman rule from 1552 to 1716?"
+expected = ["271319:3"]
+note = "generated from 271319:3:5 (Banat — History)"
+
+[[question]]
+id = "syn-361527-3-4"
+kind = "synthetic"
+text = "What are some of the historic monuments and religious buildings found in the city center of Antalya?"
+expected = ["361527:3"]
+note = "generated from 361527:3:4 (Antalya — Geography)"
+
+[[question]]
+id = "syn-1964954-2-5"
+kind = "synthetic"
+text = "What services does the Chicago Distribution Center provide to university presses and other publishers?"
+expected = ["1964954:2"]
+note = "generated from 1964954:2:5 (University of Chicago Press — Current status)"
+
+[[question]]
+id = "syn-421012-1-7"
+kind = "synthetic"
+text = "What were the main components of the war reparations made by Japan under the San Francisco Peace Treaty of 1951?"
+expected = ["421012:1"]
+note = "generated from 421012:1:7 (War reparations — History)"
+
+[[question]]
+id = "syn-16215656-1-1"
+kind = "synthetic"
+text = "What challenges did the Czechoslovak government-in-exile face in gaining full recognition from France during Édouard Daladier's government?"
+expected = ["16215656:1"]
+note = "generated from 16215656:1:1 (Czechoslovak government-in-exile — From committee to government)"
+
+[[question]]
+id = "syn-14245-8-2"
+kind = "synthetic"
+text = "How did the Second Polish Republic's government treat the Ukrainian minority in Galicia and the Eastern Borderlands before World War II?"
+expected = ["14245:8"]
+note = "generated from 14245:8:2 (Second Polish Republic — Status of ethnic minorities)"
+
+[[question]]
+id = "syn-70435-2-4"
+kind = "synthetic"
+text = "What was the planned sequence of objectives and artillery support during the Battle of Vimy Ridge prelude to maintain momentum and secure the ridge?"
+expected = ["70435:2"]
+note = "generated from 70435:2:4 (Battle of Vimy Ridge — Prelude)"
+
+[[question]]
+id = "syn-14653-3-4"
+kind = "synthetic"
+text = "What are the main roles and limitations of the president in Iran's government and political system?"
+expected = ["14653:3"]
+note = "generated from 14653:3:4 (Iran — Government and politics)"
+
+[[question]]
+id = "syn-13909887-3-0"
+kind = "synthetic"
+text = "What was the role of the League of Nations Council in the enforcement of the Minority Treaties?"
+expected = ["13909887:3"]
+note = "generated from 13909887:3:0 (Minority Treaties — System)"
+
+[[question]]
+id = "syn-3434750-7-4"
+kind = "synthetic"
+text = "How did early American authors and critics contribute to the development of a unique American literature and culture during the 18th and 19th centuries?"
+expected = ["3434750:7"]
+note = "generated from 3434750:7:4 (United States — Culture and society)"
+
+[[question]]
+id = "syn-27929799-3-0"
+kind = "synthetic"
+text = "How did the U.S.–German Peace Treaty of 1921 influence American support for the Weimar Republic and the reestablishment of diplomatic relations between the U.S. and Germany?"
+expected = ["27929799:3"]
+note = "generated from 27929799:3:0 (U.S.–German Peace Treaty (1921) — Aftermath)"
+
+[[question]]
+id = "syn-266350-1-11"
+kind = "synthetic"
+text = "How did the Assyrian identity and religious landscape evolve under Parthian and Sasanian rule in the region of Adiabene and Asoristan?"
+expected = ["266350:1"]
+note = "generated from 266350:1:11 (Assyrians — History)"
+
+[[question]]
+id = "syn-50123-5-4"
+kind = "synthetic"
+text = "How did the political landscape in Europe change in terms of autocracy and monarchy during the 19th and 20th centuries?"
+expected = ["50123:5"]
+note = "generated from 50123:5:4 (Autocracy — History)"
+
+[[question]]
+id = "syn-50863619-3-2"
+kind = "synthetic"
+text = "What directives did the Barbarossa decree and German military leaders give regarding the treatment of Soviet civilians and perceived enemies during the invasion of the Soviet Union?"
+expected = ["50863619:3"]
+note = "generated from 50863619:3:2 (Barbarossa decree — Contents)"
+
+[[question]]
+id = "syn-15642219-1-0"
+kind = "synthetic"
+text = "What was the role of forced labour in Nazi Germany's policy of Lebensraum and how were different groups subjected to it during World War II?"
+expected = ["15642219:1"]
+note = "generated from 15642219:1:0 (Forced labour under German rule during World War II — Forced workers)"
+
+[[question]]
+id = "syn-255083-3-5"
+kind = "synthetic"
+text = "Why did Josephine Baker decline Coretta Scott King's request to lead the Civil Rights Movement after Martin Luther King Jr.'s assassination?"
+expected = ["255083:3"]
+note = "generated from 255083:3:5 (Josephine Baker — Civil rights activism)"
+
+[[question]]
+id = "syn-14244852-4-5"
+kind = "synthetic"
+text = "What factors contributed to the high death rates among Soviet prisoners of war in German camps during the fall of 1941 and early 1942?"
+expected = ["14244852:4"]
+note = "generated from 14244852:4:5 (German atrocities committed against Soviet prisoners of war — Prisoner-of-war camps)"
+
+[[question]]
+id = "syn-295105-6-3"
+kind = "synthetic"
+text = "How did the Treaty of Versailles address Japanese territorial claims in China and the Pacific Islands during the Paris Peace Conference?"
+expected = ["295105:6"]
+note = "generated from 295105:6:3 (Paris Peace Conference (1919–1920) — Japanese approach)"
+
+[[question]]
+id = "syn-586345-1-3"
+kind = "synthetic"
+text = "What was the rationale behind Germany's decision to resume unrestricted submarine warfare in early 1917 during World War I?"
+expected = ["586345:1"]
+note = "generated from 586345:1:3 (Unrestricted submarine warfare — History)"
+
+[[question]]
+id = "syn-184394-5-0"
+kind = "synthetic"
+text = "How did Heinz Guderian portray himself in his post-war autobiography Panzer Leader regarding his role in the development of German panzer forces and blitzkrieg tactics?"
+expected = ["184394:5"]
+note = "generated from 184394:5:0 (Heinz Guderian — Writings and mythology)"
+
+[[question]]
+id = "syn-40036297-2-0"
+kind = "synthetic"
+text = "Which are the largest communities located north of the Arctic Circle in Russia, Norway, and Sweden, and what are their populations?"
+expected = ["40036297:2"]
+note = "generated from 40036297:2:0 (Arctic Circle — Human habitation)"
+
+[[question]]
+id = "syn-213765-1-1"
+kind = "synthetic"
+text = "Who was the first political figure to be referred to as Führer and what influences contributed to the Nazi adoption of this term?"
+expected = ["213765:1"]
+note = "generated from 213765:1:1 (Führer — History)"
+
+[[question]]
+id = "syn-10396793-5-9"
+kind = "synthetic"
+text = "How did the German occupation of Hungary in 1944 affect the deportation and murder of Hungarian Jews during the Holocaust?"
+expected = ["10396793:5"]
+note = "generated from 10396793:5:9 (The Holocaust — Mass murder)"
+
+[[question]]
+id = "syn-229457-1-1"
+kind = "synthetic"
+text = "What role did the SS officers involved in the Aktion T4 program play in the implementation of Operation Reinhard during the Holocaust?"
+expected = ["229457:1"]
+note = "generated from 229457:1:1 (Operation Reinhard — Background)"

@@ -33,8 +33,8 @@ machine settings. See D-037 and the Phase 4 session note.
 
 ## The knobs
 
-Thirteen entries. Changing any of them changes what the system retrieves or
-answers. Eleven are numbers; one is a prompt; one is a model name.
+Fifteen entries. Changing any of them changes what the system retrieves or
+answers — or, for the last two, what the measurement of it says.
 
 | Knob | Value | File | Decision | What it controls |
 |---|---|---|---|---|
@@ -53,6 +53,8 @@ answers. Eleven are numbers; one is a prompt; one is a model name.
 | `hybrid_enabled` | `false` default | `core/config.py` | D-074 | Whether the BM25 keyword search runs and gets fused in. Lives in `.env` for the same reason as `reranker_enabled`: it is the switch a before/after run flips. **Needs an index built with sparse vectors** — turning it on against a pre-Phase-9 collection finds nothing |
 | `SYSTEM_PROMPT` | `prompt.md` | `generation/prompt.md` | D-054 to D-057 | The standing rules the answering model works under. Not a number, but the single biggest lever on answer quality in this phase |
 | `TEMPERATURE` | 0.0 | `generation/client.py` | D-052 | How much the model varies run to run. 0 so the same question gives the same answer, which is what makes Phase 7's before/after comparable |
+| `judge_model` | `gpt-4.1-mini` | `core/config.py` | D-079 | Which model grades faithfulness. Changing it changes the measurement, not the system — and **re-run `judge-probe` after**, because a different judge is a different instrument. Defaults to the answering model, so the self-preference bias is present by default and stated rather than hidden |
+| `SAMPLE_SEED` / `DEFAULT_COUNT` | 20261005 / 150 | `eval/synthetic.py` | D-078 | Which chunks become synthetic questions, and how many. Changing either regenerates the set and **invalidates every comparison against runs made with the old one** |
 
 ### How to change one
 
@@ -98,6 +100,8 @@ requires re-curating and re-ingesting, which is the only expensive one here.
 | `DEFAULT_K` / `MAX_PER_DOCUMENT` / `OVERFETCH` / `RERANK_TOP_N` / `RRF_K` | nothing | free, takes effect next query |
 | `hybrid_enabled` | `index` **if the collection predates Phase 9** | free to flip; a rebuild is a few cents |
 | `reranker_enabled` / `reranker_model` | nothing | free; a new model downloads once, then ~1 s per query |
+| `judge_model` | nothing; re-run `judge` on the affected runs | a few cents per run, and a `judge-probe` first |
+| `SAMPLE_SEED` / `DEFAULT_COUNT` | `synthesize`, then `evaluate --questions` | a few cents to write, a few more to run |
 
 The embedding pass over ~30,000 chunks is a few cents and a few minutes. Only
 Bronze is expensive to rebuild, which is the whole point of the medallion
