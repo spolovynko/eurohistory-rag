@@ -1,0 +1,52 @@
+judge: gpt-4.1-mini
+
+answers judged   53
+answers skipped  7  (refusals, errors, no claims)
+claims           430
+  supported      420
+  unsupported    10
+  unparseable    0
+mean faithfulness  98.1%
+fully faithful     44/53
+
+==============================================================================
+UNSUPPORTED CLAIMS -- read these, they are the point of the metric
+==============================================================================
+
+[versailles-vs-trianon]
+  UNSUPPORTED: The Treaty of Trianon required Hungary to assume financial obligations for parts of its former territory assigned to Romania, Yugoslavia, and Czechoslovakia.
+    -> "Romania, Yugoslavia and Czechoslovakia had to assume part of the financial obligations" - the claim reverses who assumed the obligations
+
+[finland-two-wars]
+  UNSUPPORTED: In the Moscow Peace Treaty, Finland ceded territory.
+    -> "The League of Nations deemed the attack illegal and expelled the Soviet Union from its organization." - no sentence states Finland ceded territory in the treaty
+
+[brexit-why]
+  UNSUPPORTED: Older Leave voters saw immigration as a potential threat to national identity and culture.
+    -> "Immigration is thought to be a particular worry for older people that voted Leave" - it is a worry, not explicitly stated as a threat to national identity and culture
+
+[stasi-scale]
+  UNSUPPORTED: In 1989, the Stasi had 2,000 fully employed unofficial collaborators.
+    -> "In 1989, the Stasi employed 91,015 people full-time, including 2,000 fully employed unofficial collaborators" - attaches the fact to total employees, not just unofficial collaborators
+  UNSUPPORTED: In 1989, the Stasi had 2,232 officers of the GDR army.
+    -> "In 1989, the Stasi employed 91,015 people full-time, including 2,000 fully employed unofficial collaborators, 13,073 soldiers and 2,232 officers of the GDR army" - the officers are part of the Stasi's total, not the Stasi itself having them as its own officers
+
+[comecon-vs-marshall]
+  UNSUPPORTED: The Marshall Plan was a direct financial aid program.
+    -> "The Soviets established COMECON as a riposte to the Marshall Plan to deliver aid" - does not specify Marshall Plan as direct financial aid program
+
+[poland-vs-czechoslovakia-1989]
+  UNSUPPORTED: The June 1989 elections effectively ended communist rule in Poland.
+    -> "These negotiations legalized Solidarity and established the framework for partially free parliamentary elections, which facilitated sweeping victory for opposition candidates and effectively ended communist rule in Poland." - the elections were in June 1989 but the source attaches the end of communist rule to the victory, not just the elections themselves
+
+[travel-without-showing-papers]
+  UNSUPPORTED: Schengen Area countries have abolished the need to show travel documents and police searches at borders altogether.
+    -> "Schengen Area countries (of which Ireland is not included) have abolished the need to show travel documents, and police searches at borders, altogether." - the source states this as a right, not an absolute abolition
+
+[country-came-apart]
+  UNSUPPORTED: The conflicts resulted in massive displacement and ethnic cleansing.
+    -> "A similar attempt in Bosnia and Herzegovina led to a war that lasted more than three years." - displacement is mentioned but ethnic cleansing is attributed to Serbian leaders' expectations, not the conflicts themselves
+
+[seveso-1976]
+  UNSUPPORTED: The Seveso chemical accident caused widespread air and water pollution and ecological damage.
+    -> "The natural environment was constantly under strain by unregulated industrial expansion" - pollution and disasters are effects of industrial expansion, not specifically caused by Seveso accident

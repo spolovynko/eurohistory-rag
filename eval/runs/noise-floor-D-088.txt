@@ -1,0 +1,68 @@
+runs: 2026-08-06T1703Z, 2026-08-06T1814Z, 2026-08-06T1832Z
+
+RETRIEVAL -- the control. Any movement means the harness broke.
+
+  chunk slots compared                1200
+  slots where the chunk changed       0
+  slots where only the score changed  35   (largest delta 0.0006)
+
+ golden
+  recall@5           0.7500  0.7500  0.7500
+  recall@20          1.0000  1.0000  1.0000
+  coverage@5         0.4792  0.4792  0.4792
+  MRR                0.5356  0.5356  0.5356
+  top-1 score        0.6794  0.6794  0.6794   <-- MOVED
+
+ extended
+  recall@5           0.6250  0.6250  0.6250
+  recall@20          0.9167  0.9167  0.9167
+  coverage@5         0.3889  0.3889  0.3889
+  MRR                0.4531  0.4531  0.4531
+  top-1 score        0.6413  0.6413  0.6413   <-- MOVED
+
+ all sixty
+  recall@5           0.6875  0.6875  0.6875
+  recall@20          0.9583  0.9583  0.9583
+  coverage@5         0.4340  0.4340  0.4340
+  MRR                0.4944  0.4944  0.4944
+  top-1 score        0.6604  0.6604  0.6604   <-- MOVED
+
+GENERATION -- where the variance is expected to live.
+
+  answers identical across all runs   4 of 60
+  citation sets identical             49 of 60
+  refusals, metrics.REFUSAL           [7, 7, 7]
+  refusals, opens with the phrase     [7, 7, 7]
+  declines, cited nothing             [7, 7, 7]
+
+  answers judged                      [53, 53, 53]
+  claims extracted                    [462, 465, 430]   430 - 465  (range 35)
+  unsupported claims                  [7, 11, 10]   7 - 11  (range 4)
+  mean faithfulness                   ['98.7%', '98.0%', '98.1%']
+  fully faithful answers              [46, 45, 44]   44 - 46  (range 2)
+
+RECURRENCE -- does the same defect come back?
+
+  [123] seveso-1976: The Seveso chemical accident caused widespread air and water pollution and ecological damage.
+  [123] stasi-scale: In 1989, the Stasi employed 2,000 fully employed unofficial collaborators.
+  [123] travel-without-showing-papers: Schengen Area countries have abolished the need to show travel documents and police searches at 
+  [123] versailles-vs-trianon: The Treaty of Trianon required Hungary to assume financial obligations for parts of its former t
+  [12.] stalingrad-kursk-turning: Kursk is described as a turning point because it was the largest battle in history.
+  [.23] stasi-scale: In 1989, the Stasi had 2,232 officers of the GDR army.
+  [..3] brexit-why: Older Leave voters saw immigration as a potential threat to national identity and culture.
+  [..3] comecon-vs-marshall: The Marshall Plan was a direct financial aid program.
+  [.2.] country-came-apart: Serbian leaders expected impunity for such actions based on previous international inaction.
+  [..3] country-came-apart: The conflicts resulted in massive displacement and ethnic cleansing.
+  [1..] empires-let-go: The large loan from the United States limited Britain's ability to maintain its empire.
+  [.2.] finland-two-wars: In the Moscow Peace Treaty, Finland repelled the Soviet conquest attempt.
+  [..3] finland-two-wars: In the Moscow Peace Treaty, Finland ceded territory.
+  [1..] mussolini-vs-hitler-power: Hitler became chancellor later through political maneuvering rather than a mass demonstration li
+  [.2.] poland-vs-czechoslovakia-1989: The elections in June 1989 led to a sweeping victory for opposition candidates.
+  [..3] poland-vs-czechoslovakia-1989: The June 1989 elections effectively ended communist rule in Poland.
+  [.2.] stalingrad-kursk-turning: The Soviet victory at Kursk allowed the Red Army to firmly seize the initiative for the remainde
+  [.2.] stalingrad-kursk-turning: The Soviet victory at Kursk limited the Germans to reacting and never regaining the initiative o
+
+  in 3 of 3 runs: 4 distinct claims
+  in 2 of 3 runs: 2 distinct claims
+  in 1 of 3 runs: 12 distinct claims
+  (columns are runs 2026-08-06T1703Z, 2026-08-06T1814Z, 2026-08-06T1832Z)
