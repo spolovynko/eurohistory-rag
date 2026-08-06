@@ -396,6 +396,9 @@ def sweep(
         Path | None,
         typer.Option(help="A run directory the control row must reproduce."),
     ] = None,
+    configs: Annotated[
+        str, typer.Option(help="Which set of arms to sweep: thinning or hybrid.")
+    ] = "thinning",
 ) -> None:
     """Measure many retrieval settings at once, without generating anything.
 
@@ -406,12 +409,19 @@ def sweep(
     Pass `--baseline eval/runs/<id>` and the control row is checked against
     that run before the table is printed. Without it the table is unverified.
     """
+    arms = {
+        "thinning": sweep_module.THINNING_CONFIGS,
+        "hybrid": sweep_module.HYBRID_CONFIGS,
+    }
+    if configs not in arms:
+        raise typer.BadParameter(f"unknown config set {configs!r}")
+
     settings = get_settings()
     questions = [q for q in load_questions(questions_path) if q.expected]
     pools = sweep_module.collect_pools(
         questions, _embedder(settings), _store(settings), _reranker(settings)
     )
-    rows = sweep_module.sweep(sweep_module.DEFAULT_CONFIGS, questions, pools)
+    rows = sweep_module.sweep(arms[configs], questions, pools)
 
     if baseline is not None:
         wanted = summarise([r for r in read_records(baseline) if r.expected_doc_ids])

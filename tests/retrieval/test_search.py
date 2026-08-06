@@ -28,12 +28,14 @@ from tests.fakes import FakeEmbedder, FakeReranker, UnavailableReranker
 # --- helpers ----------------------------------------------------------------
 
 
-def result(chunk_id: str, doc_id: str, score: float = 0.5) -> SearchResult:
+def result(
+    chunk_id: str, doc_id: str, score: float = 0.5, page_id: int = 30030
+) -> SearchResult:
     """A result with only the fields `thin` looks at varied."""
     return SearchResult(
         chunk_id=chunk_id,
         doc_id=doc_id,
-        page_id=30030,
+        page_id=page_id,
         title="Marshall Plan",
         heading="Origins",
         text="Marshall plan aid to Europe.",
@@ -155,6 +157,38 @@ def test_thin_returns_a_short_list_rather_than_reinstating_duplicates() -> None:
     """Three distinct sources beat five slots holding one page five times."""
     results = [result(f"c{i}", "same") for i in range(5)]
     assert len(thin(results, k=5, max_per_document=1)) == 1
+
+
+def test_thin_caps_an_article_across_its_sections() -> None:
+    """The Versailles failure: one article, many sections, every slot taken.
+
+    The section cap cannot see this -- three different `doc_id`s satisfy it
+    while all three are the same article.
+    """
+    results = [
+        result("c0", "versailles:1", page_id=1),
+        result("c1", "versailles:2", page_id=1),
+        result("c2", "versailles:3", page_id=1),
+        result("c3", "trianon:1", page_id=2),
+    ]
+    kept = [
+        r.chunk_id for r in thin(results, k=3, max_per_document=2, max_per_article=2)
+    ]
+    assert kept == ["c0", "c1", "c3"]
+
+
+def test_thin_with_no_caps_removes_nothing() -> None:
+    """D-082's other arm: take the best k, whatever they are."""
+    results = [result(f"c{i}", "same", page_id=1) for i in range(5)]
+    kept = thin(results, k=5, max_per_document=None, max_per_article=None)
+    assert len(kept) == 5
+
+
+def test_both_caps_apply_and_the_tighter_one_wins() -> None:
+    """An article cap does not loosen the section cap, or the reverse."""
+    results = [result(f"c{i}", "same", page_id=1) for i in range(5)]
+    assert len(thin(results, k=5, max_per_document=2, max_per_article=4)) == 2
+    assert len(thin(results, k=5, max_per_document=4, max_per_article=1)) == 1
 
 
 def test_thin_never_reorders() -> None:

@@ -72,6 +72,10 @@ class Config:
     "union"  -- fusion that can only add. The dense head is kept intact and
                 keyword-only chunks are appended into an enlarged rerank
                 window, so no dense candidate can be displaced.
+
+    The two caps are the thinning question (D-082): `None` on either means no
+    limit, so one Config can express today's system, a per-article cap, and no
+    thinning at all.
     """
 
     name: str
@@ -80,9 +84,14 @@ class Config:
     sparse_pool: int = 80
     rrf_k: int = 60
     union_extra: int = 10
+    max_per_document: int | None = MAX_PER_DOCUMENT
+    max_per_article: int | None = None
 
 
-DEFAULT_CONFIGS = (
+# Phase 9's question: does keyword search earn its place. Answered no (D-074
+# verdict) and kept because Phase 20's infobox data is the shape BM25 is good
+# at, so it will be asked again.
+HYBRID_CONFIGS = (
     Config("dense only (control)", "dense"),
     Config("fuse w=1.0", "fuse"),
     Config("fuse w=0.5", "fuse", sparse_weight=0.5),
@@ -90,6 +99,17 @@ DEFAULT_CONFIGS = (
     Config("fuse w=0.1", "fuse", sparse_weight=0.1),
     Config("union +5", "union", union_extra=5),
     Config("union +10", "union"),
+)
+
+# Phase 12's question (D-082): is the per-section cap too loose, or wrong to
+# have at all. Every arm is dense, so the only thing that varies is thinning.
+THINNING_CONFIGS = (
+    Config("dense only (control)", "dense"),
+    Config("no cap at all", "dense", max_per_document=None),
+    Config("section cap 3", "dense", max_per_document=3),
+    Config("article cap 3", "dense", max_per_article=3),
+    Config("article cap 2", "dense", max_per_article=2),
+    Config("article cap 1", "dense", max_per_article=1),
 )
 
 
@@ -183,7 +203,12 @@ def rank_for(config: Config, pool: Pool) -> list[SearchResult]:
         key=lambda result: result.rerank_score or 0.0,
         reverse=True,
     )
-    return thin(head + ordered[window:], EVAL_K, MAX_PER_DOCUMENT)
+    return thin(
+        head + ordered[window:],
+        EVAL_K,
+        config.max_per_document,
+        config.max_per_article,
+    )
 
 
 def as_record(question: Question, results: Sequence[SearchResult]) -> EvalRecord:
