@@ -83,6 +83,31 @@ def test_rank_for_keeps_vector_order_without_a_reranker() -> None:
     assert [r.chunk_id for r in ranked] == [r.chunk_id for r in DENSE]
 
 
+def test_rank_for_thins_by_the_config_rather_than_the_module_constant() -> None:
+    """D-082's arms only exist if the Config's caps reach `thin`.
+
+    Three sections of article 1 satisfy the section cap, so only an article cap
+    can separate these two rows -- which is the whole question being swept.
+    """
+    crowded = [result("1:0:0"), result("1:1:0"), result("1:2:0"), result("2:0:0")]
+    pool = Pool(dense=crowded, sparse=[], rerank_scores={})
+
+    default = rank_for(Config("dense", "dense"), pool)
+    capped = rank_for(Config("article cap 1", "dense", max_per_article=1), pool)
+
+    assert [r.chunk_id for r in default] == [r.chunk_id for r in crowded]
+    assert [r.chunk_id for r in capped] == ["1:0:0", "2:0:0"]
+
+
+def test_a_config_with_no_caps_keeps_every_candidate() -> None:
+    """The arm arguing the rule should go: the best k, whatever they are."""
+    crowded = [result("1:0:0", doc_id="1:0"), result("1:0:1", doc_id="1:0")]
+    pool = Pool(dense=crowded, sparse=[], rerank_scores={})
+    uncapped = Config("no cap at all", "dense", max_per_document=None)
+    assert len(rank_for(uncapped, pool)) == 2
+    assert len(rank_for(Config("dense", "dense"), pool)) == 2
+
+
 def test_a_config_is_scored_by_the_real_metric_code() -> None:
     question = Question(id="q", kind="easy", text="why?", expected=("2:0",))
     pool = Pool(dense=DENSE, sparse=[], rerank_scores={})

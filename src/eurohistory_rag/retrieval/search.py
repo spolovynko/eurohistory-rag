@@ -151,20 +151,42 @@ def fuse(
 
 
 def thin(
-    results: list[SearchResult], k: int, max_per_document: int
+    results: list[SearchResult],
+    k: int,
+    max_per_document: int | None,
+    max_per_article: int | None = None,
 ) -> list[SearchResult]:
-    """Keep the best `k`, allowing at most `max_per_document` from one section.
+    """Keep the best `k`, capped per section and optionally per article.
 
     Order is preserved, so this only ever removes. If thinning cannot fill `k`
     the short list is returned rather than reinstating duplicates -- five slots
     holding three distinct sources beats five holding one page three times.
+
+    `None` means no cap, on either limit. The section cap accepts it so D-082
+    can measure removing the rule entirely, which is the arm arguing that a long
+    article may genuinely hold the best five chunks.
+
+    `max_per_article` is off by default, so nothing changes until the D-082
+    sweep says it should. It exists because `doc_id` is a *section* and an
+    article has many: capping sections never stopped one article taking every
+    slot, which is the Versailles-with-no-Trianon failure seen five times.
     """
     kept: list[SearchResult] = []
-    seen: dict[str, int] = {}
+    sections: dict[str, int] = {}
+    articles: dict[int, int] = {}
     for result in results:
-        if seen.get(result.doc_id, 0) >= max_per_document:
+        section_full = (
+            max_per_document is not None
+            and sections.get(result.doc_id, 0) >= max_per_document
+        )
+        article_full = (
+            max_per_article is not None
+            and articles.get(result.page_id, 0) >= max_per_article
+        )
+        if section_full or article_full:
             continue
-        seen[result.doc_id] = seen.get(result.doc_id, 0) + 1
+        sections[result.doc_id] = sections.get(result.doc_id, 0) + 1
+        articles[result.page_id] = articles.get(result.page_id, 0) + 1
         kept.append(result)
         if len(kept) == k:
             break
