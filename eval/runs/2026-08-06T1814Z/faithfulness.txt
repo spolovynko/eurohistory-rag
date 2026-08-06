@@ -1,0 +1,52 @@
+judge: gpt-4.1-mini
+
+answers judged   53
+answers skipped  7  (refusals, errors, no claims)
+claims           465
+  supported      454
+  unsupported    11
+  unparseable    0
+mean faithfulness  98.0%
+fully faithful     45/53
+
+==============================================================================
+UNSUPPORTED CLAIMS -- read these, they are the point of the metric
+==============================================================================
+
+[versailles-vs-trianon]
+  UNSUPPORTED: The Treaty of Trianon required Hungary to assume financial obligations for parts of its former territory assigned to Romania, Yugoslavia, and Czechoslovakia.
+    -> "Romania, Yugoslavia and Czechoslovakia had to assume part of the financial obligations" - the treaty required Romania, Yugoslavia, and Czechoslovakia, not Hungary, to assume obligations
+
+[stalingrad-kursk-turning]
+  UNSUPPORTED: Kursk is described as a turning point because it was the largest battle in history.
+    -> "The Battle of Kursk, also called the Battle of the Kursk Salient, was a major World War II Eastern Front battle" - it is described as a turning point but not because it was the largest battle.
+  UNSUPPORTED: The Soviet victory at Kursk allowed the Red Army to firmly seize the initiative for the remainder of the war.
+    -> "With victory, the initiative firmly passed to the Red Army." - this refers to Kursk, not explicitly a Soviet victory, and the claim upgrades the verb to "allowed" which is stronger than the source's statement.
+  UNSUPPORTED: The Soviet victory at Kursk limited the Germans to reacting and never regaining the initiative or launching a major offensive on the Eastern Front again.
+    -> "With victory, the initiative firmly passed to the Red Army." - this refers to Kursk victory but does not say Soviets limited Germans to reacting or never regaining initiative or launching major offensive again
+
+[finland-two-wars]
+  UNSUPPORTED: In the Moscow Peace Treaty, Finland repelled the Soviet conquest attempt.
+    -> "The League of Nations deemed the attack illegal" - no mention of repelling conquest in the treaty itself
+
+[stasi-scale]
+  UNSUPPORTED: In 1989, the Stasi had 2,000 fully employed unofficial collaborators.
+    -> "In 1989, the Stasi employed 91,015 people full-time, including 2,000 fully employed unofficial collaborators" - attaches the fact to employees, not to the Stasi as a whole
+  UNSUPPORTED: In 1989, the Stasi had 2,232 officers of the GDR army.
+    -> "In 1989, the Stasi employed 91,015 people full-time, including 2,000 fully employed unofficial collaborators, 13,073 soldiers and 2,232 officers of the GDR army" - the claim attaches the number to the Stasi, but the sentence lists these as part of the total Stasi employees, not specifically as Stasi officers.
+
+[poland-vs-czechoslovakia-1989]
+  UNSUPPORTED: The elections in June 1989 led to a sweeping victory for opposition candidates.
+    -> "In February 1989 the Polish People's Republic opened talks with opposition" - talks allowed elections, not the elections themselves leading to victory
+
+[travel-without-showing-papers]
+  UNSUPPORTED: Schengen Area countries have abolished the need to show travel documents and police searches at borders altogether.
+    -> "Schengen Area countries (of which Ireland is not included) have abolished the need to show travel documents, and police searches at borders, altogether." - claim attaches fact to all Schengen countries, source excludes Ireland
+
+[country-came-apart]
+  UNSUPPORTED: Serbian leaders expected impunity for such actions based on previous international inaction.
+    -> "Tomasz Kamusella argues that Serbian leaders expected they could engage in practices of ethnic cleansing with impunity" - this is an argument, not a statement of fact.
+
+[seveso-1976]
+  UNSUPPORTED: The Seveso chemical accident caused widespread air and water pollution and ecological damage.
+    -> "The natural environment was constantly under strain" - pollution and disasters are effects of industrial expansion, not caused by Seveso accident alone
