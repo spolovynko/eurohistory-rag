@@ -119,6 +119,30 @@ layout.
 
 ---
 
+## The gate's thresholds — knobs with a rule attached
+
+`eval/gate.py` holds the numbers that decide whether a run counts as a
+regression. They are knobs in the sense that they are constants you can edit,
+and **not** knobs in the sense that matters: every one of them was measured, and
+widening one because a build went red is how a gate stops meaning anything.
+
+| Constant | Value | Where it came from |
+|---|---|---|
+| `TOP_SCORE_FLOOR` | 0.001 | 35 of 1,200 chunk slots moved their cosine score by up to 0.0006 across three identical runs; the embedding API is not bit-exact (D-088) |
+| `LATENCY_NOISE_MS` | 900 | the p50 spread inside a thirty-question suite over three identical runs. **Reported, never gated** — it is mostly the model vendor's load (D-089 verdict) |
+| `UNSUPPORTED_FLOOR` | 4 | D-088. Reported only |
+| `FAITHFULNESS_FLOOR` | 0.007 | D-088. Reported only |
+| `FULLY_FAITHFUL_FLOOR` | 2 | D-088. Reported only |
+| `CLAIMS_FLOOR` | 35 | D-088. Reported only |
+| `COMPARABILITY_FIELDS` | 10 fields of `meta.json` | anything that changes what a number means. Adding a field to `RunMeta` that affects results means adding it here too |
+
+**Changing any of them costs nothing to run and invalidates the comparison it
+was measured for.** A floor is only meaningful against the question set, prompt,
+answering model and judge it was measured on — re-measure before editing, the
+way Phase 16 re-measured D-085's floor for the sixty-question set.
+
+---
+
 ## Not knobs — leave these alone
 
 These are constants too, but they are **not** yours to tune. They encode a

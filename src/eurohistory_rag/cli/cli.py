@@ -8,6 +8,7 @@ import typer
 
 from eurohistory_rag.core.config import Settings, get_settings
 from eurohistory_rag.core.logging import configure_logging
+from eurohistory_rag.eval import gate as gate_module
 from eurohistory_rag.eval import judge as judge_module
 from eurohistory_rag.eval import probes as probes_module
 from eurohistory_rag.eval import report as report_module
@@ -442,6 +443,34 @@ def sweep(
             )
 
     typer.echo(sweep_module.render(rows))
+
+
+@app.command()
+def gate(
+    baseline: Annotated[
+        Path, typer.Argument(help="The run the candidate must not regress against.")
+    ],
+    candidate: Annotated[Path, typer.Argument(help="The new run.")],
+    changed: Annotated[
+        list[str] | None,
+        typer.Option(help="A meta.json field this phase changed on purpose."),
+    ] = None,
+) -> None:
+    """Compare two saved runs and exit non-zero if the candidate regressed.
+
+    Free and offline: it reads both runs from disk and calls nothing. Run it at
+    the end of a phase, after `evaluate`, and paste the output into the verdict.
+
+    Anything the phase changed on purpose must be named -- `--changed reranker`
+    -- and anything named must actually differ, which is how a run that measured
+    nothing is caught. Retrieval, refusals and errors fail the gate; faithfulness
+    is printed with its noise floor and never fails anything, because a quarter
+    of that number's movement is the judge disagreeing with itself (D-088).
+    """
+    verdict = gate_module.gate(baseline, candidate, frozenset(changed or ()))
+    typer.echo(gate_module.render(verdict, baseline.name, candidate.name))
+    if not verdict.passed:
+        raise typer.Exit(code=1)
 
 
 @app.command()
