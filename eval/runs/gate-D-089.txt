@@ -1,0 +1,186 @@
+# Phase 17 gate output -- D-089
+# Six pairs, all free, all offline. Generated 2026-08-07T1209Z.
+
+################ PAIR 1: Phase 7 baseline vs Phase 15 baseline -- must refuse
+gate: 2026-08-04T1623Z -> 2026-08-06T1703Z
+
+
+COMPARABILITY
+  FAIL points                                30362 -> 54903       must be identical
+  FAIL questions                        30q/55keys -> 60q/111keys  must be identical
+  FAIL reranker                                    -> cross-encoder/ms-marco-MiniLM-L6-v2  must be identical
+
+INCOMPARABLE -- no metric was computed. Declare an intended difference with --changed <field>.
+
+
+################ PAIR 2: same corpus, thirty questions vs sixty -- must refuse
+gate: 2026-08-06T1331Z -> 2026-08-06T1703Z
+
+
+COMPARABILITY
+  FAIL questions                        30q/55keys -> 60q/111keys  must be identical
+
+INCOMPARABLE -- no metric was computed. Declare an intended difference with --changed <field>.
+
+
+################ PAIR 3: noise-floor run 1 vs run 2 -- must pass
+gate: 2026-08-06T1703Z -> 2026-08-06T1814Z
+
+
+COMPARABILITY
+  ok   all 11 fields                     identical -> identical   must be identical
+
+RETRIEVAL
+  ok   extended recall@5                     0.625 -> 0.625       no drop
+  ok   extended recall@20                    0.917 -> 0.917       no drop
+  ok   extended coverage@5                   0.389 -> 0.389       no drop
+  ok   extended MRR                          0.453 -> 0.453       no drop
+  ok   extended top-1 score                  0.592 -> 0.592       drop <= 0.001
+  ok   golden recall@5                       0.750 -> 0.750       no drop
+  ok   golden recall@20                      1.000 -> 1.000       no drop
+  ok   golden coverage@5                     0.479 -> 0.479       no drop
+  ok   golden MRR                            0.536 -> 0.536       no drop
+  ok   golden top-1 score                    0.655 -> 0.655       drop <= 0.001
+  ok   all recall@5                          0.688 -> 0.688       no drop
+  ok   all recall@20                         0.958 -> 0.958       no drop
+  ok   all coverage@5                        0.434 -> 0.434       no drop
+  ok   all MRR                               0.494 -> 0.494       no drop
+  ok   all top-1 score                       0.624 -> 0.624       drop <= 0.001
+
+BEHAVIOUR
+  ok   extended refusals                         5 -> 5           no change
+  ok   extended invalid markers                  0 -> 0           no rise
+  ok   extended answers with no citation          0 -> 0           no rise
+  ok   extended errors                           0 -> 0           no rise
+  ok   golden refusals                           2 -> 2           no change
+  ok   golden invalid markers                    0 -> 0           no rise
+  ok   golden answers with no citation           0 -> 0           no rise
+  ok   golden errors                             0 -> 0           no rise
+  ok   all refusals                              7 -> 7           no change
+  ok   all invalid markers                       0 -> 0           no rise
+  ok   all answers with no citation              0 -> 0           no rise
+  ok   all errors                                0 -> 0           no rise
+
+LATENCY
+  --   extended p50 ms                        3822 -> 3339        moved 483, floor 900
+  --   golden p50 ms                          3799 -> 4693        moved 893, floor 900
+  --   all p50 ms                             3822 -> 3813        moved 10, floor 900
+
+GENERATION
+  --   unsupported claims                        7 -> 11          moved 4, floor 4
+  --   mean faithfulness                    0.9865 -> 0.9804      moved 0.0061, floor 0.007
+  --   fully faithful answers                   46 -> 45          moved 1, floor 2
+  --   claims extracted                        462 -> 465         moved 3, floor 35
+
+GATE PASSED -- 35 checks
+
+
+################ PAIR 4: noise-floor run 1 vs run 3 -- must pass
+gate: 2026-08-06T1703Z -> 2026-08-06T1832Z
+
+
+COMPARABILITY
+  ok   all 11 fields                     identical -> identical   must be identical
+
+RETRIEVAL
+  ok   extended recall@5                     0.625 -> 0.625       no drop
+  ok   extended recall@20                    0.917 -> 0.917       no drop
+  ok   extended coverage@5                   0.389 -> 0.389       no drop
+  ok   extended MRR                          0.453 -> 0.453       no drop
+  ok   extended top-1 score                  0.592 -> 0.592       drop <= 0.001
+  ok   golden recall@5                       0.750 -> 0.750       no drop
+  ok   golden recall@20                      1.000 -> 1.000       no drop
+  ok   golden coverage@5                     0.479 -> 0.479       no drop
+  ok   golden MRR                            0.536 -> 0.536       no drop
+  ok   golden top-1 score                    0.655 -> 0.655       drop <= 0.001
+  ok   all recall@5                          0.688 -> 0.688       no drop
+  ok   all recall@20                         0.958 -> 0.958       no drop
+  ok   all coverage@5                        0.434 -> 0.434       no drop
+  ok   all MRR                               0.494 -> 0.494       no drop
+  ok   all top-1 score                       0.624 -> 0.624       drop <= 0.001
+
+BEHAVIOUR
+  ok   extended refusals                         5 -> 5           no change
+  ok   extended invalid markers                  0 -> 0           no rise
+  ok   extended answers with no citation          0 -> 0           no rise
+  ok   extended errors                           0 -> 0           no rise
+  ok   golden refusals                           2 -> 2           no change
+  ok   golden invalid markers                    0 -> 0           no rise
+  ok   golden answers with no citation           0 -> 0           no rise
+  ok   golden errors                             0 -> 0           no rise
+  ok   all refusals                              7 -> 7           no change
+  ok   all invalid markers                       0 -> 0           no rise
+  ok   all answers with no citation              0 -> 0           no rise
+  ok   all errors                                0 -> 0           no rise
+
+LATENCY
+  --   extended p50 ms                        3822 -> 3310        moved 512, floor 900
+  --   golden p50 ms                          3799 -> 3947        moved 147, floor 900
+  --   all p50 ms                             3822 -> 3508        moved 315, floor 900
+
+GENERATION
+  --   unsupported claims                        7 -> 10          moved 3, floor 4
+  --   mean faithfulness                    0.9865 -> 0.9813      moved 0.0052, floor 0.007
+  --   fully faithful answers                   46 -> 44          moved 2, floor 2
+  --   claims extracted                        462 -> 430         moved 32, floor 35
+
+GATE PASSED -- 35 checks
+
+
+################ PAIR 5: run 1 vs run 2, declaring a change that did not happen
+################ (Phase 8's dead switch) -- must refuse
+gate: 2026-08-06T1703Z -> 2026-08-06T1814Z
+
+
+COMPARABILITY
+  FAIL reranker                          identical -> identical   declared changed, and is not
+
+INCOMPARABLE -- no metric was computed. Declare an intended difference with --changed <field>.
+
+
+################ PAIR 6: run 1 vs a mutated copy of itself -- must fail
+################ wannsee-decisions lost its 6 correct chunks; the key is untouched
+gate: 2026-08-06T1703Z -> mutated
+
+
+COMPARABILITY
+  ok   all 11 fields                     identical -> identical   must be identical
+
+RETRIEVAL
+  ok   extended recall@5                     0.625 -> 0.625       no drop
+  ok   extended recall@20                    0.917 -> 0.917       no drop
+  ok   extended coverage@5                   0.389 -> 0.389       no drop
+  ok   extended MRR                          0.453 -> 0.453       no drop
+  ok   extended top-1 score                  0.592 -> 0.592       drop <= 0.001
+  FAIL golden recall@5                       0.750 -> 0.708       no drop
+  FAIL golden recall@20                      1.000 -> 0.958       no drop
+  FAIL golden coverage@5                     0.479 -> 0.465       no drop
+  FAIL golden MRR                            0.536 -> 0.494       no drop
+  ok   golden top-1 score                    0.655 -> 0.655       drop <= 0.001
+  FAIL all recall@5                          0.688 -> 0.667       no drop
+  FAIL all recall@20                         0.958 -> 0.938       no drop
+  FAIL all coverage@5                        0.434 -> 0.427       no drop
+  FAIL all MRR                               0.494 -> 0.474       no drop
+  ok   all top-1 score                       0.624 -> 0.624       drop <= 0.001
+
+BEHAVIOUR
+  ok   extended refusals                         5 -> 5           no change
+  ok   extended invalid markers                  0 -> 0           no rise
+  ok   extended answers with no citation          0 -> 0           no rise
+  ok   extended errors                           0 -> 0           no rise
+  ok   golden refusals                           2 -> 2           no change
+  ok   golden invalid markers                    0 -> 0           no rise
+  ok   golden answers with no citation           0 -> 0           no rise
+  ok   golden errors                             0 -> 0           no rise
+  ok   all refusals                              7 -> 7           no change
+  ok   all invalid markers                       0 -> 0           no rise
+  ok   all answers with no citation              0 -> 0           no rise
+  ok   all errors                                0 -> 0           no rise
+
+LATENCY
+  --   extended p50 ms                        3822 -> 3822        moved 0, floor 900
+  --   golden p50 ms                          3799 -> 3799        moved 0, floor 900
+  --   all p50 ms                             3822 -> 3822        moved 0, floor 900
+
+GATE FAILED -- 8 checks
+

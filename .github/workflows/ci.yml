@@ -1,0 +1,44 @@
+# Everything that can be checked without a database, a key or money.
+#
+# The eval itself is deliberately NOT here. It needs a Qdrant container holding
+# 54,903 points, a `data/` directory that is gitignored, an OpenAI key, and
+# about $0.08 and four minutes per run. `roadmap.md` asked for "the eval runs on
+# every commit"; that is not buildable, and D-089 records the correction.
+#
+# What IS here is the half that catches the failure the eval cannot: the scoring
+# code silently changing what it reports about runs already published.
+# tests/eval/test_baseline_pinned.py holds the committed baseline to the figures
+# quoted in decisions.md, and it needs nothing but a text file in git.
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          # sentence-transformers pulls torch -- 487 MB for the CPU wheel, and
+          # the dominant cost of this job. Keyed on uv.lock, so the download
+          # happens again only when a dependency actually moves.
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+
+      # --locked rather than a plain sync: CI resolving its own versions would
+      # mean the suite passes against a dependency set nobody has on disk.
+      - run: uv sync --locked --dev
+
+      - run: uv run ruff check .
+      - run: uv run ruff format --check .
+      - run: uv run mypy src tests
+
+      # No Docker and no key on purpose. The whole suite is built to run this
+      # way -- QdrantClient(":memory:"), FakeEmbedder, FakeGenerator -- and a
+      # test that needed the network would be a test that never ran here.
+      - run: uv run pytest
