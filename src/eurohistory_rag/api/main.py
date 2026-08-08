@@ -4,7 +4,7 @@ from importlib.resources import files
 from pathlib import Path
 from typing import Annotated
 
-from fastapi import Depends, FastAPI, HTTPException, Query, status
+from fastapi import Depends, FastAPI, HTTPException, Query, Request, status
 from fastapi.responses import HTMLResponse, Response
 from pydantic import BaseModel, Field
 
@@ -15,8 +15,19 @@ from eurohistory_rag.api.dependencies import (
     get_search_service,
     get_vector_store,
 )
+from eurohistory_rag.api.experiment import (
+    Precondition,
+    check_preconditions,
+    make_work,
+    write_prediction,
+)
+from eurohistory_rag.api.jobs import EvalJob, JobStatus, get_job
 from eurohistory_rag.core.config import CORPUS_LICENSE, Settings, get_settings
 from eurohistory_rag.eval.browse import RunListing, RunView, list_runs, load_run
+from eurohistory_rag.eval.cost import estimate
+from eurohistory_rag.eval.execute import RunConfig
+from eurohistory_rag.eval.questions import QUESTIONS_PATH, load_questions
+from eurohistory_rag.eval.record import RUNS_DIR, new_run_id
 from eurohistory_rag.generation.client import GenerationUnavailable
 from eurohistory_rag.generation.service import Citation, GenerationService
 from eurohistory_rag.retrieval.search import DEFAULT_K, SearchResult, SearchService
@@ -142,6 +153,49 @@ class OptionsResponse(BaseModel):
     max_k: int
 
 
+# The hosts a run may be started from. There is no authentication anywhere in
+# this system and a run costs about eight cents, so the only thing between those
+# two facts is this list. It is a guard against the deployment mistake -- binding
+# uvicorn to 0.0.0.0 and walking away -- not against an attacker, and it is
+# written in code rather than in a comment so that mistake fails closed.
+LOOPBACK = frozenset({"127.0.0.1", "::1", "localhost"})
+
+
+class ExperimentPlan(BaseModel):
+    """What a run would cost and whether it could succeed, before one is started.
+
+    Everything a person needs to answer "should I press this?" in one request:
+    the price, where the price came from, and each precondition separately so a
+    refusal names the thing to fix rather than saying no.
+    """
+
+    questions: int
+    dollars: float
+    basis: str
+    preconditions: list[Precondition]
+    ready: bool
+    defaults: Configuration
+
+
+class StartRequest(BaseModel):
+    """A request to spend money, and the prediction that entitles it to.
+
+    `prediction` has a minimum length rather than being optional, so obligation
+    9 is enforced by the schema: a client that omits it gets a 422 and no run.
+    `questions` is the count the caller was quoted; the server checks it still
+    matches, so nobody confirms one price and pays another.
+    """
+
+    prediction: str = Field(min_length=10, max_length=4000)
+    questions: int = Field(ge=1)
+    baseline: str | None = None
+    note: str = ""
+    k: int = Field(default=DEFAULT_K, ge=1, le=MAX_K)
+    hybrid: bool | None = None
+    reranker: str | None = None
+    model: str | None = None
+
+
 class AnswerSource(BaseModel):
     """One source the answer actually cited.
 
@@ -196,16 +250,17 @@ def _overridden(request: AskRequest) -> bool:
     )
 
 
-def _chosen_reranker(request: AskRequest, settings: Settings) -> str | None:
+def _chosen_reranker(requested: str | None, settings: Settings) -> str | None:
     """Which reranker this request wants, or None for no reranking.
 
     An empty string is how a client says "switch it off", because a JSON null
     already means "leave it alone" -- the two are different requests and a
-    single field has to carry both.
+    single field has to carry both. Takes the field rather than the request so
+    that /ask and the run button resolve it through the same three lines.
     """
-    if request.reranker is None:
+    if requested is None:
         return settings.reranker_model if settings.reranker_enabled else None
-    return request.reranker or None
+    return requested or None
 
 
 def create_app() -> FastAPI:
@@ -335,7 +390,7 @@ def create_app() -> FastAPI:
         settings = get_settings()
         used = Configuration(
             model=request.model or settings.generation_model,
-            reranker=_chosen_reranker(request, settings),
+            reranker=_chosen_reranker(request.reranker, settings),
             hybrid=(
                 settings.hybrid_enabled if request.hybrid is None else request.hybrid
             ),
@@ -408,6 +463,148 @@ def create_app() -> FastAPI:
                 detail=f"No run named {run_id!r}.",
             )
         return view
+
+    @app.get("/eval/plan", summary="What a run would cost, and whether it could work")
+    def plan(model: str | None = None) -> ExperimentPlan:
+        """Price the run and check the preconditions. Spends nothing.
+
+        Its own request rather than a field on the start request, because the
+        answer has to be on screen *before* the control that spends is live.
+        D-083 says state the cost before spending it; this is that sentence,
+        computed rather than remembered.
+        """
+        settings = get_settings()
+        questions = load_questions(QUESTIONS_PATH)
+        chosen = model or settings.generation_model
+        quote = estimate(chosen, len(questions))
+        checks = check_preconditions(settings)
+        return ExperimentPlan(
+            questions=len(questions),
+            dollars=quote.dollars,
+            basis=quote.basis,
+            preconditions=checks,
+            ready=all(check.ok for check in checks),
+            defaults=Configuration(
+                model=chosen,
+                reranker=settings.reranker_model if settings.reranker_enabled else None,
+                hybrid=settings.hybrid_enabled,
+                k=DEFAULT_K,
+            ),
+        )
+
+    @app.get("/eval/run", summary="What the running evaluation is doing")
+    def evaluation(job: Annotated[EvalJob, Depends(get_job)]) -> JobStatus:
+        """The state of the one run this process can have.
+
+        Polled rather than pushed. The state lives in the server, so a reload,
+        a second tab or a different browser all see the same run -- and closing
+        the page that started it does not stop it.
+        """
+        return job.status()
+
+    @app.post("/eval/run", summary="Start an evaluation — this spends money")
+    def start_evaluation(
+        request: Request,
+        body: StartRequest,
+        job: Annotated[EvalJob, Depends(get_job)],
+    ) -> JobStatus:
+        """Run every question and gate the result, in the background.
+
+        The order in this function is the phase. The prediction is written to
+        disk before the thread exists, so there is no path in which a question
+        is asked and no prediction is on file -- which is obligation 9 enforced
+        by the interface instead of by whoever is at the keyboard.
+        """
+        client = request.client.host if request.client else ""
+        if client not in LOOPBACK:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Evaluations may only be started from this machine.",
+            )
+
+        settings = get_settings()
+        if body.model and body.model not in settings.selectable_models:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                detail=f"Unknown model {body.model!r}.",
+            )
+        if body.reranker and body.reranker not in settings.selectable_rerankers:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                detail=f"Unknown reranker {body.reranker!r}.",
+            )
+
+        questions = load_questions(QUESTIONS_PATH)
+        if len(questions) != body.questions:
+            # The quote and the question file disagree, which means the price
+            # shown is not the price about to be paid.
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                detail=(
+                    f"Quoted {body.questions} questions, the set now holds "
+                    f"{len(questions)}. Reload and confirm the new cost."
+                ),
+            )
+
+        failing = [check for check in check_preconditions(settings) if not check.ok]
+        if failing:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="; ".join(check.detail for check in failing),
+            )
+
+        baseline = RUNS_DIR / body.baseline if body.baseline else None
+        if baseline is not None and not (baseline / "meta.json").exists():
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"No run named {body.baseline!r} to compare against.",
+            )
+
+        config = RunConfig(
+            k=body.k,
+            model=body.model or settings.generation_model,
+            reranker=_chosen_reranker(body.reranker, settings) or "",
+            hybrid=(settings.hybrid_enabled if body.hybrid is None else body.hybrid),
+        )
+
+        run_id = new_run_id()
+        # Before the thread exists, and therefore before any question can be
+        # asked. This one line is the phase.
+        write_prediction(run_id, body.prediction, RUNS_DIR)
+        started = job.start(
+            run_id,
+            len(questions),
+            make_work(
+                questions,
+                settings,
+                config,
+                run_id=run_id,
+                note=body.note or "started from the page",
+                baseline=baseline,
+                runs_dir=RUNS_DIR,
+            ),
+        )
+        if started is None:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=f"Run {job.status().run_id} is already going.",
+            )
+        return started
+
+    @app.delete("/eval/run", summary="Stop the running evaluation")
+    def cancel_evaluation(job: Annotated[EvalJob, Depends(get_job)]) -> JobStatus:
+        """Ask the run to stop after the question it is on.
+
+        Not mid-question: that call is already paid for, and abandoning it would
+        leave a record nobody could interpret. A cancelled run writes no
+        `records.jsonl`, so it never appears as a run -- only its prediction
+        survives, which is the right way round.
+        """
+        if not job.cancel():
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT, detail="Nothing is running."
+            )
+        return job.status()
 
     return app
 

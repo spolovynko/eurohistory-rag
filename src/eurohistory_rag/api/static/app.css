@@ -592,6 +592,106 @@
     font-size: .87rem; font-style: italic;
   }
 
+  /* --- the run button ------------------------------------------------------
+     The only control on this page that spends money, and it is styled to say
+     so: warm-edged rather than neutral, folded shut by default, and with the
+     price sitting immediately above the button rather than anywhere else. */
+
+  .runner {
+    margin: 1.4rem 0 0;
+    padding: 1.1rem 1.3rem;
+    border: 1px solid var(--rule);
+    border-left: 4px solid var(--warn);
+    border-radius: var(--radius);
+    background: var(--raised);
+    box-shadow: var(--shadow);
+  }
+  .runner > summary {
+    font: 500 .8rem/1.4 ui-sans-serif, system-ui, sans-serif;
+    letter-spacing: .04em;
+    color: var(--ink);
+    cursor: pointer;
+  }
+  .runner .warn {
+    margin-left: .5rem; padding: .1rem .45rem;
+    border-radius: 999px;
+    background: color-mix(in oklab, var(--warn) 16%, transparent);
+    color: var(--warn);
+    font-size: .7rem; letter-spacing: .06em; text-transform: uppercase;
+  }
+  .runner .lede { margin: .9rem 0 0; color: var(--quiet); font-size: .88rem; line-height: 1.6; }
+  .runner .controls { margin-top: .9rem; }
+
+  .predict {
+    display: block; margin: 1.2rem 0 .4rem;
+    font: 500 .8rem/1.4 ui-sans-serif, system-ui, sans-serif;
+    letter-spacing: .03em;
+  }
+  .predict .plain {
+    display: block; margin-top: .3rem;
+    color: var(--quiet);
+    font: 400 .85rem/1.6 ui-sans-serif, system-ui, sans-serif;
+    letter-spacing: 0;
+  }
+  #prediction {
+    width: 100%; padding: .7rem .85rem;
+    border: 1px solid var(--rule); border-radius: var(--radius);
+    background: var(--paper); color: var(--ink);
+    font: 400 .9rem/1.6 ui-sans-serif, system-ui, sans-serif;
+    resize: vertical;
+  }
+  #prediction:focus-visible {
+    outline: none;
+    border-color: color-mix(in oklab, var(--c1) 55%, var(--rule));
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--c1) 16%, transparent);
+  }
+
+  .checks { list-style: none; margin: .9rem 0 0; padding: 0; }
+  .checks li {
+    padding: .25rem 0 .25rem 1.4rem;
+    position: relative;
+    color: var(--quiet);
+    font-size: .84rem;
+  }
+  .checks li::before {
+    content: "";
+    position: absolute; left: .25rem; top: .65rem;
+    width: .5rem; height: .5rem; border-radius: 50%;
+    background: var(--miss);
+  }
+  .checks li[data-ok="yes"]::before { background: var(--ok); }
+  .checks li[data-ok="no"] { color: var(--warn); }
+
+  .cost {
+    margin: .8rem 0 0;
+    color: var(--ink);
+    font: 400 .85rem/1.6 ui-monospace, Menlo, Consolas, monospace;
+  }
+
+  .run-actions { display: flex; gap: .6rem; margin-top: 1rem; }
+  #run-cancel { background: transparent; color: var(--warn); box-shadow: none;
+                border: 1px solid color-mix(in oklab, var(--warn) 45%, var(--rule)); }
+
+  .progress { margin-top: 1.1rem; }
+  .progress .bar {
+    height: 6px; border-radius: 999px; overflow: hidden;
+    background: color-mix(in oklab, var(--rule) 70%, transparent);
+  }
+  .progress .bar i { display: block; height: 100%; width: 0;
+                     background: var(--c2); transition: width .4s ease; }
+  .progress .line { margin: .5rem 0 0; color: var(--quiet); font-size: .84rem; line-height: 1.6; }
+
+  .verdict {
+    margin: 1.1rem 0 0; padding: .9rem 1rem;
+    max-height: 22rem; overflow: auto;
+    border-radius: var(--radius);
+    border-left: 3px solid var(--miss);
+    background: color-mix(in oklab, var(--rule) 30%, transparent);
+    font: 400 .72rem/1.55 ui-monospace, Menlo, Consolas, monospace;
+    white-space: pre;
+  }
+  .verdict[data-passed="yes"] { border-left-color: var(--ok); }
+
   /* --- the explanations --------------------------------------------------- */
 
   .guide {

@@ -3,7 +3,8 @@
 // Owns the question box, the settings row, the answer and its sources.
 // Imported for its side effects: it wires its own listeners on load.
 
-import { el, getJSON, setStatus } from "./dom.js";
+import { chosen, fillControls, options } from "./controls.js";
+import { el, setStatus } from "./dom.js";
 
 const form = document.getElementById("ask");
 const box = document.getElementById("question");
@@ -14,63 +15,17 @@ const sourcesHeading = document.getElementById("sources-heading");
 const sourceList = document.getElementById("sources");
 const footer = document.getElementById("footer");
 
-const modelPicker = document.getElementById("model-picker");
-const rerankerPicker = document.getElementById("reranker-picker");
-const hybridToggle = document.getElementById("hybrid-toggle");
-const kPicker = document.getElementById("k-picker");
-
-// How many passages the model is shown. A short list rather than a free number:
-// the ceiling is 50, and a page offering 50 invites someone to pay for fifty
-// chunks of prompt to answer a one-line question. Phase 6 measured what k
-// costs on money, latency and quality, and the third is not linear.
-const K_CHOICES = [3, 5, 8, 10, 15];
+// The controls describe what /ask will be asked for. Read from the server so
+// the page cannot offer a model the server would refuse.
+const nodes = {
+  model: document.getElementById("model-picker"),
+  reranker: document.getElementById("reranker-picker"),
+  hybrid: document.getElementById("hybrid-toggle"),
+  k: document.getElementById("k-picker"),
+};
 
 const MARKER = /\[(\d+)\]/g;
 const HUES = 6;
-
-// Phase 8 measured this one ranking "Treaty of Rome" above East German
-// emigration for a Berlin Wall question, and gave two unrelated documents an
-// identical 0.000. It stays on the menu because it is the value in config.py,
-// so hiding it would make the default unreproducible -- but nobody should pick
-// it without being told.
-const BROKEN_RERANKER = "BAAI/bge-reranker-base";
-
-// The controls describe what /ask will be asked for. Read from the server so
-// the page cannot offer a model the server would refuse.
-async function loadOptions() {
-  const options = await getJSON("/options");
-
-  for (const model of options.models) {
-    const choice = el("option", null, model);
-    choice.value = model;
-    modelPicker.append(choice);
-  }
-  modelPicker.value = options.defaults.model;
-
-  const off = el("option", null, "off");
-  off.value = "";
-  rerankerPicker.append(off);
-  for (const name of options.rerankers) {
-    const short = name.split("/").pop();
-    const broken = name === BROKEN_RERANKER;
-    const choice = el("option", null, broken ? short + "  ⚠ measured broken" : short);
-    choice.value = name;
-    choice.title = broken
-      ? "Phase 8 measured this model ranking unrelated passages above correct ones. Kept because it is the default in config.py."
-      : name;
-    rerankerPicker.append(choice);
-  }
-  rerankerPicker.value = options.defaults.reranker || "";
-
-  hybridToggle.checked = options.defaults.hybrid;
-
-  for (const k of K_CHOICES.filter((value) => value <= options.max_k)) {
-    const choice = el("option", null, String(k));
-    choice.value = String(k);
-    kPicker.append(choice);
-  }
-  kPicker.value = String(options.defaults.k);
-}
 
 // Which of the six hues a citation wears. k is 5, so in practice n never wraps;
 // the modulo is there so a larger k cannot produce a colourless card.
@@ -146,15 +101,7 @@ form.addEventListener("submit", async (event) => {
     const response = await fetch("/ask", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        question: question,
-        model: modelPicker.value,
-        // "" means switch it off; null would mean "leave the server's default
-        // alone", and those are different requests.
-        reranker: rerankerPicker.value,
-        hybrid: hybridToggle.checked,
-        k: Number(kPicker.value),
-      }),
+      body: JSON.stringify({ question: question, ...chosen(nodes) }),
     });
     if (!response.ok) {
       const detail = await response.json().catch(() => ({}));
@@ -207,12 +154,14 @@ form.addEventListener("submit", async (event) => {
 });
 
 
-loadOptions().catch((error) => {
-  // The controls are useless if the server never said what it accepts, and
-  // a silently-empty dropdown is worse than a stated failure.
-  setStatus(
-    statusLine,
-    "Could not read this server's settings: " + error.message,
-    "error",
-  );
-});
+options()
+  .then((opts) => fillControls(nodes, opts))
+  .catch((error) => {
+    // The controls are useless if the server never said what it accepts, and
+    // a silently-empty dropdown is worse than a stated failure.
+    setStatus(
+      statusLine,
+      "Could not read this server's settings: " + error.message,
+      "error",
+    );
+  });

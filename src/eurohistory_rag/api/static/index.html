@@ -55,6 +55,57 @@
   </div>
 
   <p class="status" id="eval-status" hidden></p>
+
+  <details class="runner" id="runner">
+    <summary>Run a new evaluation <span class="warn">costs money</span></summary>
+
+    <p class="lede">Sixty questions, about four minutes. The settings below are
+    what the run will use; anything that differs from the baseline is declared
+    to the gate automatically.</p>
+
+    <div class="controls">
+      <label class="ctl">model
+        <select id="run-model" aria-label="Which model answers"></select>
+      </label>
+      <label class="ctl">reranker
+        <select id="run-reranker" aria-label="Which reranker orders the passages"></select>
+      </label>
+      <label class="ctl">hybrid
+        <input type="checkbox" id="run-hybrid">
+        <span class="track"></span>
+      </label>
+      <label class="ctl">k
+        <select id="run-k" aria-label="How many passages the model is shown"></select>
+      </label>
+      <label class="ctl">compare against
+        <select id="run-baseline" aria-label="Which run this one is gated against"></select>
+      </label>
+    </div>
+
+    <label class="predict" for="prediction">What do you expect to happen?
+      <span class="plain">Which number moves, in which direction, by how much —
+      and what result would be impossible rather than merely bad. This is
+      written to the run before the first question is asked, so it cannot be
+      edited once the numbers exist.</span>
+    </label>
+    <textarea id="prediction" rows="4" maxlength="4000"
+              placeholder="recall@5 will not move at all. Anything above 70% would be impossible without a knob change, because…"></textarea>
+
+    <ul class="checks" id="run-checks"></ul>
+    <p class="cost" id="run-cost"></p>
+
+    <div class="run-actions">
+      <button id="run-start" type="button" disabled>Start</button>
+      <button id="run-cancel" type="button" hidden>Cancel</button>
+    </div>
+
+    <div class="progress" id="run-progress" hidden>
+      <div class="bar"><i id="run-bar"></i></div>
+      <p class="line" id="run-line"></p>
+    </div>
+    <pre class="verdict" id="run-verdict" hidden></pre>
+  </details>
+
   <div class="conditions" id="conditions"></div>
 
   <details class="guide">

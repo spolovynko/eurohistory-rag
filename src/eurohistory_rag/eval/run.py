@@ -8,7 +8,7 @@ would have given, not an approximation of it.
 import logging
 import subprocess
 import time
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from datetime import UTC, datetime
 
 from eurohistory_rag.eval.questions import Question
@@ -158,22 +158,38 @@ def run_question(
     )
 
 
+class Cancelled(Exception):
+    """Raised when a caller asked for the run to stop between questions."""
+
+
 def run_all(
     questions: Sequence[Question],
     search: SearchService,
     generation: GenerationService,
     answer_k: int,
     retrieval_k: int = RETRIEVAL_K,
+    on_question: Callable[[int, Question], None] | None = None,
+    should_stop: Callable[[], bool] | None = None,
 ) -> list[EvalRecord]:
     """Ask every question in order, one at a time.
 
     Sequential on purpose: thirty questions take a couple of minutes, and
     concurrent calls would make the latency numbers measure contention rather
     than the system.
+
+    The two callbacks exist for the caller that is not a terminal. `on_question`
+    is how a four-minute job says where it has got to; `should_stop` is how it
+    is stopped. Both are checked *between* questions and never inside one --
+    a half-asked question is money already spent, and abandoning it would leave
+    a record nobody could interpret.
     """
     records: list[EvalRecord] = []
     for position, question in enumerate(questions, start=1):
+        if should_stop is not None and should_stop():
+            raise Cancelled(f"stopped before question {position}")
         logger.info("[%d/%d] %s", position, len(questions), question.id)
+        if on_question is not None:
+            on_question(position, question)
         records.append(
             run_question(question, search, generation, answer_k, retrieval_k)
         )

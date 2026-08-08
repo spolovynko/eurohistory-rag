@@ -9,6 +9,29 @@ from collections.abc import Iterator
 import pytest
 from fastapi.testclient import TestClient
 
+from eurohistory_rag.core.config import get_settings
+
+
+@pytest.fixture(autouse=True)
+def stub_environment(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
+    """Give every test the two required settings, from nowhere real.
+
+    `Settings` requires an API key and a user agent, and `.env` is the only
+    place a developer's machine has them. Twelve tests reached `get_settings()`
+    through an endpoint and therefore passed by reading the real key off disk --
+    so they failed on CI, which has no `.env`, and they were reading a live
+    secret on the machines where they passed. Both halves are fixed here.
+
+    The cache is cleared on the way in and out because it is process-wide: one
+    test that built Settings from its own environment would otherwise hand that
+    instance to every test after it.
+    """
+    monkeypatch.setenv("OPENAI_API_KEY", "test-key-not-real")
+    monkeypatch.setenv("WIKIPEDIA_USER_AGENT", "eurohistory-rag-tests")
+    get_settings.cache_clear()
+    yield
+    get_settings.cache_clear()
+
 
 @pytest.fixture
 def client() -> Iterator[TestClient]:

@@ -143,6 +143,25 @@ way Phase 16 re-measured D-085's floor for the sixty-question set.
 
 ---
 
+## The run button's numbers — Phase 20
+
+Four constants sit behind the one control in this system that spends money.
+None of them changes what an evaluation measures; all four change what it costs
+to press by accident.
+
+| Constant | File | What changing it costs |
+|---|---|---|
+| `LOOPBACK` | `api/main.py` | **the whole access control.** There is no authentication anywhere in this system, so widening this list makes `$0.08` a click available to anything that can reach the port. Narrow is the only safe direction |
+| `MIN_PREDICTION` = 10 | `api/static/experiment.js`, mirrored by `StartRequest`'s `min_length` | how short a prediction may be. Both ends must move together — the page's copy only decides when the button lights up, and the server's is the one that refuses |
+| `POLL_MS` = 2000 | `api/static/experiment.js` | how often the page asks what the run is doing. Free; a hundred and twenty status reads over four minutes is nothing. Lower it and the bar is smoother, raise it and a finished run sits unnoticed for longer |
+| `PRICES`, `FALLBACK_TOKENS` | `eval/cost.py` | the accuracy of the number shown before the spend. A stale price quotes the wrong figure with full confidence — quoted $0.08 against $0.0803 actual on the run that proved it (D-094) |
+
+`PRICES` is the one that goes stale on its own, because OpenAI moves prices and
+nothing here notices. `test_every_selectable_model_has_a_price` catches a model
+added without one; nothing catches a price that simply became wrong.
+
+---
+
 ## Not knobs — leave these alone
 
 These are constants too, but they are **not** yours to tune. They encode a
