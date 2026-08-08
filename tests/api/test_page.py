@@ -1,11 +1,12 @@
-"""Tests for the one HTML page.
+"""Tests for the front end: one HTML shell, one stylesheet, four script modules.
 
 A static page cannot be tested the way a handler can -- nothing here runs the
-JavaScript, so these do not check that the page *works*. They check the two
-things that are properties of the file rather than of the browser: that it is
-actually served, and that it talks to `/ask` and to nothing else.
+JavaScript, so these do not check that the page *works*. They check what is a
+property of the files rather than of the browser: that each is served with the
+right type, that the shell asks only for files the package ships, and that the
+scripts talk to `/ask` and to nothing else.
 
-The second one is D-090's third decision written as an assertion. A page that
+That last one is D-090's third decision written as an assertion. A page that
 grew its own endpoint would still look right on screen, and the eval would
 stop describing the thing people use.
 """
@@ -14,7 +15,14 @@ import re
 
 from fastapi.testclient import TestClient
 
-from eurohistory_rag.api.main import PAGE, create_app
+from eurohistory_rag.api.main import PAGE, STATIC, create_app
+
+# The front end is four files now, so an assertion has to name the one it is
+# about. SCRIPTS is every module concatenated: the claims about behaviour --
+# which endpoints are called, that nothing is written as markup -- are true of
+# the front end as a whole, and splitting them per file would just mean editing
+# a test every time a function moved between modules.
+SCRIPTS = "".join(body for name, (body, _) in STATIC.items() if name.endswith(".js"))
 
 # Every network call the page makes. One capture group: the URL.
 #
@@ -34,15 +42,50 @@ def test_the_root_route_serves_html() -> None:
     assert response.text.startswith("<!doctype html>")
 
 
-def test_the_page_is_packaged_with_the_app() -> None:
-    """The served bytes are the file on disk.
+def test_the_stylesheet_and_scripts_are_served_with_their_own_types() -> None:
+    """A browser refuses a module served as text/plain, and says nothing useful."""
+    client = TestClient(create_app())
 
-    Guards the packaging rather than the content: page.html is data inside the
-    installed package, and a build that dropped it would fail here rather than
-    in a browser.
+    assert client.get("/static/app.css").headers["content-type"].startswith("text/css")
+    assert (
+        client.get("/static/main.js")
+        .headers["content-type"]
+        .startswith("text/javascript")
+    )
+
+
+def test_an_unknown_static_name_is_a_404_and_touches_no_filesystem() -> None:
+    """`name` arrives in a URL, so it is a dictionary key and nothing else."""
+    client = TestClient(create_app())
+
+    assert client.get("/static/nope.js").status_code == 404
+    assert client.get("/static/..%2F..%2Fmain.py").status_code == 404
+
+
+def test_the_page_asks_for_exactly_what_is_shipped() -> None:
+    """Every file the HTML references is one the package actually holds.
+
+    The failure this catches is a renamed module: the page still loads, the
+    stylesheet or the script silently 404s, and the first sign is a screen
+    with no styling.
+    """
+    referenced = set(re.findall(r"/static/([\w.]+)", PAGE))
+
+    assert referenced <= set(STATIC)
+    assert "app.css" in referenced
+    assert "main.js" in referenced
+
+
+def test_the_page_is_packaged_with_the_app() -> None:
+    """The served bytes are the files on disk.
+
+    Guards the packaging rather than the content: these are data inside the
+    installed package, and a build that dropped them would fail here rather
+    than in a browser.
     """
     assert PAGE.strip().endswith("</html>")
     assert TestClient(create_app()).get("/").text == PAGE
+    assert len(STATIC) == 6
 
 
 def test_the_only_answering_call_is_ask() -> None:
@@ -54,7 +97,7 @@ def test_the_only_answering_call_is_ask() -> None:
     question* except `/ask`, and that is what is asserted here. Everything
     reached by this page is either `/ask` or a read-only `/runs` lookup.
     """
-    called = FETCH.findall(PAGE)
+    called = FETCH.findall(SCRIPTS)
     reads = ("/runs", "/options")
 
     assert "/ask" in called
@@ -68,8 +111,8 @@ def test_the_page_cannot_start_an_evaluation() -> None:
     would put that behind a click, and a run nobody predicted the result of is
     a run that teaches nothing (obligation 9).
     """
-    assert PAGE.count('method: "POST"') == 1
-    assert '"/ask"' in PAGE
+    assert SCRIPTS.count('method: "POST"') == 1
+    assert '"/ask"' in SCRIPTS
 
 
 def test_the_page_never_writes_server_text_as_html() -> None:
@@ -79,8 +122,8 @@ def test_the_page_never_writes_server_text_as_html() -> None:
     this file would turn a Wikipedia passage into something the browser runs;
     `textContent` and `append` cannot.
     """
-    assert "innerHTML" not in PAGE
-    assert "insertAdjacentHTML" not in PAGE
+    assert "innerHTML" not in SCRIPTS
+    assert "insertAdjacentHTML" not in SCRIPTS
 
 
 def test_the_page_offers_no_second_button() -> None:
@@ -104,8 +147,8 @@ def test_the_broken_reranker_is_named_as_broken() -> None:
     would make the documented default unreproducible from the page. What it may
     not do is look like an ordinary choice.
     """
-    assert "BAAI/bge-reranker-base" in PAGE
-    assert "measured broken" in PAGE
+    assert "BAAI/bge-reranker-base" in SCRIPTS
+    assert "measured broken" in SCRIPTS
 
 
 def test_the_page_reads_its_choices_from_the_server() -> None:
@@ -115,10 +158,10 @@ def test_the_page_reads_its_choices_from_the_server() -> None:
     it. A page carrying its own copy would offer options the server rejects the
     first time either side is edited alone.
     """
-    called = FETCH.findall(PAGE)
+    called = FETCH.findall(SCRIPTS)
 
     assert "/options" in called
-    assert "gpt-4.1-nano" not in PAGE
+    assert "gpt-4.1-nano" not in SCRIPTS
 
 
 def test_the_openapi_schema_lists_the_page() -> None:
