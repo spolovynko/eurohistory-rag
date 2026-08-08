@@ -113,7 +113,7 @@ def stack(
     )
 
 
-CONFIG = RunConfig(k=5, model="gpt-4.1-mini", reranker="", hybrid=False)
+CONFIG = RunConfig(k=5, model="gpt-4.1-mini", reranker="", hybrid=False, temporal=False)
 
 
 def test_a_run_writes_the_four_files_the_cli_writes(tmp_path: Path) -> None:
@@ -146,7 +146,13 @@ def test_the_configuration_reaches_meta_json(tmp_path: Path) -> None:
     directory = execute(
         questions(),
         settings(),
-        RunConfig(k=8, model="gpt-4.1-nano", reranker="cross-encoder/x", hybrid=True),
+        RunConfig(
+            k=8,
+            model="gpt-4.1-nano",
+            reranker="cross-encoder/x",
+            hybrid=True,
+            temporal=True,
+        ),
         run_id="2026-01-01T0000Z",
         runs_dir=tmp_path,
         build=stack,
@@ -264,3 +270,25 @@ def test_the_embedder_fake_is_not_used_by_accident() -> None:
     module's stack it would mean the run was scoring vectors nobody wrote.
     """
     assert FakeEmbedder is not None
+
+
+def test_from_settings_carries_every_retrieval_flag() -> None:
+    """The wire that was forgotten, pinned.
+
+    `temporal` was added to RunConfig with a default, the CLI built the object
+    field by field and never passed it, and a run made with the flag on measured
+    the flag off -- $0.11 for a table identical to the one before it. The field
+    lost its default afterwards, which is what makes a forgotten wire a type
+    error; this checks the values actually arrive. See the D-096 fourth addendum.
+    """
+    settings = Settings(
+        openai_api_key=SecretStr("sk-test"),
+        wikipedia_user_agent="test/1.0 (test@example.com)",
+        hybrid_enabled=True,
+        temporal_enabled=True,
+        reranker_enabled=True,
+    )
+    config = RunConfig.from_settings(settings)
+    assert config.hybrid is True
+    assert config.temporal is True
+    assert config.reranker == settings.reranker_model

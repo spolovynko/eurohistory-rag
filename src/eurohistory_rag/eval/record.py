@@ -51,6 +51,11 @@ class RunMeta:
     # still false and only caught it because meta.json recorded the model name;
     # this field exists so Phase 13 cannot repeat that. D-084.
     verifier: str = ""
+    # How the period arm was run, or "" when it was off. Same reasoning as
+    # `hybrid` above: it is a description rather than a flag, and it defaults to
+    # empty so every run already on disk reads back as a run without it, which
+    # is what makes those runs valid "before" halves. Phase 22, D-096.
+    temporal: str = ""
     note: str = ""
 
 

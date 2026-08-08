@@ -126,6 +126,45 @@ class VectorStore:
         ]
         self._client.upsert(collection_name=self._collection, points=points, wait=True)
 
+    def set_payload(
+        self, chunk_ids: Sequence[str], payloads: Sequence[dict[str, Any]]
+    ) -> None:
+        """Overwrite the metadata on points that already exist, one point at a time.
+
+        The vectors are not touched, which is the point: adding a payload field
+        to 54,903 chunks this way costs nothing and takes seconds, where a full
+        `index` would re-embed 13.0 M tokens for $0.26 and would move every
+        cosine score in the fourth decimal. A run that has to be compared
+        against the one before it cannot afford that noise.
+
+        `set_payload` rather than `overwrite_payload`: the existing keys are
+        still correct and only the new ones are being added. A point that is not
+        in the collection is skipped by Qdrant rather than created, so this can
+        never invent a vectorless point.
+        """
+        for chunk_id, payload in zip(chunk_ids, payloads, strict=True):
+            self._client.set_payload(
+                collection_name=self._collection,
+                payload=payload,
+                points=[point_id(chunk_id)],
+                wait=False,
+            )
+
+    def index_payload_field(self, field: str) -> None:
+        """Make a payload field filterable at speed.
+
+        Qdrant will filter on an unindexed field by scanning, which is correct
+        and slow. The temporal arm filters on `year_start` and `year_end` on
+        every dated question, so both are indexed. Idempotent -- asking twice
+        for the same index is not an error.
+        """
+        self._client.create_payload_index(
+            collection_name=self._collection,
+            field_name=field,
+            field_schema=models.PayloadSchemaType.INTEGER,
+            wait=True,
+        )
+
     def has_all(self, chunk_ids: Sequence[str]) -> bool:
         """True if every one of these chunks is already stored.
 
@@ -157,6 +196,8 @@ class VectorStore:
         query: list[float] | models.SparseVector,
         limit: int,
         using: str | None = None,
+        query_filter: models.Filter | None = None,
+        exact: bool = False,
     ) -> list[Hit]:
         """One search against the collection, in this project's terms.
 
@@ -170,6 +211,8 @@ class VectorStore:
                 using=using,
                 limit=limit,
                 with_payload=True,
+                query_filter=query_filter,
+                search_params=models.SearchParams(exact=True) if exact else None,
             )
         except ResponseHandlingException as error:
             raise VectorStoreUnavailable(str(error)) from error
@@ -181,6 +224,47 @@ class VectorStore:
     def search(self, vector: Sequence[float], limit: int) -> list[Hit]:
         """Nearest `limit` chunks by meaning, best first."""
         return self._query(list(vector), limit)
+
+    def search_within(
+        self, vector: Sequence[float], limit: int, start: int, end: int
+    ) -> list[Hit]:
+        """Nearest `limit` chunks by meaning, among those covering `start`-`end`.
+
+        Overlap, not containment: a chunk spanning 1914-1918 is about 1916, and
+        requiring the chunk's period to sit inside the question's would throw
+        away every survey section ever written. Two ranges overlap when each
+        starts before the other ends, which is the pair of conditions below.
+
+        A chunk with no period has neither key in its payload and matches
+        neither condition, so it is absent from this list. It is not absent from
+        the caller's other lists, and that difference is deliberate: this is one
+        arm of a fusion, never a gate on the search. See D-096.
+
+        **Exact, unlike every other search here, and this is the whole reason
+        the arm works.** Qdrant finds neighbours by walking an HNSW graph. With
+        most of the points filtered out, the walk strands itself in a region the
+        answer is not in: measured, `Cold War - Renewal of tensions (1979-1985)`
+        was absent from eighty filtered results while a brute-force scan of the
+        same filtered set put it second, and raising `hnsw_ef` eightfold did not
+        find it either. Scanning costs nothing here because the filter has
+        already made the candidate set small -- 7-26 ms against 7-31 ms
+        approximate. See the D-096 second addendum.
+        """
+        return self._query(
+            list(vector),
+            limit,
+            exact=True,
+            query_filter=models.Filter(
+                must=[
+                    models.FieldCondition(
+                        key="year_start", range=models.Range(lte=end)
+                    ),
+                    models.FieldCondition(
+                        key="year_end", range=models.Range(gte=start)
+                    ),
+                ]
+            ),
+        )
 
     def search_sparse(self, sparse: Mapping[int, float], limit: int) -> list[Hit]:
         """Nearest `limit` chunks by keyword match, best first.

@@ -7,7 +7,7 @@ from pydantic import ValidationError
 
 from eurohistory_rag.eval.questions import (
     QUESTIONS_PATH,
-    TARGET_COUNTS,
+    SUITE_TARGETS,
     Question,
     counts,
     load_questions,
@@ -62,18 +62,34 @@ def test_a_synthetic_question_names_its_own_suite() -> None:
 
 
 def test_committed_set_loads_and_matches_the_plan() -> None:
-    """The real file: two suites of thirty, each in the 8/8/8/6 shape.
+    """The real file: every suite in the shape its own plan asks for.
 
-    Both halves are checked rather than the total, because the total is exactly
+    Each suite is checked rather than the total, because the total is exactly
     what hid Phase 14's problem -- thirty questions about a third of the corpus
-    average perfectly well with thirty about the rest.
+    average perfectly well with thirty about the rest. The count is derived from
+    SUITE_TARGETS rather than typed, so adding a suite is one edit and not two.
     """
     questions = load_questions(QUESTIONS_PATH)
-    assert len(questions) == 60
-    for suite in ("golden", "extended"):
+    assert sorted({q.suite for q in questions}) == sorted(SUITE_TARGETS)
+    for suite, want in SUITE_TARGETS.items():
         subset = [question for question in questions if question.suite == suite]
-        assert len(subset) == 30
-        assert counts(subset) == TARGET_COUNTS
+        assert counts(subset) == want, suite
+        assert len(subset) == sum(want.values()), suite
+
+
+def test_the_golden_thirty_are_still_the_golden_thirty() -> None:
+    """Phase 22 added eighteen questions and had to leave the sixty untouched.
+
+    Every baseline back to Phase 7 is a comparison against these ids; one of
+    them renamed or reworded silently invalidates all of it. Checked on ids
+    rather than on file bytes, so a comment may be edited and a question may
+    not.
+    """
+    questions = load_questions(QUESTIONS_PATH)
+    golden = [q.id for q in questions if q.suite == "golden"]
+    assert golden[0] == "brest-litovsk-terms"
+    assert golden[-1] == "transformer-attention"
+    assert len(golden) == 30
 
 
 def test_committed_ground_truth_points_at_real_sections() -> None:

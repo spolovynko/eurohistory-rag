@@ -451,3 +451,46 @@ def test_hybrid_can_be_switched_off() -> None:
     service = SearchService(FakeEmbedder(), store, hybrid=False)  # type: ignore[arg-type]
     service.search("Marshall plan", k=5)
     assert store.limits == [20]
+
+
+# --- the temporal arm (D-096) -----------------------------------------------
+
+
+def test_the_period_arm_lifts_a_chunk_the_dense_search_ranked_below() -> None:
+    """The whole phase, in one case.
+
+    `right_period` is second on meaning and first among chunks whose years
+    overlap the question. `wrong_period` is first on meaning and has no date, so
+    it never appears in the third list. Agreement across two arms wins.
+    """
+    wrong_period = result("wrong_period", "d0")
+    right_period = result("right_period", "d1")
+
+    fused = fuse([wrong_period, right_period], [], period=[right_period])
+    assert fused[0].chunk_id == "right_period"
+
+
+def test_an_undated_chunk_is_never_removed_by_the_period_arm() -> None:
+    """The named risk of the whole phase: a filter that subtracts.
+
+    `undated` is absent from the period list because it has no year span. It
+    must still come back -- this arm adds candidates and never gates the search.
+    """
+    undated = result("undated", "d0")
+    dated = result("dated", "d1")
+
+    fused = fuse([undated, dated], [], period=[dated])
+    assert {r.chunk_id for r in fused} == {"undated", "dated"}
+
+
+def test_fusion_is_unchanged_when_no_period_was_parsed() -> None:
+    """43 of 78 evaluation questions take this path and must not move."""
+    dense = [result("a", "d0"), result("b", "d1")]
+    assert fuse(dense, [], period=[]) == fuse(dense, [])
+
+
+def test_a_period_only_chunk_keeps_its_cosine_score() -> None:
+    """Unlike the keyword arm: this is the same vector search, so `score` is real."""
+    fused = fuse([], [], period=[result("in_period", "d0", score=0.61)])
+    assert fused[0].score == 0.61
+    assert fused[0].sparse_score is None

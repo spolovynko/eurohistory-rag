@@ -12,6 +12,7 @@ from dataclasses import dataclass, replace
 from eurohistory_rag.retrieval.embedding import Embedder
 from eurohistory_rag.retrieval.rerank import Reranker, RerankUnavailable
 from eurohistory_rag.retrieval.sparse import query_vector
+from eurohistory_rag.retrieval.temporal import parse_period
 from eurohistory_rag.retrieval.vectorstore import Hit, VectorStore
 
 logger = logging.getLogger(__name__)
@@ -72,6 +73,11 @@ class SearchResult:
     # result afterwards, "which search found this, and how strongly" is the
     # question worth answering, and one blended number cannot answer it.
     sparse_score: float | None = None
+    # The years this chunk covers, or None for the 28% that name none. Read from
+    # the payload so the period arm can be ordered by how well each chunk's span
+    # agrees with the question's, which Qdrant's filter cannot express.
+    year_start: int | None = None
+    year_end: int | None = None
 
     @property
     def source(self) -> str:
@@ -105,6 +111,10 @@ def to_result(hit: Hit) -> SearchResult:
         text=payload["text"],
         score=hit.score,
         revision_id=payload["revision_id"],
+        # `.get`, not `[]`: an undated chunk has no such key, and a collection
+        # indexed before Phase 22 has it on no chunk at all.
+        year_start=payload.get("year_start"),
+        year_end=payload.get("year_end"),
     )
 
 
@@ -112,8 +122,9 @@ def fuse(
     dense: Sequence[SearchResult],
     sparse: Sequence[SearchResult],
     rrf_k: int = RRF_K,
+    period: Sequence[SearchResult] = (),
 ) -> list[SearchResult]:
-    """Merge the two ranked lists into one, by position rather than by score.
+    """Merge the ranked lists into one, by position rather than by score.
 
     Reciprocal rank fusion: a chunk earns `1 / (rrf_k + rank)` in each list it
     appears in, and the two are added. Positions rather than scores because
@@ -125,6 +136,13 @@ def fuse(
     search loves. That is the Trianon failure -- meaning-search buries it under
     Versailles sections, keyword-search puts it first, and agreement lifts it.
 
+    `period` is D-096's third arm: the same dense search, restricted to chunks
+    whose years overlap the question's. It is empty whenever the question names
+    no period, which is 43 of the 78 evaluation questions, and when it is empty
+    this function does exactly what it did before. A chunk that is right on both
+    meaning and period appears in two lists and is lifted; a chunk with no date
+    is scored by the other arms alone and is never removed.
+
     Ties keep dense order, because Python's sort is stable and dense goes in
     first. That matters only when nothing has been found twice.
     """
@@ -134,6 +152,12 @@ def fuse(
     for rank, result in enumerate(dense, start=1):
         fused[result.chunk_id] = fused.get(result.chunk_id, 0.0) + 1 / (rrf_k + rank)
         merged[result.chunk_id] = result
+
+    for rank, result in enumerate(period, start=1):
+        fused[result.chunk_id] = fused.get(result.chunk_id, 0.0) + 1 / (rrf_k + rank)
+        # Same vector search, so a chunk found here carries the same cosine
+        # score it would have carried from the dense arm. Nothing to reconcile.
+        merged.setdefault(result.chunk_id, result)
 
     for rank, result in enumerate(sparse, start=1):
         fused[result.chunk_id] = fused.get(result.chunk_id, 0.0) + 1 / (rrf_k + rank)
@@ -207,6 +231,7 @@ class SearchService:
         rerank_top_n: int = RERANK_TOP_N,
         hybrid: bool = True,
         rrf_k: int = RRF_K,
+        temporal: bool = False,
     ) -> None:
         self._embedder = embedder
         self._store = store
@@ -217,6 +242,7 @@ class SearchService:
         self._rerank_top_n = rerank_top_n
         self._hybrid = hybrid
         self._rrf_k = rrf_k
+        self._temporal = temporal
 
     def search(
         self,
@@ -249,21 +275,50 @@ class SearchService:
             results = [result for result in results if result.score >= min_score]
 
         keyword: list[SearchResult] = []
+        dated: list[SearchResult] = []
+        period = parse_period(question) if self._temporal else None
+
+        if period is not None:
+            found = [
+                to_result(hit)
+                for hit in self._store.search_within(
+                    vector, limit=pool, start=period.start, end=period.end
+                )
+            ]
+            # Reordered by how closely each span agrees with the question's
+            # period, cosine breaking ties. Qdrant's range filter can only say
+            # whether two ranges touch, and a one-year touch arriving at rank 1
+            # of this list earns the same fusion bonus as an exact match --
+            # which is how the first build made the temporal suite worse. The
+            # list is only reordered, never shortened. See the D-096 addendum.
+            dated = sorted(
+                found,
+                key=lambda r: (period.agreement(r.year_start, r.year_end), r.score),
+                reverse=True,
+            )
+
         if self._hybrid:
             keyword = [
                 to_result(hit)
                 for hit in self._store.search_sparse(query_vector(question), limit=pool)
             ]
-            results = fuse(results, keyword, self._rrf_k)
+
+        # Fusion is skipped entirely when neither extra arm ran, so a question
+        # naming no period on a dense-only configuration takes exactly the code
+        # path it took before this phase -- same list, same order, provably.
+        if keyword or dated:
+            results = fuse(results, keyword, self._rrf_k, period=dated)
 
         results = self._rerank(question, results)
 
         thinned = thin(results, limit, self._max_per_document)
         logger.debug(
-            "search %r: %d dense, %d keyword, %d after thinning",
+            "search %r: %d dense, %d keyword, %d in %s, %d after thinning",
             question,
             len(results),
             len(keyword),
+            len(dated),
+            period,
             len(thinned),
         )
         return thinned

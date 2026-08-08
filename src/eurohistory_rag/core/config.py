@@ -88,6 +88,13 @@ class Settings(BaseSettings):
     # quietly contaminate the comparison. Phase 9, D-074.
     hybrid_enabled: bool = False
 
+    # Temporal retrieval: a third arm restricted to chunks whose years overlap
+    # the period the question names. Off by default for the same reason as the
+    # two above, and for one more -- Phase 22 measured the failure it is meant
+    # to fix at two questions out of sixteen, so the default has to be argued
+    # from the verdict rather than assumed. Phase 22, D-096.
+    temporal_enabled: bool = False
+
     # The groundedness gate: a second call that checks the draft answer against
     # the sources before it is returned. Off by default for the same reason as
     # the two above -- with it off the system behaves exactly as the run that

@@ -1,6 +1,7 @@
 """Command-line entry points for the pipeline."""
 
 import datetime as dt
+from dataclasses import replace
 from pathlib import Path
 from typing import Annotated
 
@@ -18,7 +19,7 @@ from eurohistory_rag.eval import synthetic as synthetic_module
 from eurohistory_rag.eval.metrics import summarise
 from eurohistory_rag.eval.questions import (
     QUESTIONS_PATH,
-    TARGET_COUNTS,
+    SUITE_TARGETS,
     counts,
     load_questions,
 )
@@ -210,6 +211,10 @@ def index(
         bool,
         typer.Option(help="Keep the collection and skip batches already stored."),
     ] = False,
+    payload_only: Annotated[
+        bool,
+        typer.Option(help="Rewrite metadata on existing points. Free, no embedding."),
+    ] = False,
 ) -> None:
     """Embed data/gold/ into Qdrant.
 
@@ -217,12 +222,21 @@ def index(
     chunk size changes, so writing into an old collection leaves points nothing
     will ever overwrite. Use --resume only to finish an interrupted run.
 
-    This is the one command that costs money. Requires Qdrant running:
-    `docker compose up -d`.
+    This is the one command that costs money -- except with --payload-only,
+    which updates metadata on points that already exist and touches no vector.
+    Requires Qdrant running: `docker compose up -d`.
     """
     settings = get_settings()
-    embedder = _embedder(settings)
     store = _store(settings)
+    if payload_only:
+        report = index_module.refresh_payloads(gold, store, batch_size)
+        typer.echo(
+            f"{report.indexed} payloads updated, {report.points} points "
+            f"in {settings.qdrant_collection} -- $0.00, no vectors touched"
+        )
+        return
+
+    embedder = _embedder(settings)
     report = index_module.build(gold, store, embedder, batch_size, resume=resume)
     typer.echo(
         f"{report.indexed} indexed, {report.skipped} skipped, "
@@ -253,20 +267,18 @@ def evaluate(
     # that every run would train everyone to ignore the line.
     if questions_path == QUESTIONS_PATH:
         for suite in sorted({question.suite for question in questions}):
+            want = SUITE_TARGETS.get(suite)
             have = counts([q for q in questions if q.suite == suite])
-            if have != TARGET_COUNTS:
-                typer.echo(f"note: {suite} is {have}, plan asks for {TARGET_COUNTS}")
+            if want is not None and have != want:
+                typer.echo(f"note: {suite} is {have}, plan asks for {want}")
 
     settings = get_settings()
     # The whole run, including how the retrieval stack is wired, lives in
     # eval/execute.py. It is shared with the page's run button, and it is shared
     # precisely so a run started here and a run started there are the same run.
-    config = execute_module.RunConfig(
-        k=k,
-        model=settings.generation_model,
-        reranker=settings.reranker_model if settings.reranker_enabled else "",
-        hybrid=settings.hybrid_enabled,
-    )
+    # Built from settings and then narrowed, rather than field by field: a
+    # field listed here by hand is a field the next one can be forgotten beside.
+    config = replace(execute_module.RunConfig.from_settings(settings), k=k)
     directory = execute_module.execute(
         questions, settings, config, runs_dir=runs, note=note
     )

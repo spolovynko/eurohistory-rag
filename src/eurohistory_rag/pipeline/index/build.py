@@ -70,7 +70,67 @@ def to_payload(row: dict[str, Any]) -> dict[str, Any]:
         # ISO text rather than a datetime: payloads are JSON, and Qdrant reads
         # this format back for range filters.
         "revision_timestamp": row["revision_timestamp"].isoformat(),
+        **date_payload(row),
     }
+
+
+def date_payload(row: dict[str, Any]) -> dict[str, Any]:
+    """The period keys, present only when the chunk has a period.
+
+    Omitted rather than written as null, and that is the whole design of the
+    temporal filter in one line: Qdrant's range condition does not match a point
+    whose field is absent, so an undated chunk simply never appears in the
+    temporal arm's results. It is not excluded from anything -- the dense and
+    keyword arms never look at these keys. See D-096.
+    """
+    if row["year_start"] is None:
+        return {}
+    return {
+        "year_start": int(row["year_start"]),
+        "year_end": int(row["year_end"]),
+        "year_source": row["year_source"],
+    }
+
+
+def refresh_payloads(
+    gold_root: Path, store: VectorStore, batch_size: int = DEFAULT_BATCH_SIZE
+) -> IndexReport:
+    """Rewrite every point's metadata from Gold, without embedding anything.
+
+    The cheap half of `build`. A payload column added after the corpus was
+    indexed -- Phase 22's year span is the first -- does not need new vectors,
+    and paying for them would buy nothing but a fourth-decimal change in every
+    cosine score at the exact moment two runs have to be compared.
+
+    Only valid while `chunk_id` is unchanged, which is why it reports the point
+    count: a Gold table rebuilt at a different chunk size produces ids that are
+    not in the collection, Qdrant skips them, and the count is what says so.
+    """
+    started = time.monotonic()
+    chunks = read_chunks(gold_root)
+    logger.info("payload refresh: %d chunks", chunks.height)
+
+    updated = 0
+    for offset in range(0, chunks.height, batch_size):
+        batch = chunks.slice(offset, batch_size)
+        store.set_payload(
+            batch["chunk_id"].to_list(),
+            [to_payload(row) for row in batch.iter_rows(named=True)],
+        )
+        updated += batch.height
+        logger.info("payload batch at %d: %d updated", offset, updated)
+
+    for field in ("year_start", "year_end"):
+        store.index_payload_field(field)
+
+    points = store.count()
+    logger.info(
+        "payload refresh done: %d updated, %d points in %.1fs",
+        updated,
+        points,
+        time.monotonic() - started,
+    )
+    return IndexReport(indexed=updated, skipped=0, points=points)
 
 
 def build(
