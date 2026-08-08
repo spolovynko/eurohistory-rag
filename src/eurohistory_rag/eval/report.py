@@ -10,6 +10,7 @@ from collections.abc import Sequence
 from eurohistory_rag.eval.metrics import (
     Summary,
     first_hit_rank,
+    first_token_ms,
     invalid_markers,
     refused,
     summarise_by_kind,
@@ -32,7 +33,7 @@ def render_summary(summaries: Sequence[Summary]) -> str:
     header = (
         f"{'kind':<13}{'n':>3}  {'r@5':>6} {'r@20':>6} {'cov@5':>6} {'MRR':>6} "
         f"{'top':>6} {'docs':>5} {'arts':>5} {'refuse':>7} "
-        f"{'p50ms':>7} {'p95ms':>7} {'gen ms':>7}"
+        f"{'ttft':>7} {'p50ms':>7} {'p95ms':>7} {'gen ms':>7}"
     )
     lines = [header, "-" * len(header)]
     for s in summaries:
@@ -42,7 +43,8 @@ def render_summary(summaries: Sequence[Summary]) -> str:
             f"{_pct(s.coverage_at_5):>6} {_num(s.mrr):>6} "
             f"{s.mean_top_score:>6.3f} {s.mean_distinct_docs_at_5:>5.1f} "
             f"{s.mean_distinct_articles_at_5:>5.1f} {_pct(s.refusal_rate):>7} "
-            f"{s.p50_total_ms:>7.0f} {s.p95_total_ms:>7.0f} {s.mean_generate_ms:>7.0f}"
+            f"{s.p50_first_token_ms:>7.0f} {s.p50_total_ms:>7.0f} "
+            f"{s.p95_total_ms:>7.0f} {s.mean_generate_ms:>7.0f}"
         )
 
     total = summaries[-1] if summaries else None
@@ -153,6 +155,7 @@ def render_transcript(meta: RunMeta, records: Sequence[EvalRecord]) -> str:
             out.append(f"INVALID MARKERS: {invalid_markers(record)}")
         out.append(
             f"timing: search {record.search_ms:.0f} ms, "
+            f"first token {first_token_ms(record):.0f} ms, "
             f"generate {record.generate_ms:.0f} ms, total {record.total_ms:.0f} ms"
         )
 

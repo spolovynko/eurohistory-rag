@@ -26,7 +26,11 @@ from pathlib import Path
 import polars as pl
 
 from eurohistory_rag.eval.questions import Question, load_questions
-from eurohistory_rag.generation.client import GenerationUnavailable, Generator
+from eurohistory_rag.generation.client import (
+    GenerationUnavailable,
+    Generator,
+    complete,
+)
 from eurohistory_rag.generation.messages import Message
 
 logger = logging.getLogger(__name__)
@@ -247,7 +251,7 @@ def generate(chunks: Sequence[SourceChunk], generator: Generator) -> GenerationR
 
     for position, chunk in enumerate(chunks, start=1):
         try:
-            completion = generator.generate(build_messages(chunk))
+            completion = complete(generator, build_messages(chunk))
         except GenerationUnavailable as error:
             logger.warning("%s: generation failed: %s", chunk.chunk_id, error)
             failed += 1

@@ -89,6 +89,24 @@ def test_an_invented_marker_is_recorded_but_not_cited() -> None:
     assert [c.number for c in record.citations] == [1]
 
 
+def test_the_record_counts_the_search_into_the_time_to_first_word() -> None:
+    """The wait a person feels starts when they press the button, not when the
+    model is called -- so a TTFT excluding retrieval would flatter itself by the
+    half-second the search costs. Phase 21, D-095.
+    """
+    search, generation = services(FakeGenerator(first_token_ms=100.0))
+    record = run_question(QUESTION, search, generation, answer_k=2)
+
+    assert record.first_token_ms == round(record.search_ms + 100.0, 1)
+
+
+def test_a_run_with_no_streaming_records_no_first_word() -> None:
+    """None rather than zero: the metric reads it as "arrived at the end"."""
+    search, generation = services(FakeGenerator())
+
+    assert run_question(QUESTION, search, generation, answer_k=2).first_token_ms is None
+
+
 def test_a_generation_failure_is_recorded_rather_than_raised() -> None:
     """One unreachable call must not throw away the questions already done."""
     search, generation = services(UnavailableGenerator())

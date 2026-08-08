@@ -70,6 +70,13 @@ TOP_SCORE_FLOOR = 0.001
 # a build on two runs that changed nothing.
 LATENCY_NOISE_MS = 900.0
 
+# Time to first token has no measured noise floor -- Phase 16's three identical
+# runs predate the field. This borrows the total-latency spread rather than
+# inventing a number, and says so: it is the same clock measuring a shorter
+# interval, so it is if anything too wide. Reported, never gated, like the line
+# above it. D-095.
+TTFT_NOISE_MS = LATENCY_NOISE_MS
+
 UNSUPPORTED_FLOOR = 4
 FAITHFULNESS_FLOOR = 0.007
 FULLY_FAITHFUL_FLOOR = 2
@@ -394,7 +401,14 @@ def _reported(
 
 
 def _latency_checks(suite: str, before: Summary, after: Summary) -> list[Check]:
-    """p50, reported against the spread three identical runs produced."""
+    """p50 and time to first token, reported against their spreads.
+
+    Both are reported rather than gated, and for opposite reasons. Total latency
+    moved 893 ms across three runs that changed nothing, so it cannot fail a
+    build. Time to first token is the number Phase 21 exists to move, and a gate
+    whose rule is "must not get worse" would pass an improvement in silence --
+    which is the one thing the gate was already known not to do.
+    """
     return [
         _reported(
             "latency",
@@ -402,7 +416,14 @@ def _latency_checks(suite: str, before: Summary, after: Summary) -> list[Check]:
             before.p50_total_ms,
             after.p50_total_ms,
             LATENCY_NOISE_MS,
-        )
+        ),
+        _reported(
+            "latency",
+            f"{suite} p50 first token ms",
+            before.p50_first_token_ms,
+            after.p50_first_token_ms,
+            TTFT_NOISE_MS,
+        ),
     ]
 
 

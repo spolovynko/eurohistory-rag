@@ -11,6 +11,7 @@ came from the reranker; it cannot assert the reranker is any good. The same
 split applies here, so the guards get tests and the judgement gets a probe.
 """
 
+from eurohistory_rag.generation.client import complete
 from eurohistory_rag.generation.verify import (
     REFUSAL,
     build_verify_messages,
@@ -148,7 +149,7 @@ def test_the_cost_is_recorded_even_when_the_revision_is_thrown_away() -> None:
     """
     checked = verify(FakeGenerator(answer=reply(REFUSAL)), "q", [result()], DRAFT)
 
-    assert checked.prompt_tokens == FakeGenerator().generate([]).prompt_tokens
+    assert checked.prompt_tokens == complete(FakeGenerator(), []).prompt_tokens
 
 
 def test_a_reply_without_an_answer_block_keeps_the_draft() -> None:

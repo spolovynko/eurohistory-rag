@@ -1,11 +1,14 @@
 """FastAPI application factory and the module-level app uvicorn imports."""
 
+import json
+import logging
+from collections.abc import Iterator
 from importlib.resources import files
 from pathlib import Path
 from typing import Annotated
 
 from fastapi import Depends, FastAPI, HTTPException, Query, Request, status
-from fastapi.responses import HTMLResponse, Response
+from fastapi.responses import HTMLResponse, Response, StreamingResponse
 from pydantic import BaseModel, Field
 
 from eurohistory_rag import __version__
@@ -57,6 +60,8 @@ STATIC = {
 }
 
 PAGE = STATIC["index.html"][0]
+
+logger = logging.getLogger(__name__)
 
 
 class SearchHit(BaseModel):
@@ -239,6 +244,69 @@ class AskResponse(BaseModel):
     configuration: Configuration
 
 
+# What a client sends in `Accept` to be given the answer as it is written. HTTP
+# already has a way to say "which shape of this resource do you want", so the
+# streaming choice is made there rather than in a second URL -- D-090's third
+# decision says there is one path from a question to an answer, and this keeps
+# that literally true. D-095.
+SSE_TYPE = "text/event-stream"
+
+
+def _sse(event: str, payload: object) -> str:
+    """One server-sent event: a named kind, and one line of JSON.
+
+    The wire format is two labelled lines and a blank one. It is this small on
+    purpose -- the alternative was a websocket, which is a second protocol, a
+    second failure mode and a connection to keep alive for a four-second job.
+    """
+    return f"event: {event}\ndata: {json.dumps(payload)}\n\n"
+
+
+def _answer_events(
+    service: GenerationService,
+    question: str,
+    results: list[SearchResult],
+    used: Configuration,
+) -> Iterator[str]:
+    """The answer as a stream of events: sources, then text, then the rest.
+
+    The sources go first because they are already known -- retrieval finished
+    before this generator was ever iterated -- and they are the thing a reader
+    can start on while the model writes. The citations cannot go with them: a
+    marker only becomes a citation once the sentence holding it exists.
+
+    A failure here arrives *after* the 200 was sent, so it cannot become a
+    status code. It becomes an `error` event instead, and the page is
+    responsible for making that look like a failure rather than an answer.
+    """
+    yield _sse(
+        "sources",
+        [SearchHit.from_result(result).model_dump() for result in results],
+    )
+    try:
+        for piece in service.stream_from(question, results):
+            if isinstance(piece, str):
+                yield _sse("token", piece)
+            else:
+                yield _sse(
+                    "done",
+                    AskResponse(
+                        question=piece.question,
+                        answer=piece.text,
+                        model=piece.model,
+                        license=CORPUS_LICENSE,
+                        sources=[
+                            AnswerSource.from_citation(citation)
+                            for citation in piece.citations
+                        ],
+                        configuration=used.model_copy(update={"model": piece.model}),
+                    ).model_dump(),
+                )
+    except (VectorStoreUnavailable, GenerationUnavailable) as error:
+        logger.warning("stream failed after the response began: %s", error)
+        yield _sse("error", "Answering is temporarily unavailable.")
+
+
 def _overridden(request: AskRequest) -> bool:
     """Whether this request asked for anything other than the process default.
 
@@ -371,11 +439,16 @@ def create_app() -> FastAPI:
             max_k=MAX_K,
         )
 
-    @app.post("/ask", summary="Answer a question from the corpus, with citations")
+    @app.post(
+        "/ask",
+        summary="Answer a question from the corpus, with citations",
+        response_model=AskResponse,
+    )
     def ask(
         service: Annotated[GenerationService, Depends(get_generation_service)],
         request: AskRequest,
-    ) -> AskResponse:
+        http: Request,
+    ) -> AskResponse | Response:
         """Answer a question using only the indexed corpus.
 
         POST rather than GET because a question is input the server acts on,
@@ -386,6 +459,11 @@ def create_app() -> FastAPI:
         D-090's third decision. A request naming nothing uses the injected
         service, which is what keeps the tests' fakes in play and what the eval
         runner's equivalent does.
+
+        One question, two shapes. `Accept: text/event-stream` gets the answer as
+        it is written; anything else gets the same answer as one JSON object,
+        assembled from the identical call. `response_model` is declared on the
+        decorator rather than inferred, so /docs still describes the JSON.
         """
         settings = get_settings()
         used = Configuration(
@@ -412,8 +490,23 @@ def create_app() -> FastAPI:
                 hybrid=used.hybrid, reranker=used.reranker, model=used.model
             )
 
+        streaming = SSE_TYPE in http.headers.get("accept", "")
         try:
-            answer = service.ask(request.question, k=request.k)
+            # Retrieval runs here in both shapes, and that is the point: it is
+            # the half that can fail before a single byte has left, so a dead
+            # Qdrant is still an honest 503 rather than an apology inside a
+            # response that already claimed success.
+            results = service.search(request.question, k=request.k)
+            if streaming:
+                return StreamingResponse(
+                    _answer_events(service, request.question, results, used),
+                    media_type=SSE_TYPE,
+                    # Buffering proxies are the one thing that can undo this
+                    # phase: an intermediary holding the response back until it
+                    # is complete restores exactly the blank screen we removed.
+                    headers={"Cache-Control": "no-store", "X-Accel-Buffering": "no"},
+                )
+            answer = service.answer_from(request.question, results)
         except (VectorStoreUnavailable, GenerationUnavailable) as error:
             # Two different failures, one message: the caller can do nothing
             # differently about a dead Qdrant than about a dead OpenAI.

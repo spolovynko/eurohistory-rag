@@ -42,7 +42,11 @@ from pathlib import Path
 
 from eurohistory_rag.eval.metrics import refused
 from eurohistory_rag.eval.record import EvalRecord
-from eurohistory_rag.generation.client import GenerationUnavailable, Generator
+from eurohistory_rag.generation.client import (
+    GenerationUnavailable,
+    Generator,
+    complete,
+)
 from eurohistory_rag.generation.messages import Message
 
 logger = logging.getLogger(__name__)
@@ -216,7 +220,7 @@ def extract_claims(answer: str, generator: Generator) -> list[str]:
         {"role": "system", "content": CLAIM_INSTRUCTIONS},
         {"role": "user", "content": answer},
     ]
-    return parse_claims(generator.generate(messages).text)
+    return parse_claims(complete(generator, messages).text)
 
 
 def judge_claim(claim: str, sources: str, generator: Generator) -> Claim:
@@ -231,7 +235,7 @@ def judge_claim(claim: str, sources: str, generator: Generator) -> Claim:
         {"role": "system", "content": VERDICT_INSTRUCTIONS},
         {"role": "user", "content": f"{sources}\n\n# CLAIM\n\n{claim}"},
     ]
-    supported, reason = parse_verdict(generator.generate(messages).text)
+    supported, reason = parse_verdict(complete(generator, messages).text)
     return Claim(text=claim, supported=supported, reason=reason)
 
 

@@ -153,6 +153,14 @@ def run_question(
         search_ms=search_ms,
         generate_ms=generate_ms,
         total_ms=_elapsed_ms(started),
+        # From the start of the question, not the start of generation: the
+        # search is part of the wait, and a TTFT that excluded it would flatter
+        # the number by the 518 ms retrieval costs. None when nothing streamed.
+        first_token_ms=(
+            None
+            if answer.first_token_ms is None
+            else round(search_ms + answer.first_token_ms, 1)
+        ),
         prompt_tokens=answer.prompt_tokens,
         completion_tokens=answer.completion_tokens,
     )

@@ -4,6 +4,7 @@ from eurohistory_rag.eval.metrics import (
     coverage_at,
     distinct_articles,
     distinct_documents,
+    first_token_ms,
     hit_at,
     invalid_markers,
     reciprocal_rank,
@@ -27,6 +28,7 @@ def make_record(
     cited: bool = True,
     sources_sent: int = 5,
     total_ms: float = 100.0,
+    ttft_ms: float | None = None,
 ) -> EvalRecord:
     """An EvalRecord with only the fields a metric reads set meaningfully."""
     docs = doc_ids if doc_ids is not None else ["1:0", "2:0", "3:0"]
@@ -58,7 +60,27 @@ def make_record(
         search_ms=10.0,
         generate_ms=90.0,
         total_ms=total_ms,
+        first_token_ms=ttft_ms,
     )
+
+
+def test_a_run_made_before_streaming_had_its_first_token_at_the_end() -> None:
+    """The fallback that makes every run already on disk a valid "before"."""
+    assert first_token_ms(make_record(total_ms=4000.0)) == 4000.0
+
+
+def test_a_streamed_record_reports_the_moment_it_recorded() -> None:
+    assert first_token_ms(make_record(total_ms=4000.0, ttft_ms=900.0)) == 900.0
+
+
+def test_the_summary_reports_a_median_first_token_across_both_kinds() -> None:
+    """A mixed set: two streamed, one not, so the fallback has to be in the sort."""
+    records = [
+        make_record(total_ms=4000.0),
+        make_record(total_ms=4000.0, ttft_ms=800.0),
+        make_record(total_ms=4000.0, ttft_ms=900.0),
+    ]
+    assert summarise(records).p50_first_token_ms == 900.0
 
 
 def test_hit_at_respects_the_depth() -> None:

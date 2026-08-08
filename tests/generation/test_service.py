@@ -282,3 +282,63 @@ def test_citations_follow_the_shipped_text_not_the_draft(
     answer = generation.ask("when?")
 
     assert [citation.number for citation in answer.citations] == [1]
+
+
+# --- streaming (Phase 21, D-095) ---------------------------------------------
+
+
+def test_the_stream_yields_the_text_in_pieces_then_the_finished_answer(
+    results: list[SearchResult],
+) -> None:
+    generation, _ = service(results, "The wall went up in 1961 [1].")
+
+    pieces = list(generation.stream_from("when?", results))
+
+    assert isinstance(pieces[-1], Answer)
+    assert pieces[-1].text == "The wall went up in 1961 [1]."
+    assert "".join(str(p) for p in pieces[:-1]) == "The wall went up in 1961 [1]."
+
+
+def test_the_assembled_answer_is_the_streamed_one(
+    results: list[SearchResult],
+) -> None:
+    """`answer_from` is the same call with the pieces thrown away, so the two
+    shapes cannot drift apart into two different answers.
+    """
+    generation, _ = service(results, "Berlin [1].")
+
+    assert generation.answer_from("when?", results).text == "Berlin [1]."
+
+
+def test_a_streamed_answer_reports_when_its_first_word_arrived(
+    results: list[SearchResult],
+) -> None:
+    generation = GenerationService(
+        StubSearchService(results),  # type: ignore[arg-type]
+        FakeGenerator(answer="Berlin [1].", first_token_ms=120.0),
+    )
+
+    assert generation.ask("when?").first_token_ms == 120.0
+
+
+def test_nothing_streams_while_the_groundedness_gate_is_on(
+    results: list[SearchResult],
+) -> None:
+    """You cannot stream text you may have to retract.
+
+    The gate reads the finished draft and may delete a sentence from it, so the
+    answer arrives in one piece and reports no first token -- which the eval
+    reads as "arrived at the end" rather than as a fast one.
+    """
+    generation = GenerationService(
+        StubSearchService(results),  # type: ignore[arg-type]
+        FakeGenerator(answer="The wall went up in 1961 [1].", first_token_ms=120.0),
+        verifier=FakeGenerator(answer=CHECKED.format("The wall went up [1].")),
+    )
+
+    pieces = list(generation.stream_from("when?", results))
+
+    assert len(pieces) == 1
+    assert isinstance(pieces[0], Answer)
+    assert pieces[0].text == "The wall went up [1]."
+    assert pieces[0].first_token_ms is None
