@@ -1,10 +1,11 @@
 """FastAPI application factory and the module-level app uvicorn imports."""
 
 from importlib.resources import files
+from pathlib import Path
 from typing import Annotated
 
 from fastapi import Depends, FastAPI, HTTPException, Query, status
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, Response
 from pydantic import BaseModel, Field
 
 from eurohistory_rag import __version__
@@ -24,11 +25,27 @@ from eurohistory_rag.retrieval.vectorstore import VectorStore, VectorStoreUnavai
 # A ceiling on k, so one request cannot ask for the whole corpus.
 MAX_K = 50
 
-# The one page, read once at import. It sits next to this module as .html
-# rather than inside a template engine for the reason system_prompt.md sits
-# next to messages.py: it is edited far more often than the code serving it,
-# and nothing in it needs rendering -- the browser fills it in from /ask.
-PAGE = files("eurohistory_rag.api").joinpath("page.html").read_text(encoding="utf-8")
+# The front end, read once at import. It lives beside this module as ordinary
+# files rather than inside a template engine, for the reason system_prompt.md
+# sits beside messages.py: it is edited far more often than the code serving
+# it, and nothing in it needs rendering -- the browser fills it in from /ask.
+#
+# One file per job. `app.css` is 651 lines and `main.js` is 20; keeping them in
+# one document meant every styling tweak and every behaviour change landed in
+# the same diff, and an editor could not tell the browser what language it was
+# looking at.
+STATIC_TYPES = {".html": "text/html", ".css": "text/css", ".js": "text/javascript"}
+
+# Name -> (contents, media type), for exactly the files shipped in the package.
+# A dict rather than a mounted directory: the name arrives in a URL, and a
+# lookup that can only ever hit a key cannot be talked into leaving the folder.
+STATIC = {
+    item.name: (item.read_text(encoding="utf-8"), STATIC_TYPES[Path(item.name).suffix])
+    for item in files("eurohistory_rag.api.static").iterdir()
+    if Path(item.name).suffix in STATIC_TYPES
+}
+
+PAGE = STATIC["index.html"][0]
 
 
 class SearchHit(BaseModel):
@@ -210,6 +227,21 @@ def create_app() -> FastAPI:
         question of the identical code.
         """
         return PAGE
+
+    @app.get("/static/{name}", summary="One stylesheet or script")
+    def static(name: str) -> Response:
+        """Serve one of the files shipped beside this module.
+
+        `name` comes from a URL, so it is looked up in a dictionary built at
+        import rather than joined onto a path -- the same rule the run browser
+        follows. A name that is not a key is a 404 and touches no filesystem.
+        """
+        if name not in STATIC:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail=f"No file {name!r}."
+            )
+        body, media_type = STATIC[name]
+        return Response(content=body, media_type=media_type)
 
     @app.get("/health", summary="Health check endpoint")
     async def health() -> dict[str, str]:

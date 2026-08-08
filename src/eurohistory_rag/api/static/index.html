@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Eurohistory RAG</title>
+<link rel="stylesheet" href="/static/app.css">
+</head>
+<body data-view="ask">
+<main>
+
+<header>
+  <h1>Eurohistory</h1>
+  <p class="tagline">Answered only from an indexed corpus of European history, 1914&ndash;2024.</p>
+  <nav>
+    <a id="tab-ask" href="#ask">Ask</a>
+    <a id="tab-eval" href="#eval">Evaluation</a>
+  </nav>
+</header>
+
+<section class="view" id="view-ask">
+  <div class="controls" id="controls">
+    <label class="ctl">model
+      <select id="model-picker" aria-label="Which model answers"></select>
+    </label>
+    <label class="ctl">reranker
+      <select id="reranker-picker" aria-label="Which reranker orders the passages"></select>
+    </label>
+    <label class="ctl">hybrid
+      <input type="checkbox" id="hybrid-toggle">
+      <span class="track"></span>
+    </label>
+    <label class="ctl">k
+      <select id="k-picker" aria-label="How many passages the model is shown"></select>
+    </label>
+  </div>
+
+  <form id="ask">
+    <input id="question" name="question" maxlength="500" required autofocus
+           autocomplete="off" placeholder="Why was the Berlin Wall built?">
+    <button id="submit" type="submit">Ask</button>
+  </form>
+
+  <p class="status" id="status" hidden></p>
+  <div id="answer"></div>
+  <h2 id="sources-heading" hidden>Sources</h2>
+  <ul id="sources"></ul>
+  <footer id="footer" hidden></footer>
+</section>
+
+<section class="view" id="view-eval" hidden>
+  <div class="pickers">
+    <select id="run-picker" aria-label="Which evaluation run"></select>
+    <select id="suite-picker" aria-label="Which question set"></select>
+  </div>
+
+  <p class="status" id="eval-status" hidden></p>
+  <div class="conditions" id="conditions"></div>
+
+  <details class="guide">
+    <summary>How to read these numbers</summary>
+
+    <p>Sixty questions, each with the correct answer written down by hand
+    beforehand. The system sits the exam, the paper is kept, and these are the
+    marks. Two different things are being marked:
+    <b>did it find the right passage</b>, and <b>was the answer any good</b>.
+    A system can be excellent at one and hopeless at the other.</p>
+
+    <div class="big"><b>The one number that matters most:</b> recall@20 is far
+    higher than recall@5. The right passage is nearly always retrieved — it is
+    just not always in the first five. That means the weakness is
+    <b>ordering</b>, not searching. The book is on the trolley; it is not in the
+    first five you pick up.</div>
+
+    <h3>Why the table is split by kind</h3>
+    <p>An overall average hides opposite movements. Easy questions carry it up
+    and reworded ones drag it down, so a change that helps one and hurts the
+    other looks like no change at all. <code>arts</code> is how many different
+    articles the five passages came from — five slots holding one article three
+    times is five slots doing the work of three.</p>
+
+    <h3>Why some cells say n/a</h3>
+    <p>The unanswerable questions have no correct answer on file, because
+    nothing should come back. Scoring them 0% would read as failure when
+    refusing is exactly right, so they are marked n/a and greyed in the strip
+    below.</p>
+
+    <h3>Golden, extended, all</h3>
+    <p>The first thirty questions have never been edited since Phase 7, so
+    every run since is comparable to every other. The second thirty were added
+    in Phase 15 to cover the parts of the corpus the first thirty never asked
+    about. They are scored separately because mixing them would break the
+    comparison the first thirty exist to provide.</p>
+
+    <h3>When a change counts</h3>
+    <p>The same run repeated three times does not give the same answer numbers.
+    Measured in Phase 16: a generation result has to move by more than
+    <b>4 unsupported claims</b>, <b>0.7 faithfulness points</b> or
+    <b>2 fully-faithful answers</b> before it means anything. Retrieval and
+    refusal numbers are exact — any change in those is real.
+    <span class="plain">Weigh yourself three times on the same scales and you
+    get three numbers. Anything smaller than that spread is the scales, not
+    you.</span></p>
+  </details>
+
+  <div class="cards" id="cards"></div>
+
+  <h2 id="table-heading" hidden>By question kind</h2>
+  <div class="scrolls"><table id="kinds" hidden></table></div>
+
+  <h2 id="strip-heading" hidden>Every question</h2>
+  <ul class="strip" id="strip"></ul>
+  <ul class="legend" id="legend" hidden></ul>
+  <p class="note" id="eval-note" hidden></p>
+</section>
+
+</main>
+<script type="module" src="/static/main.js"></script>
+</body>
+</html>

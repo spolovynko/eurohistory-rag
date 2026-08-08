@@ -1,0 +1,651 @@
+  /* Colour does one job beyond looking alive: every citation gets a hue, and
+     the marker in the answer wears the same hue as its source card. A reader
+     matching [3] to its passage matches a colour, not a number. The evaluation
+     view reuses the same six for its metric cards. */
+  :root {
+    --paper:   #fbfaf7;
+    --raised:  #ffffff;
+    --ink:     #201e1b;
+    --quiet:   #6b665f;
+    --faint:   #9a948c;
+    --rule:    #e6e2da;
+    --link:    #3b5da8;
+    --warn:    #b4442a;
+    --shadow:  0 1px 2px rgba(32,30,27,.05), 0 10px 30px -16px rgba(32,30,27,.25);
+    --radius:  11px;
+
+    --c1: #4f46e5;  /* indigo */
+    --c2: #0d7f74;  /* teal   */
+    --c3: #a35a08;  /* amber  */
+    --c4: #b4265a;  /* rose   */
+    --c5: #6d34c4;  /* violet */
+    --c6: #10668f;  /* cyan   */
+    --c:  var(--link);
+
+    --ok:   #0d7f74;  /* found in the top 5           */
+    --mid:  #a35a08;  /* found, but ranked below 5    */
+    --miss: #b4265a;  /* never found                  */
+    --na:   #cfcac1;  /* no answer key -- unanswerable */
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper:  #131217;
+      --raised: #1c1b21;
+      --ink:    #eeebe5;
+      --quiet:  #a49e95;
+      --faint:  #7b746b;
+      --rule:   #2e2c35;
+      --link:   #93b4e4;
+      --warn:   #e5906d;
+      --shadow: 0 1px 2px rgba(0,0,0,.35), 0 10px 30px -16px rgba(0,0,0,.8);
+
+      --c1: #a5b4fc;
+      --c2: #5eead4;
+      --c3: #fcd34d;
+      --c4: #fda4af;
+      --c5: #c4b5fd;
+      --c6: #7dd3fc;
+
+      --ok:   #5eead4;
+      --mid:  #fcd34d;
+      --miss: #fda4af;
+      --na:   #3a3742;
+    }
+  }
+
+  * { box-sizing: border-box; }
+  ::selection { background: color-mix(in oklab, var(--c1) 25%, transparent); }
+
+  body {
+    margin: 0;
+    padding: 0 1.25rem 8rem;
+    background:
+      radial-gradient(ellipse 38rem 22rem at 12% -6rem,
+                      color-mix(in oklab, var(--c1) 16%, transparent), transparent 68%),
+      radial-gradient(ellipse 34rem 20rem at 88% -8rem,
+                      color-mix(in oklab, var(--c3) 15%, transparent), transparent 68%),
+      radial-gradient(ellipse 40rem 24rem at 50% -14rem,
+                      color-mix(in oklab, var(--c2) 10%, transparent), transparent 72%),
+      var(--paper);
+    background-attachment: fixed;
+    color: var(--ink);
+    font: 400 17px/1.7 "Iowan Old Style", "Palatino Linotype", Palatino,
+          Georgia, "Times New Roman", serif;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  main { max-width: 41rem; margin: 0 auto; }
+  body[data-view="eval"] main { max-width: 52rem; }
+  .sans { font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+  .mono { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
+
+  /* --- masthead and tabs -------------------------------------------------- */
+
+  header { padding: 4rem 0 1.75rem; text-align: center; }
+  h1 {
+    margin: 0;
+    color: var(--ink);
+    font-size: clamp(1.7rem, 1.2rem + 1.9vw, 2.3rem);
+    font-weight: 400;
+    letter-spacing: -0.02em;
+  }
+  /* The gradient title is opt-in: `color: transparent` with no working
+     background-clip is an invisible heading, and a title nobody can read is a
+     worse outcome than a plain one. */
+  @supports ((background-clip: text) or (-webkit-background-clip: text)) {
+    h1 {
+      background: linear-gradient(100deg, var(--c1), var(--c5) 38%, var(--c4) 68%, var(--c3));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+  }
+  .tagline { margin: .6rem 0 0; color: var(--quiet); font-size: .88rem; font-style: italic; }
+
+  nav {
+    display: flex;
+    justify-content: center;
+    gap: .3rem;
+    margin: 1.6rem auto 0;
+    padding: .28rem;
+    width: fit-content;
+    border: 1px solid var(--rule);
+    border-radius: 999px;
+    background: var(--raised);
+    box-shadow: var(--shadow);
+  }
+  nav a {
+    padding: .42rem 1.1rem;
+    border-radius: 999px;
+    color: var(--quiet);
+    font: 500 .78rem/1 ui-sans-serif, system-ui, sans-serif;
+    letter-spacing: .04em;
+    text-decoration: none;
+    transition: background .18s ease, color .18s ease;
+  }
+  nav a:hover { color: var(--ink); }
+  nav a[aria-current="page"] {
+    background: linear-gradient(135deg, var(--c1), var(--c5));
+    color: #fff;
+  }
+  @media (prefers-color-scheme: dark) { nav a[aria-current="page"] { color: #14131a; } }
+
+  .view[hidden] { display: none; }
+
+  /* --- the settings row --------------------------------------------------- */
+
+  .controls {
+    display: flex; flex-wrap: wrap; align-items: center;
+    justify-content: center;
+    gap: .5rem .7rem;
+    margin: 1.5rem auto 0;
+    padding: .55rem .8rem;
+    width: fit-content; max-width: 100%;
+    border: 1px solid var(--rule);
+    border-radius: 999px;
+    background: var(--raised);
+    box-shadow: var(--shadow);
+  }
+  .ctl {
+    display: flex; align-items: center; gap: .45rem;
+    color: var(--faint);
+    font: 500 .64rem/1.4 ui-sans-serif, system-ui, sans-serif;
+    letter-spacing: .12em; text-transform: uppercase;
+    cursor: pointer;
+  }
+  .ctl select {
+    padding: .3rem .45rem;
+    border: 1px solid var(--rule);
+    border-radius: 7px;
+    background: var(--paper);
+    color: var(--ink);
+    font: 400 .76rem/1.3 ui-sans-serif, system-ui, sans-serif;
+    letter-spacing: 0; text-transform: none;
+    cursor: pointer;
+    box-shadow: none;
+    flex: none;
+  }
+  .ctl select:focus-visible {
+    outline: none;
+    border-color: color-mix(in oklab, var(--c1) 55%, var(--rule));
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--c1) 16%, transparent);
+  }
+  /* The hybrid switch. A real checkbox underneath, so it is keyboard operable
+     and announces itself; the pill is drawn from it. */
+  .ctl input { position: absolute; opacity: 0; width: 0; height: 0; }
+  .ctl .track {
+    position: relative;
+    width: 34px; height: 19px;
+    border-radius: 999px;
+    background: color-mix(in oklab, var(--faint) 35%, transparent);
+    transition: background .18s ease;
+  }
+  .ctl .track::after {
+    content: "";
+    position: absolute; top: 2px; left: 2px;
+    width: 15px; height: 15px;
+    border-radius: 50%;
+    background: var(--raised);
+    box-shadow: 0 1px 3px rgba(0,0,0,.3);
+    transition: transform .18s ease;
+  }
+  .ctl input:checked + .track { background: var(--ok); }
+  .ctl input:checked + .track::after { transform: translateX(15px); }
+  .ctl input:focus-visible + .track {
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--c1) 20%, transparent);
+  }
+
+  /* --- the one control ---------------------------------------------------- */
+
+  form {
+    display: flex;
+    gap: .5rem;
+    margin-top: 2rem;
+    padding: .4rem;
+    border: 1px solid var(--rule);
+    border-radius: calc(var(--radius) + 4px);
+    background: var(--raised);
+    box-shadow: var(--shadow);
+    transition: border-color .18s ease, box-shadow .18s ease;
+  }
+  form:focus-within {
+    border-color: color-mix(in oklab, var(--c1) 50%, var(--rule));
+    box-shadow: var(--shadow), 0 0 0 4px color-mix(in oklab, var(--c1) 16%, transparent);
+  }
+  #question {
+    flex: 1; min-width: 0;
+    padding: .75rem .9rem;
+    border: 0; background: transparent; color: inherit; font: inherit;
+  }
+  #question::placeholder { color: var(--faint); }
+  #question:focus { outline: none; }
+  button {
+    flex: none;
+    padding: .78rem 1.5rem;
+    border: 0;
+    border-radius: var(--radius);
+    background: linear-gradient(135deg, var(--c1), var(--c5));
+    color: #fff;
+    font: 500 .88rem/1 ui-sans-serif, system-ui, sans-serif;
+    letter-spacing: .05em;
+    cursor: pointer;
+    box-shadow: 0 2px 10px -3px color-mix(in oklab, var(--c1) 60%, transparent);
+    transition: filter .18s ease, transform .12s ease;
+  }
+  @media (prefers-color-scheme: dark) { button { color: #14131a; } }
+  button:hover:not(:disabled) { filter: brightness(1.08); }
+  button:active:not(:disabled) { transform: translateY(1px); }
+  button:disabled { opacity: .4; box-shadow: none; cursor: progress; }
+
+  /* --- status ------------------------------------------------------------- */
+
+  .status {
+    display: flex; align-items: baseline; gap: .65rem;
+    margin: 1.8rem 0 0;
+    color: var(--quiet);
+    font-size: .92rem;
+  }
+  .status::before {
+    content: "";
+    flex: none;
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--c3);
+    transform: translateY(-2px);
+    animation: pulse 1.5s ease-out infinite;
+  }
+  .status[data-kind="refusal"]::before { background: var(--faint); animation: none; }
+  .status[data-kind="error"] { color: var(--warn); }
+  .status[data-kind="error"]::before { background: var(--warn); animation: none; }
+  @keyframes pulse {
+    0%   { box-shadow: 0 0 0 0 color-mix(in oklab, var(--c3) 55%, transparent); }
+    70%  { box-shadow: 0 0 0 9px transparent; }
+    100% { box-shadow: 0 0 0 0 transparent; }
+  }
+
+  /* --- the answer --------------------------------------------------------- */
+
+  #answer { margin: 2.1rem 0 0; font-size: 1.09rem; line-height: 1.78; white-space: pre-wrap; }
+  #answer:not(:empty) { animation: rise .35s ease both; }
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: none; }
+  }
+  #answer a {
+    display: inline-block;
+    min-width: 1.3em;
+    margin: 0 .08em;
+    padding: .05em .3em;
+    border-radius: 5px;
+    background: color-mix(in oklab, var(--c) 16%, transparent);
+    color: color-mix(in oklab, var(--c) 78%, var(--ink));
+    font: 600 .66em/1.55 ui-sans-serif, system-ui, sans-serif;
+    text-align: center; text-decoration: none; vertical-align: .42em;
+    transition: background .15s ease, transform .12s ease;
+  }
+  #answer a:hover {
+    background: color-mix(in oklab, var(--c) 32%, transparent);
+    transform: translateY(-1px);
+  }
+
+  /* --- section headings --------------------------------------------------- */
+
+  h2 {
+    display: flex; align-items: center; gap: .85rem;
+    margin: 3rem 0 1.2rem;
+    font: 500 .72rem/1 ui-sans-serif, system-ui, sans-serif;
+    letter-spacing: .17em; text-transform: uppercase; color: var(--faint);
+  }
+  h2::after {
+    content: ""; flex: 1; height: 2px; border-radius: 2px;
+    background: linear-gradient(to right, var(--rule), transparent);
+  }
+
+  /* --- sources ------------------------------------------------------------ */
+
+  #sources { margin: 0; padding: 0; list-style: none; }
+  #sources li {
+    position: relative;
+    margin: 0 0 .8rem;
+    padding: 1rem 1.15rem 1rem 1.35rem;
+    overflow: hidden;
+    border: 1px solid var(--rule);
+    border-radius: var(--radius);
+    background: var(--raised);
+    scroll-margin-top: 2rem;
+    transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease;
+  }
+  #sources li::before {
+    content: ""; position: absolute; inset: 0 auto 0 0; width: 4px; background: var(--c);
+  }
+  #sources li:hover { transform: translateX(2px); }
+  #sources li:target {
+    border-color: color-mix(in oklab, var(--c) 45%, var(--rule));
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--c) 15%, transparent);
+  }
+  .cite {
+    display: flex; flex-wrap: wrap; align-items: baseline; gap: .55rem;
+    margin: 0; font: 400 .93rem/1.5 inherit;
+  }
+  .cite .n {
+    flex: none; min-width: 1.7em; padding: .12em .4em;
+    border-radius: 5px;
+    background: color-mix(in oklab, var(--c) 16%, transparent);
+    color: color-mix(in oklab, var(--c) 78%, var(--ink));
+    font: 600 .72rem/1.5 ui-sans-serif, system-ui, sans-serif;
+    text-align: center;
+  }
+  .cite a { color: var(--ink); text-decoration: none; border-bottom: 1px solid var(--rule); }
+  .cite a:hover { color: color-mix(in oklab, var(--c) 70%, var(--ink)); border-bottom-color: var(--c); }
+  .score {
+    margin-left: auto;
+    color: color-mix(in oklab, var(--c) 55%, var(--faint));
+    font: 400 .73rem/1.5 ui-monospace, Menlo, Consolas, monospace;
+  }
+  details { margin: .75rem 0 0; }
+  summary {
+    display: inline-block; color: var(--quiet);
+    font: 400 .78rem/1.5 ui-sans-serif, system-ui, sans-serif;
+    cursor: pointer; user-select: none;
+  }
+  summary:hover { color: color-mix(in oklab, var(--c) 70%, var(--ink)); }
+  blockquote {
+    margin: .75rem 0 0;
+    padding: .15rem 0 .15rem 1rem;
+    border-left: 2px solid color-mix(in oklab, var(--c) 40%, var(--rule));
+    color: var(--quiet); font-size: .93rem; line-height: 1.65; white-space: pre-wrap;
+  }
+
+  [data-hue="1"] { --c: var(--c1); }
+  [data-hue="2"] { --c: var(--c2); }
+  [data-hue="3"] { --c: var(--c3); }
+  [data-hue="4"] { --c: var(--c4); }
+  [data-hue="5"] { --c: var(--c5); }
+  [data-hue="6"] { --c: var(--c6); }
+
+  /* --- evaluation view ---------------------------------------------------- */
+
+  .pickers {
+    display: flex; flex-wrap: wrap; gap: .6rem;
+    margin: 2rem 0 0;
+  }
+  select {
+    flex: 1 1 12rem; min-width: 0;
+    padding: .6rem .8rem;
+    border: 1px solid var(--rule);
+    border-radius: var(--radius);
+    background: var(--raised);
+    color: inherit;
+    font: 400 .85rem/1.4 ui-sans-serif, system-ui, sans-serif;
+    cursor: pointer;
+    box-shadow: var(--shadow);
+  }
+  select:focus-visible {
+    outline: none;
+    border-color: color-mix(in oklab, var(--c1) 50%, var(--rule));
+    box-shadow: var(--shadow), 0 0 0 4px color-mix(in oklab, var(--c1) 16%, transparent);
+  }
+
+  /* The conditions the run happened under. Phase 8 shipped a measurement whose
+     reranker was switched off and nobody noticed, so these are given room
+     rather than being crammed into a line of chips. */
+  .conditions {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+    gap: 1px;
+    margin: 1rem 0 0;
+    overflow: hidden;
+    border: 1px solid var(--rule);
+    border-radius: var(--radius);
+    background: var(--rule);
+    box-shadow: var(--shadow);
+  }
+  .fact {
+    display: flex; flex-direction: column; gap: .3rem;
+    padding: .8rem .9rem;
+    background: var(--raised);
+  }
+  .fact .k {
+    color: var(--faint);
+    font: 500 .62rem/1.3 ui-sans-serif, system-ui, sans-serif;
+    letter-spacing: .13em; text-transform: uppercase;
+  }
+  .fact .v {
+    color: var(--ink);
+    font: 400 .8rem/1.35 ui-monospace, Menlo, Consolas, monospace;
+    overflow-wrap: anywhere;
+  }
+  /* On or off, shown as state rather than as the words "on" and "off" buried
+     in a sentence -- these two are what make two runs incomparable. */
+  .fact .v.state {
+    display: inline-flex; align-items: center; gap: .4rem;
+    font-family: ui-sans-serif, system-ui, sans-serif;
+    font-size: .78rem;
+  }
+  .fact .v.state::before {
+    content: ""; flex: none;
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--faint);
+  }
+  .fact .v.state[data-on="yes"]::before {
+    background: var(--ok);
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--ok) 22%, transparent);
+  }
+  .fact .v.state[data-on="no"] { color: var(--quiet); }
+
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+    gap: .7rem;
+    margin: 1.4rem 0 0;
+  }
+  /* No `overflow: hidden` here on purpose -- the hover description is
+     positioned outside the card and would be clipped by it. The meter rounds
+     its own corners instead. */
+  .card {
+    position: relative;
+    padding: .95rem 1rem 1.1rem;
+    border: 1px solid var(--rule);
+    border-radius: var(--radius);
+    background: var(--raised);
+    box-shadow: var(--shadow);
+    cursor: help;
+  }
+  .card:focus-visible {
+    outline: none;
+    border-color: color-mix(in oklab, var(--c) 50%, var(--rule));
+    box-shadow: var(--shadow), 0 0 0 4px color-mix(in oklab, var(--c) 16%, transparent);
+  }
+  .card .label {
+    display: block;
+    color: var(--faint);
+    font: 500 .66rem/1.4 ui-sans-serif, system-ui, sans-serif;
+    letter-spacing: .11em; text-transform: uppercase;
+  }
+  .card .value {
+    display: block; margin-top: .3rem;
+    color: color-mix(in oklab, var(--c) 72%, var(--ink));
+    font: 400 1.65rem/1.15 ui-sans-serif, system-ui, sans-serif;
+    letter-spacing: -.02em;
+  }
+  .card .value .unit { font-size: .95rem; color: var(--faint); }
+  /* The description, revealed on hover or keyboard focus. */
+  .card .hint {
+    position: absolute;
+    left: 50%; bottom: calc(100% + .35rem);
+    z-index: 5;
+    /* Exactly the card's width. A wider box overhangs the grid's outer
+       columns, and a hidden element still counts toward the page's scroll
+       width -- so the page gained a horizontal scrollbar that nothing visible
+       explained. */
+    width: 100%;
+    transform: translateX(-50%) translateY(4px);
+    padding: .7rem .85rem;
+    border-radius: 10px;
+    background: var(--ink);
+    color: var(--paper);
+    font: 400 .76rem/1.5 ui-sans-serif, system-ui, sans-serif;
+    text-align: left;
+    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, .55);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity .15s ease, transform .15s ease, visibility .15s;
+    pointer-events: none;
+  }
+  .card .hint::after {
+    content: "";
+    position: absolute; top: 100%; left: 50%;
+    margin-left: -5px;
+    border: 5px solid transparent;
+    border-top-color: var(--ink);
+  }
+  .card .hint .exact { display: block; }
+  .card .hint .plain {
+    display: block;
+    margin-top: .4rem;
+    padding-top: .4rem;
+    border-top: 1px solid color-mix(in oklab, var(--paper) 22%, transparent);
+    color: color-mix(in oklab, var(--paper) 72%, var(--ink));
+    font-style: italic;
+  }
+  /* `:focus` rather than `:focus-visible`: the focus ring below is only wanted
+     for keyboard use, but the description should appear for any focus. */
+  .card:hover .hint,
+  .card:focus .hint {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  .card .meter {
+    position: absolute; inset: auto 0 0 0; height: 4px;
+    border-radius: 0 0 var(--radius) var(--radius);
+    overflow: hidden;
+    background: color-mix(in oklab, var(--c) 12%, transparent);
+  }
+  .card .meter i { display: block; height: 100%; background: var(--c); }
+
+  /* Nine columns do not fit a phone. The table scrolls inside its own box
+     rather than dragging the whole page sideways with it. */
+  .scrolls { overflow-x: auto; }
+  table { width: 100%; min-width: 28rem; margin: 0; border-collapse: collapse; }
+  caption { margin-bottom: .5rem; color: var(--faint); font-size: .78rem; text-align: left; }
+  th, td {
+    padding: .55rem .5rem;
+    border-bottom: 1px solid var(--rule);
+    text-align: right;
+    font: 400 .84rem/1.4 ui-monospace, Menlo, Consolas, monospace;
+  }
+  th {
+    color: var(--faint);
+    font: 500 .66rem/1.4 ui-sans-serif, system-ui, sans-serif;
+    letter-spacing: .1em; text-transform: uppercase;
+    cursor: help;
+    text-decoration: underline dotted color-mix(in oklab, var(--faint) 55%, transparent);
+    text-underline-offset: 3px;
+  }
+  th:first-child, td:first-child {
+    text-align: left;
+    font-family: ui-sans-serif, system-ui, sans-serif;
+  }
+  tbody tr:last-child td { border-bottom: 0; font-weight: 600; }
+  tbody tr:hover td { background: color-mix(in oklab, var(--c1) 5%, transparent); }
+  .na { color: var(--faint); }
+
+  .bar {
+    display: inline-block; vertical-align: middle;
+    width: 3.2rem; height: 5px; margin-right: .45rem;
+    border-radius: 3px;
+    background: color-mix(in oklab, var(--c1) 13%, transparent);
+  }
+  .bar i { display: block; height: 100%; border-radius: 3px; background: var(--c1); }
+
+  .strip {
+    display: flex; flex-wrap: wrap; gap: 3px;
+    margin: 1.1rem 0 0; padding: 0; list-style: none;
+  }
+  .strip li {
+    width: 15px; height: 15px;
+    border-radius: 3px;
+    background: var(--na);
+    transition: transform .12s ease;
+  }
+  .strip li:hover { transform: scale(1.35); }
+  .strip li[data-outcome="hit"]  { background: var(--ok); }
+  .strip li[data-outcome="deep"] { background: var(--mid); }
+  .strip li[data-outcome="miss"] { background: var(--miss); }
+  .legend {
+    display: flex; flex-wrap: wrap; gap: .5rem 1rem;
+    margin: .9rem 0 0; padding: 0; list-style: none;
+    color: var(--quiet);
+    font: 400 .75rem/1.5 ui-sans-serif, system-ui, sans-serif;
+  }
+  .legend li { display: flex; align-items: center; gap: .4rem; }
+  .legend .swatch { width: 11px; height: 11px; border-radius: 3px; background: var(--na); }
+  .legend .swatch[data-outcome="hit"]  { background: var(--ok); }
+  .legend .swatch[data-outcome="deep"] { background: var(--mid); }
+  .legend .swatch[data-outcome="miss"] { background: var(--miss); }
+
+  .note {
+    margin: 1.4rem 0 0;
+    color: var(--quiet);
+    font-size: .87rem; font-style: italic;
+  }
+
+  /* --- the explanations --------------------------------------------------- */
+
+  .guide {
+    margin: 1.4rem 0 0;
+    padding: 1.1rem 1.3rem;
+    border: 1px solid var(--rule);
+    border-left: 4px solid var(--c1);
+    border-radius: var(--radius);
+    background: var(--raised);
+    box-shadow: var(--shadow);
+  }
+  .guide > summary {
+    font: 500 .8rem/1.4 ui-sans-serif, system-ui, sans-serif;
+    letter-spacing: .04em;
+    color: var(--ink);
+  }
+  .guide h3 {
+    margin: 1.2rem 0 .4rem;
+    font: 500 .68rem/1.4 ui-sans-serif, system-ui, sans-serif;
+    letter-spacing: .13em; text-transform: uppercase; color: var(--faint);
+  }
+  .guide h3:first-of-type { margin-top: 1rem; }
+  .guide p { margin: .4rem 0 0; font-size: .92rem; line-height: 1.65; }
+  .guide dl { margin: .5rem 0 0; }
+  .guide dt {
+    margin-top: .8rem;
+    font: 600 .85rem/1.5 ui-monospace, Menlo, Consolas, monospace;
+    color: color-mix(in oklab, var(--c1) 65%, var(--ink));
+  }
+  .guide dd { margin: .15rem 0 0; font-size: .92rem; line-height: 1.6; }
+  .guide dd .plain { display: block; margin-top: .15rem; color: var(--quiet); font-style: italic; }
+  .guide .big {
+    margin: 1rem 0 0;
+    padding: .8rem 1rem;
+    border-radius: var(--radius);
+    background: color-mix(in oklab, var(--c3) 12%, transparent);
+    font-size: .92rem; line-height: 1.6;
+  }
+
+  footer {
+    margin: 2.6rem 0 0; padding-top: 1.1rem;
+    border-top: 1px solid var(--rule);
+    color: var(--faint);
+    font: 400 .73rem/1.6 ui-monospace, Menlo, Consolas, monospace;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before { animation: none !important; transition: none !important; }
+  }
+  @media (max-width: 34rem) {
+    body { padding-inline: 1rem; font-size: 16px; }
+    header { padding-top: 2.5rem; }
+    form { flex-wrap: wrap; }
+    button { width: 100%; }
+    .score { margin-left: 0; }
+    th, td { padding: .5rem .3rem; font-size: .76rem; }
+  }
