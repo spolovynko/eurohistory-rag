@@ -87,6 +87,31 @@ function renderSource(source) {
   sourceList.append(item);
 }
 
+// Read a server-sent event stream and hand each event to `handle`.
+//
+// Hand-parsed rather than via EventSource, which only does GET and a question
+// has no business in a URL. The format is small enough to be worth the twenty
+// lines: events are separated by a blank line, and each is a named kind and one
+// line of JSON.
+async function readEvents(body, handle) {
+  const reader = body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    let split;
+    while ((split = buffer.indexOf("\n\n")) !== -1) {
+      const block = buffer.slice(0, split);
+      buffer = buffer.slice(split + 2);
+      const name = block.match(/^event: (.*)$/m);
+      const data = block.match(/^data: (.*)$/m);
+      if (name && data) handle(name[1], JSON.parse(data[1]));
+    }
+  }
+}
+
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
   const question = box.value.trim();
@@ -95,12 +120,17 @@ form.addEventListener("submit", async (event) => {
   clearAnswer();
   submit.disabled = true;
   const started = performance.now();
-  setStatus(statusLine, "Searching the corpus and writing an answer… a few seconds.");
+  let firstWordAt = null;
+  setStatus(statusLine, "Searching the corpus…");
 
   try {
     const response = await fetch("/ask", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        // The one line that chooses the streamed shape of the same endpoint.
+        Accept: "text/event-stream",
+      },
       body: JSON.stringify({ question: question, ...chosen(nodes) }),
     });
     if (!response.ok) {
@@ -109,37 +139,47 @@ form.addEventListener("submit", async (event) => {
       error.status = response.status;
       throw error;
     }
-    const data = await response.json();
-    const seconds = ((performance.now() - started) / 1000).toFixed(1);
 
-    if (data.sources.length === 0) {
-      // Not an error. The corpus was asked and had nothing, which is the
-      // behaviour Phase 6 built on purpose.
-      setStatus(statusLine, "No source in the corpus covers this. The answer below is a refusal, not a failure.", "refusal");
-    } else {
-      setStatus(statusLine, "");
+    let text = "";
+    let failed = false;
+
+    await readEvents(response.body, (name, data) => {
+      if (name === "sources") {
+        // Retrieval is done and generation has not started. These are the
+        // passages the model is being shown, numbered as it sees them, and
+        // they are on screen roughly three seconds before the answer is.
+        sourcesHeading.textContent = "Passages found";
+        sourcesHeading.hidden = data.length === 0;
+        data.forEach((hit, index) => renderSource({ ...hit, n: index + 1 }));
+        setStatus(statusLine, "Writing the answer…");
+        return;
+      }
+      if (name === "token") {
+        if (firstWordAt === null) {
+          firstWordAt = performance.now();
+          setStatus(statusLine, "");
+        }
+        text += data;
+        // Plain text while it arrives. A [1] cannot become a link until the
+        // answer is finished, because until then nobody knows which markers
+        // the model kept.
+        answerBox.textContent = text;
+        return;
+      }
+      if (name === "error") {
+        // The 200 went out with the first byte, so this is the only way a
+        // failure can reach the page. It must not look like a short answer.
+        failed = true;
+        clearAnswer();
+        setStatus(statusLine, data, "error");
+        return;
+      }
+      if (name === "done") finish(data, started, firstWordAt);
+    });
+
+    if (!failed && firstWordAt === null) {
+      setStatus(statusLine, "The model sent nothing back.", "error");
     }
-
-    renderAnswer(data.answer, new Set(data.sources.map((s) => s.n)));
-    // /ask returns sources in the order the answer first mentions them, so a
-    // list can read 5, 2, 3, 4. Numbered things are looked up by their number.
-    for (const source of [...data.sources].sort((a, b) => a.n - b.n)) {
-      renderSource(source);
-    }
-    sourcesHeading.hidden = data.sources.length === 0;
-
-    // What produced this answer, stated on the answer. Phase 8 shipped a
-    // measurement whose reranker was off and nobody noticed.
-    const used = data.configuration;
-    footer.textContent = [
-      used.model,
-      "reranker " + (used.reranker ? used.reranker.split("/").pop() : "off"),
-      "hybrid " + (used.hybrid ? "on" : "off"),
-      "k " + used.k,
-      seconds + " s",
-      data.license,
-    ].join("  ·  ");
-    footer.hidden = false;
   } catch (error) {
     setStatus(
       statusLine,
@@ -152,6 +192,42 @@ form.addEventListener("submit", async (event) => {
     submit.disabled = false;
   }
 });
+
+// The end of a stream: markers become links, the passages the answer ignored
+// come off the list, and the two clocks are reported.
+function finish(data, started, firstWordAt) {
+  const cited = new Set(data.sources.map((s) => s.n));
+  answerBox.replaceChildren();
+  renderAnswer(data.answer, cited);
+
+  for (const item of [...sourceList.children]) {
+    if (!cited.has(Number(item.id.replace("source-", "")))) item.remove();
+  }
+  sourcesHeading.textContent = "Sources";
+  sourcesHeading.hidden = cited.size === 0;
+
+  if (cited.size === 0) {
+    // Not an error. The corpus was asked and had nothing, which is the
+    // behaviour Phase 6 built on purpose.
+    setStatus(statusLine, "No source in the corpus covers this. The answer above is a refusal, not a failure.", "refusal");
+  }
+
+  // What produced this answer, stated on the answer, and what it cost in the
+  // only two numbers a reader feels: when the words started, and when they
+  // stopped. Phase 8 shipped a measurement whose reranker was off unnoticed.
+  const used = data.configuration;
+  const total = (performance.now() - started) / 1000;
+  footer.textContent = [
+    used.model,
+    "reranker " + (used.reranker ? used.reranker.split("/").pop() : "off"),
+    "hybrid " + (used.hybrid ? "on" : "off"),
+    "k " + used.k,
+    "first word " + ((firstWordAt - started) / 1000).toFixed(1) + " s",
+    "done " + total.toFixed(1) + " s",
+    data.license,
+  ].join("  ·  ");
+  footer.hidden = false;
+}
 
 
 options()

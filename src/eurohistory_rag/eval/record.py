@@ -126,6 +126,13 @@ class EvalRecord:
     revised: bool = False
     draft: str = ""
 
+    # When the first piece of the answer became available, measured from the
+    # start of the question and so including the search. `None` means the run
+    # predates streaming, and the metric reads that as "at the end" rather than
+    # as zero -- on the old path the first character of the answer arrived at
+    # the same instant the last one did. Phase 21, D-095.
+    first_token_ms: float | None = None
+
     # Which batch the question was written in -- "golden", "extended" or
     # "synthetic". Carried into the record rather than looked up from
     # questions.toml at scoring time, because `rescore` reads a run off disk

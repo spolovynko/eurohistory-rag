@@ -6,7 +6,8 @@ Protocols existing at all: they make every test that touches a model run with
 no network, no API key, no downloaded weights and no cost.
 """
 
-from collections.abc import Sequence
+import re
+from collections.abc import Iterator, Sequence
 
 from eurohistory_rag.generation.client import Completion, GenerationUnavailable
 from eurohistory_rag.generation.messages import Message
@@ -25,6 +26,15 @@ VOCABULARY = (
     "wall",
     "cold",
 )
+
+
+def split(answer: str) -> list[str]:
+    """A canned answer cut into word-sized pieces, joining back to the original.
+
+    How a real model arrives: a few characters at a time, whitespace included,
+    so that "".join(pieces) is the answer exactly.
+    """
+    return [word for word in re.split(r"(\s+)", answer) if word]
 
 
 class FakeEmbedder:
@@ -69,9 +79,11 @@ class FakeGenerator:
         model: str = "fake-model",
         prompt_tokens: int | None = None,
         completion_tokens: int | None = None,
+        first_token_ms: float | None = None,
     ) -> None:
         self._answer = answer
         self._model = model
+        self._first_token_ms = first_token_ms
         # Off unless a test asks. The default stays None because a fake cannot
         # know a real cost, and inventing one would let a test pass against a
         # number this code never measured. Phase 13 opts in, because the answer
@@ -85,13 +97,20 @@ class FakeGenerator:
         """The model name recorded on every answer."""
         return self._model
 
-    def generate(self, messages: Sequence[Message]) -> Completion:
-        """Return the canned answer, recording the messages it was given."""
+    def stream(self, messages: Sequence[Message]) -> Iterator[str | Completion]:
+        """Hand the canned answer over in pieces, recording what it was given.
+
+        Deliberately more than one piece. A fake that yielded the whole answer
+        at once would let a caller that never reassembles the stream pass every
+        test, which is the defect this shape exists to make impossible.
+        """
         self.calls.append(list(messages))
-        return Completion(
+        yield from split(self._answer)
+        yield Completion(
             text=self._answer,
             prompt_tokens=self._prompt_tokens,
             completion_tokens=self._completion_tokens,
+            first_token_ms=self._first_token_ms,
         )
 
 
@@ -114,8 +133,8 @@ class ScriptedGenerator:
         """The model name recorded on every answer."""
         return self._model
 
-    def generate(self, messages: Sequence[Message]) -> Completion:
-        """Return the next scripted reply, failing loudly when they run out.
+    def stream(self, messages: Sequence[Message]) -> Iterator[str | Completion]:
+        """Yield the next scripted reply, failing loudly when they run out.
 
         Running out is a test bug worth an exception rather than a repeat: a
         silent wrap-around would let a test assert a count the code never
@@ -126,7 +145,9 @@ class ScriptedGenerator:
             raise AssertionError(
                 f"ScriptedGenerator: call {len(self.calls)} of {len(self._replies)}"
             )
-        return Completion(text=self._replies[len(self.calls) - 1])
+        reply = self._replies[len(self.calls) - 1]
+        yield from split(reply)
+        yield Completion(text=reply)
 
 
 class FakeReranker:
@@ -170,6 +191,7 @@ class UnavailableGenerator:
         """Named anyway: a failing generator still knows what it would call."""
         return "fake-model"
 
-    def generate(self, messages: Sequence[Message]) -> Completion:
+    def stream(self, messages: Sequence[Message]) -> Iterator[str | Completion]:
         """Always fail, the way an exhausted retry does."""
         raise GenerationUnavailable("connection refused")
+        yield  # pragma: no cover -- unreachable, and what makes this a generator

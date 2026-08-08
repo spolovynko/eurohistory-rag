@@ -97,6 +97,22 @@ def distinct_articles(record: EvalRecord, depth: int) -> int:
     return len({item.page_id for item in record.retrieved[:depth]})
 
 
+def first_token_ms(record: EvalRecord) -> float:
+    """How long the caller waited before *any* of the answer existed.
+
+    The number a person actually experiences as "slow", which total time is
+    not: an answer that starts in one second and finishes in five feels quicker
+    than one that appears whole at four.
+
+    A run made before streaming existed recorded no such moment, and the honest
+    value for it is the whole question -- on that path the first character of
+    the answer became available at the same instant the last one did. So an
+    absent value falls back to `total_ms` rather than to zero, which is what
+    makes every run already on disk a valid "before". D-095.
+    """
+    return record.total_ms if record.first_token_ms is None else record.first_token_ms
+
+
 @dataclass(frozen=True, slots=True)
 class Summary:
     """One run reduced to the numbers worth comparing between runs."""
@@ -115,6 +131,7 @@ class Summary:
     answers_with_invalid_marker: int
     p50_total_ms: float
     p95_total_ms: float
+    p50_first_token_ms: float
     mean_search_ms: float
     mean_generate_ms: float
     prompt_tokens: int | None
@@ -175,6 +192,7 @@ def summarise(records: Collection[EvalRecord], kind: str = "all") -> Summary:
         answers_with_invalid_marker=sum(1 for r in records if invalid_markers(r)),
         p50_total_ms=_percentile(totals, 0.50),
         p95_total_ms=_percentile(totals, 0.95),
+        p50_first_token_ms=_percentile([first_token_ms(r) for r in records], 0.50),
         mean_search_ms=mean(r.search_ms for r in records) if records else 0.0,
         mean_generate_ms=mean(r.generate_ms for r in records) if records else 0.0,
         prompt_tokens=sum(prompts) if prompts else None,

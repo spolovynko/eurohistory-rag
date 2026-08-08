@@ -8,9 +8,15 @@ own -- /search proves that -- and generation is not useful without retrieval.
 
 import logging
 import re
+from collections.abc import Iterator
 from dataclasses import dataclass
 
-from eurohistory_rag.generation.client import Generator
+from eurohistory_rag.generation.client import (
+    Completion,
+    GenerationUnavailable,
+    Generator,
+    complete,
+)
 from eurohistory_rag.generation.messages import build_messages
 from eurohistory_rag.generation.verify import verify
 from eurohistory_rag.retrieval.search import SearchResult, SearchService
@@ -56,6 +62,11 @@ class Answer:
     # of a few percent no aggregate metric can see the gate at all -- so the
     # pair is the measurement. Empty when nothing was revised.
     draft: str = ""
+    # Milliseconds from the model being asked to the first word coming back.
+    # Generation only -- the caller knows what its own search cost and adds it,
+    # because this object has no idea whether one happened. None when nothing
+    # streamed, which is what the groundedness gate forces. D-095.
+    first_token_ms: float | None = None
 
 
 def _total(first: int | None, second: int | None) -> int | None:
@@ -110,7 +121,17 @@ class GenerationService:
         rule for that case, and letting one code path handle every refusal
         means there is only one behaviour to test and to fix.
         """
-        return self.answer_from(question, self._search.search(question, k=k))
+        return self.answer_from(question, self.search(question, k=k))
+
+    def search(self, question: str, k: int | None = None) -> list[SearchResult]:
+        """The retrieval half, on its own.
+
+        Public because /ask has to do it *before* a streaming response begins:
+        once the first byte is out the status code has been sent and a dead
+        Qdrant can no longer be a 503. Doing the half that can fail early is
+        what keeps that failure honest.
+        """
+        return self._search.search(question, k=k)
 
     def answer_from(self, question: str, results: list[SearchResult]) -> Answer:
         """Answer from chunks already retrieved.
@@ -120,7 +141,46 @@ class GenerationService:
         then generate from exactly the shipped path rather than a copy of it --
         a copy would drift, and the eval would stop measuring the real system.
         """
-        completion = self._generator.generate(build_messages(question, results))
+        for piece in self.stream_from(question, results):
+            if isinstance(piece, Answer):
+                return piece
+        raise GenerationUnavailable("The answer stream ended without an answer.")
+
+    def stream_from(
+        self, question: str, results: list[SearchResult]
+    ) -> Iterator[str | Answer]:
+        """The answer as the model writes it, then the finished Answer.
+
+        Same shape as `Generator.stream` one layer down: strings are more of the
+        answer, and the single `Answer` at the end is the thing with citations
+        resolved. Citations cannot come earlier -- a marker is only a citation
+        once the text holding it exists.
+
+        **Nothing streams while the groundedness gate is on.** The gate reads
+        the finished draft and may delete a sentence from it, and text shown and
+        then taken back is worse than text that arrived late. So with a verifier
+        configured this yields the answer in one piece and reports no first
+        token, which the eval reads as "arrived at the end".
+        """
+        messages = build_messages(question, results)
+        if self._verifier is not None:
+            yield self._finish(question, results, complete(self._generator, messages))
+            return
+
+        completion: Completion | None = None
+        for piece in self._generator.stream(messages):
+            if isinstance(piece, Completion):
+                completion = piece
+            else:
+                yield piece
+        if completion is None:
+            raise GenerationUnavailable("The model's stream ended without an answer.")
+        yield self._finish(question, results, completion)
+
+    def _finish(
+        self, question: str, results: list[SearchResult], completion: Completion
+    ) -> Answer:
+        """Run the groundedness gate if there is one, then resolve the markers."""
         text = completion.text
         prompt_tokens = completion.prompt_tokens
         completion_tokens = completion.completion_tokens
@@ -154,4 +214,7 @@ class GenerationService:
             completion_tokens=completion_tokens,
             revised=revised,
             draft=completion.text if revised else "",
+            # A gated answer was not streamed, whatever the draft's own clock
+            # says: the reader waited for the check as well.
+            first_token_ms=None if self._verifier else completion.first_token_ms,
         )

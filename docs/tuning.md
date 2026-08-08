@@ -60,6 +60,7 @@ answers — or, for the last two, what the measurement of it says.
 | `verify_model` | `gpt-4.1-mini` | `core/config.py` | D-084 | Which model checks. Defaults to the answering model, so the writer proofreads itself. **Probe any replacement with `scratch_verify_check.py` before a paid run** — the first prompt caught 0 of 3 known defects and no test could see it |
 | `VERIFY_PROMPT` | `verify_prompt.md` | `generation/verify_prompt.md` | D-084 | The checker's instructions. Its `# HOW TO CHECK` section is load-bearing: asking for a whole-answer impression caught nothing, asking claim by claim in a `<check>` block caught the Trianon reversal |
 | `MAX_OUTPUT_TOKENS` | 800 | `generation/client.py` | D-084 | Shared between writing and checking. Three gate replies were cut off mid-check and fell back to the draft, which is safe but wasted the call. A checker that reasons before answering needs its own ceiling |
+| `SSE_TYPE` | `text/event-stream` | `api/main.py` | D-095 | The `Accept` value that makes `POST /ask` hand the answer over as it is written instead of in one blob. Not a number and not really tunable -- listed because it is the whole of the streaming switch, and because a client that never sends it gets the pre-Phase-21 behaviour unchanged |
 
 ### How to change one
 

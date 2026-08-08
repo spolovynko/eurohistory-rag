@@ -8,7 +8,9 @@ being checked here is the HTTP layer -- validation, status codes, the response
 shape -- not retrieval, which has its own tests.
 """
 
+import json
 from collections.abc import Iterator
+from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient
@@ -428,3 +430,95 @@ def test_options_reports_the_allow_lists_and_the_defaults() -> None:
     assert "BAAI/bge-reranker-base" in body["rerankers"]
     assert body["defaults"]["k"] == 5
     assert body["max_k"] == 50
+
+
+# --- streaming (Phase 21, D-095) ---------------------------------------------
+
+
+def events(body: str) -> list[tuple[str, Any]]:
+    """A server-sent event stream parsed back into (name, payload) pairs."""
+    parsed: list[tuple[str, Any]] = []
+    for block in body.strip().split("\n\n"):
+        lines = dict(line.split(": ", 1) for line in block.splitlines())
+        parsed.append((lines["event"], json.loads(lines["data"])))
+    return parsed
+
+
+def stream_ask(client: TestClient, question: str = "aid") -> list[tuple[str, Any]]:
+    """Ask for the streamed shape of the same endpoint."""
+    response = client.post(
+        "/ask", json={"question": question}, headers={"Accept": "text/event-stream"}
+    )
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("text/event-stream")
+    return events(response.text)
+
+
+def test_the_same_url_still_answers_json_when_nothing_asks_for_a_stream() -> None:
+    """The header is the only difference, and the default is unchanged."""
+    response = asking_client("Aid arrived [1].").post("/ask", json={"question": "?"})
+
+    assert response.headers["content-type"].startswith("application/json")
+    assert response.json()["answer"] == "Aid arrived [1]."
+
+
+def test_the_sources_are_the_first_event_and_arrive_before_any_text() -> None:
+    """They are known when retrieval finishes, which is the whole early win."""
+    parsed = stream_ask(asking_client("Aid arrived [1]."))
+
+    assert parsed[0][0] == "sources"
+    assert [hit["chunk_id"] for hit in parsed[0][1]] == ["30030:1:0", "30030:1:1"]
+
+
+def test_the_tokens_join_back_into_exactly_the_json_answer() -> None:
+    """The two shapes must not be able to disagree about what was said."""
+    answer = "The programme distributed $13.3 billion [1]."
+    parsed = stream_ask(asking_client(answer))
+
+    tokens = "".join(str(data) for name, data in parsed if name == "token")
+    assert tokens == answer
+    assert len([name for name, _ in parsed if name == "token"]) > 1
+
+
+def test_the_last_event_carries_the_citations_and_the_configuration() -> None:
+    """A marker only becomes a citation once the sentence holding it exists."""
+    parsed = stream_ask(asking_client("Aid arrived [2]."))
+
+    name, done = parsed[-1]
+    assert name == "done"
+    assert [source["n"] for source in done["sources"]] == [2]
+    assert done["configuration"]["k"] == 5
+
+
+def test_a_model_that_dies_mid_stream_becomes_an_error_event_not_a_500() -> None:
+    """The 200 was sent at byte zero and cannot be taken back.
+
+    So the failure has to travel in-band, and the page is what makes it look
+    like a failure. A stream that simply stopped would read as a short answer.
+    """
+    app = create_app()
+    app.dependency_overrides[get_generation_service] = lambda: GenerationService(
+        StubSearchService([result("30030:1:0")]),  # type: ignore[arg-type]
+        UnavailableGenerator(),
+    )
+    with TestClient(app) as unavailable_client:
+        parsed = stream_ask(unavailable_client)
+
+    assert [name for name, _ in parsed] == ["sources", "error"]
+
+
+def test_a_dead_store_is_still_a_real_503_even_when_a_stream_was_asked_for() -> None:
+    """Retrieval runs before the response begins, so this failure keeps a code."""
+    app = create_app()
+    app.dependency_overrides[get_generation_service] = lambda: GenerationService(
+        UnavailableSearchService(),  # type: ignore[arg-type]
+        FakeGenerator(),
+    )
+    with TestClient(app) as unavailable_client:
+        response = unavailable_client.post(
+            "/ask",
+            json={"question": "aid"},
+            headers={"Accept": "text/event-stream"},
+        )
+
+    assert response.status_code == 503

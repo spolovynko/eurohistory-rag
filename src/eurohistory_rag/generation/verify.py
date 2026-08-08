@@ -31,6 +31,7 @@ from eurohistory_rag.generation.client import (
     Completion,
     GenerationUnavailable,
     Generator,
+    complete,
 )
 from eurohistory_rag.generation.messages import Message, format_sources
 from eurohistory_rag.retrieval.search import SearchResult
@@ -121,7 +122,9 @@ def verify(
         return Verified(text=draft, changed=False)
 
     try:
-        completion = generator.generate(build_verify_messages(question, results, draft))
+        completion = complete(
+            generator, build_verify_messages(question, results, draft)
+        )
     except GenerationUnavailable as error:
         logger.warning("verification unavailable, keeping the draft: %s", error)
         return Verified(text=draft, changed=False)
