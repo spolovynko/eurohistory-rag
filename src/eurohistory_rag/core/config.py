@@ -55,6 +55,29 @@ class Settings(BaseSettings):
     # and it is a per-machine concern: a laptop may want the smaller model.
     reranker_model: str = "BAAI/bge-reranker-base"
 
+    # What the interface may offer, and therefore what a request may ask for.
+    # An allow-list rather than free text: `model` and `reranker` arrive from a
+    # browser, and a name that reaches OpenAI or HuggingFace unchecked is a way
+    # to spend money or read 500 MB off the network on a stranger's say-so.
+    # Every model here was called once and verified to answer; gpt-5-mini was
+    # tried and left out, because it spends its budget on reasoning tokens and
+    # returned an empty answer under the same cap the others answered within.
+    selectable_models: tuple[str, ...] = (
+        "gpt-4.1-mini",
+        "gpt-4.1-nano",
+        "gpt-4.1",
+        "gpt-4o-mini",
+    )
+
+    # Both rerankers Phase 8 measured. bge-reranker-base is kept on the list
+    # deliberately: it is the default above and it is the one Phase 8 found
+    # broken, so hiding it would make the default unreproducible. The interface
+    # marks it; see D-092.
+    selectable_rerankers: tuple[str, ...] = (
+        "cross-encoder/ms-marco-MiniLM-L6-v2",
+        "BAAI/bge-reranker-base",
+    )
+
     # Off by default so the system's behaviour does not change until the eval
     # says it should. Phase 8 turns it on in .env, measures, and then decides.
     reranker_enabled: bool = False

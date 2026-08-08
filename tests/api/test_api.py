@@ -362,3 +362,69 @@ def test_ask_answers_503_when_the_store_is_unreachable() -> None:
         response = unavailable_client.post("/ask", json={"question": "aid"})
 
     assert response.status_code == 503
+
+
+# --- per-request configuration (Phase 19, D-092) -----------------------------
+
+
+def test_an_answer_states_the_configuration_that_produced_it() -> None:
+    """Every answer, not only overridden ones.
+
+    Phase 8 shipped a measurement whose reranker was switched off and nobody
+    noticed. An answer that cannot say what produced it is that same failure,
+    in front of a person instead of in a run directory.
+    """
+    body = (
+        asking_client("Aid arrived [1].").post("/ask", json={"question": "aid"}).json()
+    )
+
+    assert body["configuration"]["model"] == "fake-model"
+    assert body["configuration"]["k"] == 5
+    assert "hybrid" in body["configuration"]
+    assert "reranker" in body["configuration"]
+
+
+def test_a_request_naming_nothing_uses_the_injected_service() -> None:
+    """The property the whole design rests on.
+
+    With no override the endpoint must use the service FastAPI injected, which
+    is what `dependency_overrides` replaces -- otherwise every test in this file
+    would start calling OpenAI.
+    """
+    response = asking_client("Aid arrived [1].").post("/ask", json={"question": "aid"})
+
+    assert response.status_code == 200
+    assert response.json()["answer"] == "Aid arrived [1]."
+
+
+def test_an_unknown_model_is_refused_before_anything_is_spent() -> None:
+    """The allow-list is the server's, not the page's.
+
+    `model` arrives from a browser. A name passed through unchecked is a way to
+    bill this account for whatever someone types.
+    """
+    response = asking_client("x").post(
+        "/ask", json={"question": "aid", "model": "gpt-9-omniscient"}
+    )
+
+    assert response.status_code == 422
+    assert "gpt-9-omniscient" in response.json()["detail"]
+
+
+def test_an_unknown_reranker_is_refused() -> None:
+    """Same argument: a name reaching HuggingFace unchecked reads 500 MB."""
+    response = asking_client("x").post(
+        "/ask", json={"question": "aid", "reranker": "evil/model"}
+    )
+
+    assert response.status_code == 422
+
+
+def test_options_reports_the_allow_lists_and_the_defaults() -> None:
+    """What the page reads instead of hardcoding a list of models."""
+    body = TestClient(create_app()).get("/options").json()
+
+    assert "gpt-4.1-mini" in body["models"]
+    assert "BAAI/bge-reranker-base" in body["rerankers"]
+    assert body["defaults"]["k"] == 5
+    assert body["max_k"] == 50
