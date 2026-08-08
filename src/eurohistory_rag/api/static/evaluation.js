@@ -275,6 +275,13 @@ export async function listRuns() {
   }
 }
 
+// A run that has just finished is not in the picker yet, and the whole reason
+// for starting one from this page is to look at what it produced.
+export async function refreshRuns() {
+  runsListed = false;
+  await listRuns();
+}
+
 runPicker.addEventListener("change", () => loadRun(runPicker.value));
 suitePicker.addEventListener("change", showSuite);
 

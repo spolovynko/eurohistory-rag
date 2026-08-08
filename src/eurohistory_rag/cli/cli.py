@@ -8,11 +8,11 @@ import typer
 
 from eurohistory_rag.core.config import Settings, get_settings
 from eurohistory_rag.core.logging import configure_logging
+from eurohistory_rag.eval import execute as execute_module
 from eurohistory_rag.eval import gate as gate_module
 from eurohistory_rag.eval import judge as judge_module
 from eurohistory_rag.eval import probes as probes_module
 from eurohistory_rag.eval import report as report_module
-from eurohistory_rag.eval import run as run_module
 from eurohistory_rag.eval import sweep as sweep_module
 from eurohistory_rag.eval import synthetic as synthetic_module
 from eurohistory_rag.eval.metrics import summarise
@@ -24,12 +24,9 @@ from eurohistory_rag.eval.questions import (
 )
 from eurohistory_rag.eval.record import (
     RUNS_DIR,
-    new_run_id,
     read_records,
-    write_run,
 )
 from eurohistory_rag.generation.client import OpenAIGenerator
-from eurohistory_rag.generation.service import GenerationService
 from eurohistory_rag.pipeline.bronze import curate as curate_module
 from eurohistory_rag.pipeline.bronze import ingest as ingest_module
 from eurohistory_rag.pipeline.bronze.registry import (
@@ -50,10 +47,6 @@ from eurohistory_rag.retrieval.embedding import OpenAIEmbedder
 from eurohistory_rag.retrieval.rerank import LocalReranker
 from eurohistory_rag.retrieval.search import (
     DEFAULT_K,
-    MAX_PER_DOCUMENT,
-    OVERFETCH,
-    RRF_K,
-    SearchService,
 )
 from eurohistory_rag.retrieval.vectorstore import VectorStore
 
@@ -265,45 +258,22 @@ def evaluate(
                 typer.echo(f"note: {suite} is {have}, plan asks for {TARGET_COUNTS}")
 
     settings = get_settings()
-    embedder = _embedder(settings)
-    store = _store(settings)
-    # Built here rather than taken from api/dependencies.py: the CLI is the
-    # pipeline's trigger and must not import the web layer.
-    search = SearchService(
-        embedder, store, reranker=_reranker(settings), hybrid=settings.hybrid_enabled
-    )
-    verifier = (
-        _generator(settings, settings.verify_model) if settings.verify_enabled else None
-    )
-    generation = GenerationService(
-        search, _generator(settings, settings.generation_model), verifier=verifier
-    )
-
-    records = run_module.run_all(questions, search, generation, answer_k=k)
-    meta = run_module.build_meta(
-        run_id=new_run_id(),
-        settings_collection=settings.qdrant_collection,
-        embedding_model=settings.embedding_model,
-        generation_model=settings.generation_model,
-        points=store.count(),
-        answer_k=k,
-        max_per_document=MAX_PER_DOCUMENT,
-        overfetch=OVERFETCH,
+    # The whole run, including how the retrieval stack is wired, lives in
+    # eval/execute.py. It is shared with the page's run button, and it is shared
+    # precisely so a run started here and a run started there are the same run.
+    config = execute_module.RunConfig(
+        k=k,
+        model=settings.generation_model,
         reranker=settings.reranker_model if settings.reranker_enabled else "",
-        hybrid=f"bm25+rrf(k={RRF_K})" if settings.hybrid_enabled else "",
-        verifier=settings.verify_model if settings.verify_enabled else "",
-        note=note,
+        hybrid=settings.hybrid_enabled,
+    )
+    directory = execute_module.execute(
+        questions, settings, config, runs_dir=runs, note=note
     )
 
-    directory = write_run(meta, records, runs)
-    summary = report_module.render_by_suite(records)
-    (directory / "summary.txt").write_text(summary + "\n", encoding="utf-8")
-    (directory / "transcript.txt").write_text(
-        report_module.render_transcript(meta, records), encoding="utf-8"
-    )
-
+    summary = (directory / "summary.txt").read_text(encoding="utf-8")
     typer.echo(summary)
-    typer.echo(f"\n{len(records)} questions -> {directory}")
+    typer.echo(f"\n{len(questions)} questions -> {directory}")
 
 
 @app.command()

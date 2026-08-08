@@ -85,34 +85,47 @@ def test_the_page_is_packaged_with_the_app() -> None:
     """
     assert PAGE.strip().endswith("</html>")
     assert TestClient(create_app()).get("/").text == PAGE
-    assert len(STATIC) == 6
+    assert len(STATIC) == 8
 
 
 def test_the_only_answering_call_is_ask() -> None:
-    """`/ask` is the sole path from a question to an answer.
+    """`/ask` is the sole path from a typed question to an answer.
 
-    Relaxed from "the page calls /ask and nothing else" when the evaluation
-    view arrived: it reads saved runs from `/runs`, which is not an answering
-    path at all. The rule D-090 wrote down was that nothing may *answer a
-    question* except `/ask`, and that is what is asserted here. Everything
-    reached by this page is either `/ask` or a read-only `/runs` lookup.
+    Relaxed twice now, and both relaxations are recorded. Phase 18 added
+    `/runs`, which reads saved runs and answers nothing. Phase 20 added
+    `/eval/*`, which starts the recorded evaluation -- that asks sixty
+    questions, but through the runner that has always called the services
+    in-process, not through a second answering endpoint of the page's own.
+
+    The rule D-090 wrote down was that nothing may answer *the question in the
+    box* except `/ask`, and that is what is asserted here.
     """
     called = FETCH.findall(SCRIPTS)
-    reads = ("/runs", "/options")
+    reads = ("/runs", "/options", "/eval/")
 
     assert "/ask" in called
     assert [url for url in called if not url.startswith(reads)] == ["/ask"]
 
 
-def test_the_page_cannot_start_an_evaluation() -> None:
-    """No POST, PUT or DELETE goes anywhere except /ask.
+def test_the_page_cannot_start_an_evaluation_without_a_prediction() -> None:
+    """The run button carries obligation 9 rather than bypassing it.
 
-    An eval run costs ~$0.08 and four minutes. A page that could trigger one
-    would put that behind a click, and a run nobody predicted the result of is
-    a run that teaches nothing (obligation 9).
+    D-090 asserted that this page could not start an evaluation at all, and the
+    reason recorded there was not the $0.08 -- it was that "a run produced by
+    clicking is a run nobody wrote a prediction for". D-094 reverses the
+    conclusion and keeps the reason: the button exists, and it cannot be pressed
+    until a prediction has been typed.
+
+    So what is asserted is no longer "there is no such call" but "the call
+    cannot be made empty-handed": the confirm control ships disabled, and every
+    path that re-enables it goes through the prediction box.
     """
-    assert SCRIPTS.count('method: "POST"') == 1
-    assert '"/ask"' in SCRIPTS
+    assert 'id="run-start" type="button" disabled' in PAGE
+    assert '"/eval/run"' in SCRIPTS
+    assert "prediction.value.trim().length >= MIN_PREDICTION" in SCRIPTS
+    # The only writes this page makes: one answer, one run start, one cancel.
+    assert SCRIPTS.count('method: "POST"') == 2
+    assert SCRIPTS.count('method: "DELETE"') == 1
 
 
 def test_the_page_never_writes_server_text_as_html() -> None:
@@ -126,18 +139,19 @@ def test_the_page_never_writes_server_text_as_html() -> None:
     assert "insertAdjacentHTML" not in SCRIPTS
 
 
-def test_the_page_offers_no_second_button() -> None:
-    """Still one button, and every input is accounted for.
+def test_every_control_on_the_page_is_accounted_for() -> None:
+    """Three buttons and three inputs, each one named here.
 
-    Phase 19 added the settings row, so `<input>` is no longer one: the second
-    is the hybrid switch, which is a real checkbox underneath its pill so that
-    it is keyboard operable and announces itself. The count is asserted rather
-    than removed -- it is the line that makes growing the page a decision
-    somebody has to take on purpose.
+    The count is asserted rather than removed because it is the line that makes
+    growing the page a decision somebody takes on purpose. Phase 20 is exactly
+    that decision: Ask, Start and Cancel, and a second hybrid switch because the
+    evaluation view carries its own copy of the settings row.
     """
-    assert PAGE.count("<button") == 1
-    assert PAGE.count("<input") == 2
+    assert PAGE.count("<button") == 3
+    assert PAGE.count("<input") == 3
     assert 'type="checkbox" id="hybrid-toggle"' in PAGE
+    assert 'type="checkbox" id="run-hybrid"' in PAGE
+    assert PAGE.count("<textarea") == 1
 
 
 def test_the_broken_reranker_is_named_as_broken() -> None:
