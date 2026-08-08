@@ -1,17 +1,21 @@
 """FastAPI application factory and the module-level app uvicorn imports."""
 
+from importlib.resources import files
 from typing import Annotated
 
 from fastapi import Depends, FastAPI, HTTPException, Query, status
+from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, Field
 
 from eurohistory_rag import __version__
 from eurohistory_rag.api.dependencies import (
+    configured_generation_service,
     get_generation_service,
     get_search_service,
     get_vector_store,
 )
-from eurohistory_rag.core.config import CORPUS_LICENSE
+from eurohistory_rag.core.config import CORPUS_LICENSE, Settings, get_settings
+from eurohistory_rag.eval.browse import RunListing, RunView, list_runs, load_run
 from eurohistory_rag.generation.client import GenerationUnavailable
 from eurohistory_rag.generation.service import Citation, GenerationService
 from eurohistory_rag.retrieval.search import DEFAULT_K, SearchResult, SearchService
@@ -19,6 +23,12 @@ from eurohistory_rag.retrieval.vectorstore import VectorStore, VectorStoreUnavai
 
 # A ceiling on k, so one request cannot ask for the whole corpus.
 MAX_K = 50
+
+# The one page, read once at import. It sits next to this module as .html
+# rather than inside a template engine for the reason system_prompt.md sits
+# next to messages.py: it is edited far more often than the code serving it,
+# and nothing in it needs rendering -- the browser fills it in from /ask.
+PAGE = files("eurohistory_rag.api").joinpath("page.html").read_text(encoding="utf-8")
 
 
 class SearchHit(BaseModel):
@@ -71,10 +81,48 @@ class SearchResponse(BaseModel):
 
 
 class AskRequest(BaseModel):
-    """A question, and how widely to search for it."""
+    """A question, how widely to search for it, and how to answer it.
+
+    The three optional fields are per-request overrides of what `.env` sets.
+    `None` means "use this process's default", which is what the eval runner
+    uses -- so a request that names nothing behaves exactly as it did before
+    these existed. D-092.
+    """
 
     question: str = Field(min_length=1, max_length=500)
     k: int = Field(default=DEFAULT_K, ge=1, le=MAX_K)
+    hybrid: bool | None = None
+    reranker: str | None = None
+    model: str | None = None
+
+
+class Configuration(BaseModel):
+    """The settings an answer was actually produced under.
+
+    Returned with every answer, not only when something was overridden. Phase 8
+    shipped a measurement whose reranker was switched off and nobody noticed;
+    an answer that cannot say what produced it is that failure waiting to
+    happen in front of a person instead of in a run directory.
+    """
+
+    model: str
+    reranker: str | None
+    hybrid: bool
+    k: int
+
+
+class OptionsResponse(BaseModel):
+    """What this server will accept, and what it does when asked for nothing.
+
+    The page reads this rather than hardcoding a list of models: a name that is
+    not on the allow-list is refused, so the page and the server would disagree
+    the moment either was edited alone.
+    """
+
+    models: list[str]
+    rerankers: list[str]
+    defaults: Configuration
+    max_k: int
 
 
 class AnswerSource(BaseModel):
@@ -110,13 +158,37 @@ class AnswerSource(BaseModel):
 
 
 class AskResponse(BaseModel):
-    """A grounded answer and only the sources it used."""
+    """A grounded answer, only the sources it used, and what produced it."""
 
     question: str
     answer: str
     model: str
     license: str
     sources: list[AnswerSource]
+    configuration: Configuration
+
+
+def _overridden(request: AskRequest) -> bool:
+    """Whether this request asked for anything other than the process default.
+
+    The test that keeps the fakes working: with nothing named, the endpoint uses
+    the service FastAPI injected, which is what `dependency_overrides` replaces.
+    """
+    return any(
+        value is not None for value in (request.hybrid, request.reranker, request.model)
+    )
+
+
+def _chosen_reranker(request: AskRequest, settings: Settings) -> str | None:
+    """Which reranker this request wants, or None for no reranking.
+
+    An empty string is how a client says "switch it off", because a JSON null
+    already means "leave it alone" -- the two are different requests and a
+    single field has to carry both.
+    """
+    if request.reranker is None:
+        return settings.reranker_model if settings.reranker_enabled else None
+    return request.reranker or None
 
 
 def create_app() -> FastAPI:
@@ -127,6 +199,17 @@ def create_app() -> FastAPI:
     build one wired to fakes, without touching the app uvicorn serves.
     """
     app = FastAPI(title="Eurohistory RAG API", version=__version__)
+
+    @app.get("/", summary="The one page", response_class=HTMLResponse)
+    def page() -> str:
+        """Serve the question page.
+
+        The only route in this app that returns something for a person rather
+        than for a program. It holds no state and calls nothing: everything on
+        it arrives from /ask, so the page and the eval runner ask the identical
+        question of the identical code.
+        """
+        return PAGE
 
     @app.get("/health", summary="Health check endpoint")
     async def health() -> dict[str, str]:
@@ -185,6 +268,22 @@ def create_app() -> FastAPI:
             results=[SearchHit.from_result(result) for result in results],
         )
 
+    @app.get("/options", summary="What this server will accept on /ask")
+    def options() -> OptionsResponse:
+        """The allow-lists and the defaults, so a client need not guess either."""
+        settings = get_settings()
+        return OptionsResponse(
+            models=list(settings.selectable_models),
+            rerankers=list(settings.selectable_rerankers),
+            defaults=Configuration(
+                model=settings.generation_model,
+                reranker=settings.reranker_model if settings.reranker_enabled else None,
+                hybrid=settings.hybrid_enabled,
+                k=DEFAULT_K,
+            ),
+            max_k=MAX_K,
+        )
+
     @app.post("/ask", summary="Answer a question from the corpus, with citations")
     def ask(
         service: Annotated[GenerationService, Depends(get_generation_service)],
@@ -195,7 +294,37 @@ def create_app() -> FastAPI:
         POST rather than GET because a question is input the server acts on,
         it can be long, and it has no business sitting in a URL that ends up
         in access logs and browser history.
+
+        Still the only path from a question to an answer, overrides or not --
+        D-090's third decision. A request naming nothing uses the injected
+        service, which is what keeps the tests' fakes in play and what the eval
+        runner's equivalent does.
         """
+        settings = get_settings()
+        used = Configuration(
+            model=request.model or settings.generation_model,
+            reranker=_chosen_reranker(request, settings),
+            hybrid=(
+                settings.hybrid_enabled if request.hybrid is None else request.hybrid
+            ),
+            k=request.k,
+        )
+        if request.model and request.model not in settings.selectable_models:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                detail=f"Unknown model {request.model!r}.",
+            )
+        if request.reranker and request.reranker not in settings.selectable_rerankers:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                detail=f"Unknown reranker {request.reranker!r}.",
+            )
+
+        if _overridden(request):
+            service = configured_generation_service(
+                hybrid=used.hybrid, reranker=used.reranker, model=used.model
+            )
+
         try:
             answer = service.ask(request.question, k=request.k)
         except (VectorStoreUnavailable, GenerationUnavailable) as error:
@@ -213,7 +342,40 @@ def create_app() -> FastAPI:
             sources=[
                 AnswerSource.from_citation(citation) for citation in answer.citations
             ],
+            # `answer.model` is what the generator reports; `used.model` is what
+            # was asked for. They agree, and reporting the requested one would
+            # hide the day they stop agreeing.
+            configuration=used.model_copy(update={"model": answer.model}),
         )
+
+    @app.get("/runs", summary="Every evaluation run saved on disk")
+    def runs() -> list[RunListing]:
+        """List the saved runs, newest first.
+
+        Read-only, and deliberately so: there is no endpoint that *starts* an
+        evaluation. That would put a $0.08 four-minute job behind a button, and
+        a run produced by clicking is a run nobody predicted the result of --
+        which is the one thing obligation 9 exists to prevent.
+        """
+        return list_runs()
+
+    @app.get("/runs/{run_id}", summary="One evaluation run, scored")
+    def run(run_id: str) -> RunView:
+        """Score one saved run the three ways this project reports it.
+
+        The dataclasses from `eval/browse.py` are the response contract rather
+        than a hand-written copy of them. Unlike /search, where the internal
+        result carries fields the public shape should not, these types were
+        written to be reported -- a second declaration would be nineteen
+        duplicated field names and one more place to forget a metric.
+        """
+        view = load_run(run_id)
+        if view is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"No run named {run_id!r}.",
+            )
+        return view
 
     return app
 

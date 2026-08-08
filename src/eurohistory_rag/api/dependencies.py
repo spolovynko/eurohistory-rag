@@ -99,3 +99,63 @@ def get_reranker() -> Reranker | None:
     if not settings.reranker_enabled:
         return None
     return LocalReranker(settings.reranker_model)
+
+
+# --- per-request configuration ----------------------------------------------
+#
+# Everything above is the process default: one embedder, one store, one
+# reranker, one generator, built from `.env` and shared. What follows lets a
+# single request run a different configuration without a restart.
+#
+# The split matters. The expensive things -- the embedder, the Qdrant
+# connection, a reranker's weights -- stay cached and shared, keyed by name so
+# each is built at most once. `SearchService` and `GenerationService` are thin
+# objects holding references to them, so building one per request costs
+# effectively nothing. D-092.
+
+
+@lru_cache(maxsize=4)
+def get_named_reranker(model: str) -> Reranker:
+    """One reranker per name, built once and kept.
+
+    Cached by name rather than by "the" reranker: switching between two of them
+    should load each once, not once per switch. Four is more than the
+    allow-list holds, so nothing is ever evicted and re-read from disk.
+    """
+    return LocalReranker(model)
+
+
+@lru_cache(maxsize=8)
+def get_generator(model: str) -> OpenAIGenerator:
+    """One OpenAI client per answering model."""
+    settings = get_settings()
+    return OpenAIGenerator(
+        api_key=settings.openai_api_key.get_secret_value(), model=model
+    )
+
+
+def configured_search_service(*, hybrid: bool, reranker: str | None) -> SearchService:
+    """A search configured for one request, over the shared expensive parts."""
+    settings = get_settings()
+    embedder = OpenAIEmbedder(
+        api_key=settings.openai_api_key.get_secret_value(),
+        model=settings.embedding_model,
+        dimensions=settings.embedding_dimensions,
+    )
+    return SearchService(
+        embedder,
+        get_vector_store(),
+        reranker=get_named_reranker(reranker) if reranker else None,
+        hybrid=hybrid,
+    )
+
+
+def configured_generation_service(
+    *, hybrid: bool, reranker: str | None, model: str
+) -> GenerationService:
+    """An answer path configured for one request."""
+    return GenerationService(
+        configured_search_service(hybrid=hybrid, reranker=reranker),
+        get_generator(model),
+        verifier=get_verifier(),
+    )

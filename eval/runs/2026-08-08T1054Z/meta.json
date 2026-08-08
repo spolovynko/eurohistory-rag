@@ -1,0 +1,16 @@
+{
+  "run_id": "2026-08-08T1054Z",
+  "started_at": "2026-08-08T10:54:01+00:00",
+  "git_sha": "9681e93",
+  "embedding_model": "text-embedding-3-small",
+  "generation_model": "gpt-4.1-mini",
+  "collection": "chunks",
+  "points": 54903,
+  "k": 5,
+  "max_per_document": 2,
+  "overfetch": 4,
+  "reranker": "cross-encoder/ms-marco-MiniLM-L6-v2",
+  "hybrid": "bm25+rrf(k=60)",
+  "verifier": "",
+  "note": "hybrid on, Phase 19 D-092"
+}

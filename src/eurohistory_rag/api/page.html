@@ -1,0 +1,1302 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Eurohistory RAG</title>
+<style>
+  /* Colour does one job beyond looking alive: every citation gets a hue, and
+     the marker in the answer wears the same hue as its source card. A reader
+     matching [3] to its passage matches a colour, not a number. The evaluation
+     view reuses the same six for its metric cards. */
+  :root {
+    --paper:   #fbfaf7;
+    --raised:  #ffffff;
+    --ink:     #201e1b;
+    --quiet:   #6b665f;
+    --faint:   #9a948c;
+    --rule:    #e6e2da;
+    --link:    #3b5da8;
+    --warn:    #b4442a;
+    --shadow:  0 1px 2px rgba(32,30,27,.05), 0 10px 30px -16px rgba(32,30,27,.25);
+    --radius:  11px;
+
+    --c1: #4f46e5;  /* indigo */
+    --c2: #0d7f74;  /* teal   */
+    --c3: #a35a08;  /* amber  */
+    --c4: #b4265a;  /* rose   */
+    --c5: #6d34c4;  /* violet */
+    --c6: #10668f;  /* cyan   */
+    --c:  var(--link);
+
+    --ok:   #0d7f74;  /* found in the top 5           */
+    --mid:  #a35a08;  /* found, but ranked below 5    */
+    --miss: #b4265a;  /* never found                  */
+    --na:   #cfcac1;  /* no answer key -- unanswerable */
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper:  #131217;
+      --raised: #1c1b21;
+      --ink:    #eeebe5;
+      --quiet:  #a49e95;
+      --faint:  #7b746b;
+      --rule:   #2e2c35;
+      --link:   #93b4e4;
+      --warn:   #e5906d;
+      --shadow: 0 1px 2px rgba(0,0,0,.35), 0 10px 30px -16px rgba(0,0,0,.8);
+
+      --c1: #a5b4fc;
+      --c2: #5eead4;
+      --c3: #fcd34d;
+      --c4: #fda4af;
+      --c5: #c4b5fd;
+      --c6: #7dd3fc;
+
+      --ok:   #5eead4;
+      --mid:  #fcd34d;
+      --miss: #fda4af;
+      --na:   #3a3742;
+    }
+  }
+
+  * { box-sizing: border-box; }
+  ::selection { background: color-mix(in oklab, var(--c1) 25%, transparent); }
+
+  body {
+    margin: 0;
+    padding: 0 1.25rem 8rem;
+    background:
+      radial-gradient(ellipse 38rem 22rem at 12% -6rem,
+                      color-mix(in oklab, var(--c1) 16%, transparent), transparent 68%),
+      radial-gradient(ellipse 34rem 20rem at 88% -8rem,
+                      color-mix(in oklab, var(--c3) 15%, transparent), transparent 68%),
+      radial-gradient(ellipse 40rem 24rem at 50% -14rem,
+                      color-mix(in oklab, var(--c2) 10%, transparent), transparent 72%),
+      var(--paper);
+    background-attachment: fixed;
+    color: var(--ink);
+    font: 400 17px/1.7 "Iowan Old Style", "Palatino Linotype", Palatino,
+          Georgia, "Times New Roman", serif;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  main { max-width: 41rem; margin: 0 auto; }
+  body[data-view="eval"] main { max-width: 52rem; }
+  .sans { font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+  .mono { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
+
+  /* --- masthead and tabs -------------------------------------------------- */
+
+  header { padding: 4rem 0 1.75rem; text-align: center; }
+  h1 {
+    margin: 0;
+    color: var(--ink);
+    font-size: clamp(1.7rem, 1.2rem + 1.9vw, 2.3rem);
+    font-weight: 400;
+    letter-spacing: -0.02em;
+  }
+  /* The gradient title is opt-in: `color: transparent` with no working
+     background-clip is an invisible heading, and a title nobody can read is a
+     worse outcome than a plain one. */
+  @supports ((background-clip: text) or (-webkit-background-clip: text)) {
+    h1 {
+      background: linear-gradient(100deg, var(--c1), var(--c5) 38%, var(--c4) 68%, var(--c3));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+  }
+  .tagline { margin: .6rem 0 0; color: var(--quiet); font-size: .88rem; font-style: italic; }
+
+  nav {
+    display: flex;
+    justify-content: center;
+    gap: .3rem;
+    margin: 1.6rem auto 0;
+    padding: .28rem;
+    width: fit-content;
+    border: 1px solid var(--rule);
+    border-radius: 999px;
+    background: var(--raised);
+    box-shadow: var(--shadow);
+  }
+  nav a {
+    padding: .42rem 1.1rem;
+    border-radius: 999px;
+    color: var(--quiet);
+    font: 500 .78rem/1 ui-sans-serif, system-ui, sans-serif;
+    letter-spacing: .04em;
+    text-decoration: none;
+    transition: background .18s ease, color .18s ease;
+  }
+  nav a:hover { color: var(--ink); }
+  nav a[aria-current="page"] {
+    background: linear-gradient(135deg, var(--c1), var(--c5));
+    color: #fff;
+  }
+  @media (prefers-color-scheme: dark) { nav a[aria-current="page"] { color: #14131a; } }
+
+  .view[hidden] { display: none; }
+
+  /* --- the settings row --------------------------------------------------- */
+
+  .controls {
+    display: flex; flex-wrap: wrap; align-items: center;
+    justify-content: center;
+    gap: .5rem .7rem;
+    margin: 1.5rem auto 0;
+    padding: .55rem .8rem;
+    width: fit-content; max-width: 100%;
+    border: 1px solid var(--rule);
+    border-radius: 999px;
+    background: var(--raised);
+    box-shadow: var(--shadow);
+  }
+  .ctl {
+    display: flex; align-items: center; gap: .45rem;
+    color: var(--faint);
+    font: 500 .64rem/1.4 ui-sans-serif, system-ui, sans-serif;
+    letter-spacing: .12em; text-transform: uppercase;
+    cursor: pointer;
+  }
+  .ctl select {
+    padding: .3rem .45rem;
+    border: 1px solid var(--rule);
+    border-radius: 7px;
+    background: var(--paper);
+    color: var(--ink);
+    font: 400 .76rem/1.3 ui-sans-serif, system-ui, sans-serif;
+    letter-spacing: 0; text-transform: none;
+    cursor: pointer;
+    box-shadow: none;
+    flex: none;
+  }
+  .ctl select:focus-visible {
+    outline: none;
+    border-color: color-mix(in oklab, var(--c1) 55%, var(--rule));
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--c1) 16%, transparent);
+  }
+  /* The hybrid switch. A real checkbox underneath, so it is keyboard operable
+     and announces itself; the pill is drawn from it. */
+  .ctl input { position: absolute; opacity: 0; width: 0; height: 0; }
+  .ctl .track {
+    position: relative;
+    width: 34px; height: 19px;
+    border-radius: 999px;
+    background: color-mix(in oklab, var(--faint) 35%, transparent);
+    transition: background .18s ease;
+  }
+  .ctl .track::after {
+    content: "";
+    position: absolute; top: 2px; left: 2px;
+    width: 15px; height: 15px;
+    border-radius: 50%;
+    background: var(--raised);
+    box-shadow: 0 1px 3px rgba(0,0,0,.3);
+    transition: transform .18s ease;
+  }
+  .ctl input:checked + .track { background: var(--ok); }
+  .ctl input:checked + .track::after { transform: translateX(15px); }
+  .ctl input:focus-visible + .track {
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--c1) 20%, transparent);
+  }
+
+  /* --- the one control ---------------------------------------------------- */
+
+  form {
+    display: flex;
+    gap: .5rem;
+    margin-top: 2rem;
+    padding: .4rem;
+    border: 1px solid var(--rule);
+    border-radius: calc(var(--radius) + 4px);
+    background: var(--raised);
+    box-shadow: var(--shadow);
+    transition: border-color .18s ease, box-shadow .18s ease;
+  }
+  form:focus-within {
+    border-color: color-mix(in oklab, var(--c1) 50%, var(--rule));
+    box-shadow: var(--shadow), 0 0 0 4px color-mix(in oklab, var(--c1) 16%, transparent);
+  }
+  #question {
+    flex: 1; min-width: 0;
+    padding: .75rem .9rem;
+    border: 0; background: transparent; color: inherit; font: inherit;
+  }
+  #question::placeholder { color: var(--faint); }
+  #question:focus { outline: none; }
+  button {
+    flex: none;
+    padding: .78rem 1.5rem;
+    border: 0;
+    border-radius: var(--radius);
+    background: linear-gradient(135deg, var(--c1), var(--c5));
+    color: #fff;
+    font: 500 .88rem/1 ui-sans-serif, system-ui, sans-serif;
+    letter-spacing: .05em;
+    cursor: pointer;
+    box-shadow: 0 2px 10px -3px color-mix(in oklab, var(--c1) 60%, transparent);
+    transition: filter .18s ease, transform .12s ease;
+  }
+  @media (prefers-color-scheme: dark) { button { color: #14131a; } }
+  button:hover:not(:disabled) { filter: brightness(1.08); }
+  button:active:not(:disabled) { transform: translateY(1px); }
+  button:disabled { opacity: .4; box-shadow: none; cursor: progress; }
+
+  /* --- status ------------------------------------------------------------- */
+
+  .status {
+    display: flex; align-items: baseline; gap: .65rem;
+    margin: 1.8rem 0 0;
+    color: var(--quiet);
+    font-size: .92rem;
+  }
+  .status::before {
+    content: "";
+    flex: none;
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--c3);
+    transform: translateY(-2px);
+    animation: pulse 1.5s ease-out infinite;
+  }
+  .status[data-kind="refusal"]::before { background: var(--faint); animation: none; }
+  .status[data-kind="error"] { color: var(--warn); }
+  .status[data-kind="error"]::before { background: var(--warn); animation: none; }
+  @keyframes pulse {
+    0%   { box-shadow: 0 0 0 0 color-mix(in oklab, var(--c3) 55%, transparent); }
+    70%  { box-shadow: 0 0 0 9px transparent; }
+    100% { box-shadow: 0 0 0 0 transparent; }
+  }
+
+  /* --- the answer --------------------------------------------------------- */
+
+  #answer { margin: 2.1rem 0 0; font-size: 1.09rem; line-height: 1.78; white-space: pre-wrap; }
+  #answer:not(:empty) { animation: rise .35s ease both; }
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: none; }
+  }
+  #answer a {
+    display: inline-block;
+    min-width: 1.3em;
+    margin: 0 .08em;
+    padding: .05em .3em;
+    border-radius: 5px;
+    background: color-mix(in oklab, var(--c) 16%, transparent);
+    color: color-mix(in oklab, var(--c) 78%, var(--ink));
+    font: 600 .66em/1.55 ui-sans-serif, system-ui, sans-serif;
+    text-align: center; text-decoration: none; vertical-align: .42em;
+    transition: background .15s ease, transform .12s ease;
+  }
+  #answer a:hover {
+    background: color-mix(in oklab, var(--c) 32%, transparent);
+    transform: translateY(-1px);
+  }
+
+  /* --- section headings --------------------------------------------------- */
+
+  h2 {
+    display: flex; align-items: center; gap: .85rem;
+    margin: 3rem 0 1.2rem;
+    font: 500 .72rem/1 ui-sans-serif, system-ui, sans-serif;
+    letter-spacing: .17em; text-transform: uppercase; color: var(--faint);
+  }
+  h2::after {
+    content: ""; flex: 1; height: 2px; border-radius: 2px;
+    background: linear-gradient(to right, var(--rule), transparent);
+  }
+
+  /* --- sources ------------------------------------------------------------ */
+
+  #sources { margin: 0; padding: 0; list-style: none; }
+  #sources li {
+    position: relative;
+    margin: 0 0 .8rem;
+    padding: 1rem 1.15rem 1rem 1.35rem;
+    overflow: hidden;
+    border: 1px solid var(--rule);
+    border-radius: var(--radius);
+    background: var(--raised);
+    scroll-margin-top: 2rem;
+    transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease;
+  }
+  #sources li::before {
+    content: ""; position: absolute; inset: 0 auto 0 0; width: 4px; background: var(--c);
+  }
+  #sources li:hover { transform: translateX(2px); }
+  #sources li:target {
+    border-color: color-mix(in oklab, var(--c) 45%, var(--rule));
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--c) 15%, transparent);
+  }
+  .cite {
+    display: flex; flex-wrap: wrap; align-items: baseline; gap: .55rem;
+    margin: 0; font: 400 .93rem/1.5 inherit;
+  }
+  .cite .n {
+    flex: none; min-width: 1.7em; padding: .12em .4em;
+    border-radius: 5px;
+    background: color-mix(in oklab, var(--c) 16%, transparent);
+    color: color-mix(in oklab, var(--c) 78%, var(--ink));
+    font: 600 .72rem/1.5 ui-sans-serif, system-ui, sans-serif;
+    text-align: center;
+  }
+  .cite a { color: var(--ink); text-decoration: none; border-bottom: 1px solid var(--rule); }
+  .cite a:hover { color: color-mix(in oklab, var(--c) 70%, var(--ink)); border-bottom-color: var(--c); }
+  .score {
+    margin-left: auto;
+    color: color-mix(in oklab, var(--c) 55%, var(--faint));
+    font: 400 .73rem/1.5 ui-monospace, Menlo, Consolas, monospace;
+  }
+  details { margin: .75rem 0 0; }
+  summary {
+    display: inline-block; color: var(--quiet);
+    font: 400 .78rem/1.5 ui-sans-serif, system-ui, sans-serif;
+    cursor: pointer; user-select: none;
+  }
+  summary:hover { color: color-mix(in oklab, var(--c) 70%, var(--ink)); }
+  blockquote {
+    margin: .75rem 0 0;
+    padding: .15rem 0 .15rem 1rem;
+    border-left: 2px solid color-mix(in oklab, var(--c) 40%, var(--rule));
+    color: var(--quiet); font-size: .93rem; line-height: 1.65; white-space: pre-wrap;
+  }
+
+  [data-hue="1"] { --c: var(--c1); }
+  [data-hue="2"] { --c: var(--c2); }
+  [data-hue="3"] { --c: var(--c3); }
+  [data-hue="4"] { --c: var(--c4); }
+  [data-hue="5"] { --c: var(--c5); }
+  [data-hue="6"] { --c: var(--c6); }
+
+  /* --- evaluation view ---------------------------------------------------- */
+
+  .pickers {
+    display: flex; flex-wrap: wrap; gap: .6rem;
+    margin: 2rem 0 0;
+  }
+  select {
+    flex: 1 1 12rem; min-width: 0;
+    padding: .6rem .8rem;
+    border: 1px solid var(--rule);
+    border-radius: var(--radius);
+    background: var(--raised);
+    color: inherit;
+    font: 400 .85rem/1.4 ui-sans-serif, system-ui, sans-serif;
+    cursor: pointer;
+    box-shadow: var(--shadow);
+  }
+  select:focus-visible {
+    outline: none;
+    border-color: color-mix(in oklab, var(--c1) 50%, var(--rule));
+    box-shadow: var(--shadow), 0 0 0 4px color-mix(in oklab, var(--c1) 16%, transparent);
+  }
+
+  /* The conditions the run happened under. Phase 8 shipped a measurement whose
+     reranker was switched off and nobody noticed, so these are given room
+     rather than being crammed into a line of chips. */
+  .conditions {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+    gap: 1px;
+    margin: 1rem 0 0;
+    overflow: hidden;
+    border: 1px solid var(--rule);
+    border-radius: var(--radius);
+    background: var(--rule);
+    box-shadow: var(--shadow);
+  }
+  .fact {
+    display: flex; flex-direction: column; gap: .3rem;
+    padding: .8rem .9rem;
+    background: var(--raised);
+  }
+  .fact .k {
+    color: var(--faint);
+    font: 500 .62rem/1.3 ui-sans-serif, system-ui, sans-serif;
+    letter-spacing: .13em; text-transform: uppercase;
+  }
+  .fact .v {
+    color: var(--ink);
+    font: 400 .8rem/1.35 ui-monospace, Menlo, Consolas, monospace;
+    overflow-wrap: anywhere;
+  }
+  /* On or off, shown as state rather than as the words "on" and "off" buried
+     in a sentence -- these two are what make two runs incomparable. */
+  .fact .v.state {
+    display: inline-flex; align-items: center; gap: .4rem;
+    font-family: ui-sans-serif, system-ui, sans-serif;
+    font-size: .78rem;
+  }
+  .fact .v.state::before {
+    content: ""; flex: none;
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--faint);
+  }
+  .fact .v.state[data-on="yes"]::before {
+    background: var(--ok);
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--ok) 22%, transparent);
+  }
+  .fact .v.state[data-on="no"] { color: var(--quiet); }
+
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+    gap: .7rem;
+    margin: 1.4rem 0 0;
+  }
+  /* No `overflow: hidden` here on purpose -- the hover description is
+     positioned outside the card and would be clipped by it. The meter rounds
+     its own corners instead. */
+  .card {
+    position: relative;
+    padding: .95rem 1rem 1.1rem;
+    border: 1px solid var(--rule);
+    border-radius: var(--radius);
+    background: var(--raised);
+    box-shadow: var(--shadow);
+    cursor: help;
+  }
+  .card:focus-visible {
+    outline: none;
+    border-color: color-mix(in oklab, var(--c) 50%, var(--rule));
+    box-shadow: var(--shadow), 0 0 0 4px color-mix(in oklab, var(--c) 16%, transparent);
+  }
+  .card .label {
+    display: block;
+    color: var(--faint);
+    font: 500 .66rem/1.4 ui-sans-serif, system-ui, sans-serif;
+    letter-spacing: .11em; text-transform: uppercase;
+  }
+  .card .value {
+    display: block; margin-top: .3rem;
+    color: color-mix(in oklab, var(--c) 72%, var(--ink));
+    font: 400 1.65rem/1.15 ui-sans-serif, system-ui, sans-serif;
+    letter-spacing: -.02em;
+  }
+  .card .value .unit { font-size: .95rem; color: var(--faint); }
+  /* The description, revealed on hover or keyboard focus. */
+  .card .hint {
+    position: absolute;
+    left: 50%; bottom: calc(100% + .35rem);
+    z-index: 5;
+    /* Exactly the card's width. A wider box overhangs the grid's outer
+       columns, and a hidden element still counts toward the page's scroll
+       width -- so the page gained a horizontal scrollbar that nothing visible
+       explained. */
+    width: 100%;
+    transform: translateX(-50%) translateY(4px);
+    padding: .7rem .85rem;
+    border-radius: 10px;
+    background: var(--ink);
+    color: var(--paper);
+    font: 400 .76rem/1.5 ui-sans-serif, system-ui, sans-serif;
+    text-align: left;
+    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, .55);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity .15s ease, transform .15s ease, visibility .15s;
+    pointer-events: none;
+  }
+  .card .hint::after {
+    content: "";
+    position: absolute; top: 100%; left: 50%;
+    margin-left: -5px;
+    border: 5px solid transparent;
+    border-top-color: var(--ink);
+  }
+  .card .hint .exact { display: block; }
+  .card .hint .plain {
+    display: block;
+    margin-top: .4rem;
+    padding-top: .4rem;
+    border-top: 1px solid color-mix(in oklab, var(--paper) 22%, transparent);
+    color: color-mix(in oklab, var(--paper) 72%, var(--ink));
+    font-style: italic;
+  }
+  /* `:focus` rather than `:focus-visible`: the focus ring below is only wanted
+     for keyboard use, but the description should appear for any focus. */
+  .card:hover .hint,
+  .card:focus .hint {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  .card .meter {
+    position: absolute; inset: auto 0 0 0; height: 4px;
+    border-radius: 0 0 var(--radius) var(--radius);
+    overflow: hidden;
+    background: color-mix(in oklab, var(--c) 12%, transparent);
+  }
+  .card .meter i { display: block; height: 100%; background: var(--c); }
+
+  /* Nine columns do not fit a phone. The table scrolls inside its own box
+     rather than dragging the whole page sideways with it. */
+  .scrolls { overflow-x: auto; }
+  table { width: 100%; min-width: 28rem; margin: 0; border-collapse: collapse; }
+  caption { margin-bottom: .5rem; color: var(--faint); font-size: .78rem; text-align: left; }
+  th, td {
+    padding: .55rem .5rem;
+    border-bottom: 1px solid var(--rule);
+    text-align: right;
+    font: 400 .84rem/1.4 ui-monospace, Menlo, Consolas, monospace;
+  }
+  th {
+    color: var(--faint);
+    font: 500 .66rem/1.4 ui-sans-serif, system-ui, sans-serif;
+    letter-spacing: .1em; text-transform: uppercase;
+    cursor: help;
+    text-decoration: underline dotted color-mix(in oklab, var(--faint) 55%, transparent);
+    text-underline-offset: 3px;
+  }
+  th:first-child, td:first-child {
+    text-align: left;
+    font-family: ui-sans-serif, system-ui, sans-serif;
+  }
+  tbody tr:last-child td { border-bottom: 0; font-weight: 600; }
+  tbody tr:hover td { background: color-mix(in oklab, var(--c1) 5%, transparent); }
+  .na { color: var(--faint); }
+
+  .bar {
+    display: inline-block; vertical-align: middle;
+    width: 3.2rem; height: 5px; margin-right: .45rem;
+    border-radius: 3px;
+    background: color-mix(in oklab, var(--c1) 13%, transparent);
+  }
+  .bar i { display: block; height: 100%; border-radius: 3px; background: var(--c1); }
+
+  .strip {
+    display: flex; flex-wrap: wrap; gap: 3px;
+    margin: 1.1rem 0 0; padding: 0; list-style: none;
+  }
+  .strip li {
+    width: 15px; height: 15px;
+    border-radius: 3px;
+    background: var(--na);
+    transition: transform .12s ease;
+  }
+  .strip li:hover { transform: scale(1.35); }
+  .strip li[data-outcome="hit"]  { background: var(--ok); }
+  .strip li[data-outcome="deep"] { background: var(--mid); }
+  .strip li[data-outcome="miss"] { background: var(--miss); }
+  .legend {
+    display: flex; flex-wrap: wrap; gap: .5rem 1rem;
+    margin: .9rem 0 0; padding: 0; list-style: none;
+    color: var(--quiet);
+    font: 400 .75rem/1.5 ui-sans-serif, system-ui, sans-serif;
+  }
+  .legend li { display: flex; align-items: center; gap: .4rem; }
+  .legend .swatch { width: 11px; height: 11px; border-radius: 3px; background: var(--na); }
+  .legend .swatch[data-outcome="hit"]  { background: var(--ok); }
+  .legend .swatch[data-outcome="deep"] { background: var(--mid); }
+  .legend .swatch[data-outcome="miss"] { background: var(--miss); }
+
+  .note {
+    margin: 1.4rem 0 0;
+    color: var(--quiet);
+    font-size: .87rem; font-style: italic;
+  }
+
+  /* --- the explanations --------------------------------------------------- */
+
+  .guide {
+    margin: 1.4rem 0 0;
+    padding: 1.1rem 1.3rem;
+    border: 1px solid var(--rule);
+    border-left: 4px solid var(--c1);
+    border-radius: var(--radius);
+    background: var(--raised);
+    box-shadow: var(--shadow);
+  }
+  .guide > summary {
+    font: 500 .8rem/1.4 ui-sans-serif, system-ui, sans-serif;
+    letter-spacing: .04em;
+    color: var(--ink);
+  }
+  .guide h3 {
+    margin: 1.2rem 0 .4rem;
+    font: 500 .68rem/1.4 ui-sans-serif, system-ui, sans-serif;
+    letter-spacing: .13em; text-transform: uppercase; color: var(--faint);
+  }
+  .guide h3:first-of-type { margin-top: 1rem; }
+  .guide p { margin: .4rem 0 0; font-size: .92rem; line-height: 1.65; }
+  .guide dl { margin: .5rem 0 0; }
+  .guide dt {
+    margin-top: .8rem;
+    font: 600 .85rem/1.5 ui-monospace, Menlo, Consolas, monospace;
+    color: color-mix(in oklab, var(--c1) 65%, var(--ink));
+  }
+  .guide dd { margin: .15rem 0 0; font-size: .92rem; line-height: 1.6; }
+  .guide dd .plain { display: block; margin-top: .15rem; color: var(--quiet); font-style: italic; }
+  .guide .big {
+    margin: 1rem 0 0;
+    padding: .8rem 1rem;
+    border-radius: var(--radius);
+    background: color-mix(in oklab, var(--c3) 12%, transparent);
+    font-size: .92rem; line-height: 1.6;
+  }
+
+  footer {
+    margin: 2.6rem 0 0; padding-top: 1.1rem;
+    border-top: 1px solid var(--rule);
+    color: var(--faint);
+    font: 400 .73rem/1.6 ui-monospace, Menlo, Consolas, monospace;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before { animation: none !important; transition: none !important; }
+  }
+  @media (max-width: 34rem) {
+    body { padding-inline: 1rem; font-size: 16px; }
+    header { padding-top: 2.5rem; }
+    form { flex-wrap: wrap; }
+    button { width: 100%; }
+    .score { margin-left: 0; }
+    th, td { padding: .5rem .3rem; font-size: .76rem; }
+  }
+</style>
+</head>
+<body data-view="ask">
+<main>
+
+<header>
+  <h1>Eurohistory</h1>
+  <p class="tagline">Answered only from an indexed corpus of European history, 1914&ndash;2024.</p>
+  <nav>
+    <a id="tab-ask" href="#ask">Ask</a>
+    <a id="tab-eval" href="#eval">Evaluation</a>
+  </nav>
+</header>
+
+<section class="view" id="view-ask">
+  <div class="controls" id="controls">
+    <label class="ctl">model
+      <select id="model-picker" aria-label="Which model answers"></select>
+    </label>
+    <label class="ctl">reranker
+      <select id="reranker-picker" aria-label="Which reranker orders the passages"></select>
+    </label>
+    <label class="ctl">hybrid
+      <input type="checkbox" id="hybrid-toggle">
+      <span class="track"></span>
+    </label>
+    <label class="ctl">k
+      <select id="k-picker" aria-label="How many passages the model is shown"></select>
+    </label>
+  </div>
+
+  <form id="ask">
+    <input id="question" name="question" maxlength="500" required autofocus
+           autocomplete="off" placeholder="Why was the Berlin Wall built?">
+    <button id="submit" type="submit">Ask</button>
+  </form>
+
+  <p class="status" id="status" hidden></p>
+  <div id="answer"></div>
+  <h2 id="sources-heading" hidden>Sources</h2>
+  <ul id="sources"></ul>
+  <footer id="footer" hidden></footer>
+</section>
+
+<section class="view" id="view-eval" hidden>
+  <div class="pickers">
+    <select id="run-picker" aria-label="Which evaluation run"></select>
+    <select id="suite-picker" aria-label="Which question set"></select>
+  </div>
+
+  <p class="status" id="eval-status" hidden></p>
+  <div class="conditions" id="conditions"></div>
+
+  <details class="guide">
+    <summary>How to read these numbers</summary>
+
+    <p>Sixty questions, each with the correct answer written down by hand
+    beforehand. The system sits the exam, the paper is kept, and these are the
+    marks. Two different things are being marked:
+    <b>did it find the right passage</b>, and <b>was the answer any good</b>.
+    A system can be excellent at one and hopeless at the other.</p>
+
+    <div class="big"><b>The one number that matters most:</b> recall@20 is far
+    higher than recall@5. The right passage is nearly always retrieved — it is
+    just not always in the first five. That means the weakness is
+    <b>ordering</b>, not searching. The book is on the trolley; it is not in the
+    first five you pick up.</div>
+
+    <h3>Why the table is split by kind</h3>
+    <p>An overall average hides opposite movements. Easy questions carry it up
+    and reworded ones drag it down, so a change that helps one and hurts the
+    other looks like no change at all. <code>arts</code> is how many different
+    articles the five passages came from — five slots holding one article three
+    times is five slots doing the work of three.</p>
+
+    <h3>Why some cells say n/a</h3>
+    <p>The unanswerable questions have no correct answer on file, because
+    nothing should come back. Scoring them 0% would read as failure when
+    refusing is exactly right, so they are marked n/a and greyed in the strip
+    below.</p>
+
+    <h3>Golden, extended, all</h3>
+    <p>The first thirty questions have never been edited since Phase 7, so
+    every run since is comparable to every other. The second thirty were added
+    in Phase 15 to cover the parts of the corpus the first thirty never asked
+    about. They are scored separately because mixing them would break the
+    comparison the first thirty exist to provide.</p>
+
+    <h3>When a change counts</h3>
+    <p>The same run repeated three times does not give the same answer numbers.
+    Measured in Phase 16: a generation result has to move by more than
+    <b>4 unsupported claims</b>, <b>0.7 faithfulness points</b> or
+    <b>2 fully-faithful answers</b> before it means anything. Retrieval and
+    refusal numbers are exact — any change in those is real.
+    <span class="plain">Weigh yourself three times on the same scales and you
+    get three numbers. Anything smaller than that spread is the scales, not
+    you.</span></p>
+  </details>
+
+  <div class="cards" id="cards"></div>
+
+  <h2 id="table-heading" hidden>By question kind</h2>
+  <div class="scrolls"><table id="kinds" hidden></table></div>
+
+  <h2 id="strip-heading" hidden>Every question</h2>
+  <ul class="strip" id="strip"></ul>
+  <ul class="legend" id="legend" hidden></ul>
+  <p class="note" id="eval-note" hidden></p>
+</section>
+
+</main>
+<script>
+// --- tiny DOM helpers -------------------------------------------------------
+// Everything is built as elements and text nodes. The corpus is other people's
+// text; text that becomes markup becomes something the browser will run.
+
+function el(tag, className, text) {
+  const node = document.createElement(tag);
+  if (className) node.className = className;
+  if (text !== undefined) node.textContent = text;
+  return node;
+}
+
+async function getJSON(url) {
+  const response = await fetch(url);
+  if (!response.ok) {
+    const detail = await response.json().catch(() => ({}));
+    const error = new Error(detail.detail || "Request failed.");
+    error.status = response.status;
+    throw error;
+  }
+  return response.json();
+}
+
+// --- the ask view -----------------------------------------------------------
+
+const form = document.getElementById("ask");
+const box = document.getElementById("question");
+const submit = document.getElementById("submit");
+const statusLine = document.getElementById("status");
+const answerBox = document.getElementById("answer");
+const sourcesHeading = document.getElementById("sources-heading");
+const sourceList = document.getElementById("sources");
+const footer = document.getElementById("footer");
+
+const modelPicker = document.getElementById("model-picker");
+const rerankerPicker = document.getElementById("reranker-picker");
+const hybridToggle = document.getElementById("hybrid-toggle");
+const kPicker = document.getElementById("k-picker");
+
+// How many passages the model is shown. A short list rather than a free number:
+// the ceiling is 50, and a page offering 50 invites someone to pay for fifty
+// chunks of prompt to answer a one-line question. Phase 6 measured what k
+// costs on money, latency and quality, and the third is not linear.
+const K_CHOICES = [3, 5, 8, 10, 15];
+
+const MARKER = /\[(\d+)\]/g;
+const HUES = 6;
+
+// Phase 8 measured this one ranking "Treaty of Rome" above East German
+// emigration for a Berlin Wall question, and gave two unrelated documents an
+// identical 0.000. It stays on the menu because it is the value in config.py,
+// so hiding it would make the default unreproducible -- but nobody should pick
+// it without being told.
+const BROKEN_RERANKER = "BAAI/bge-reranker-base";
+
+// The controls describe what /ask will be asked for. Read from the server so
+// the page cannot offer a model the server would refuse.
+async function loadOptions() {
+  const options = await getJSON("/options");
+
+  for (const model of options.models) {
+    const choice = el("option", null, model);
+    choice.value = model;
+    modelPicker.append(choice);
+  }
+  modelPicker.value = options.defaults.model;
+
+  const off = el("option", null, "off");
+  off.value = "";
+  rerankerPicker.append(off);
+  for (const name of options.rerankers) {
+    const short = name.split("/").pop();
+    const broken = name === BROKEN_RERANKER;
+    const choice = el("option", null, broken ? short + "  ⚠ measured broken" : short);
+    choice.value = name;
+    choice.title = broken
+      ? "Phase 8 measured this model ranking unrelated passages above correct ones. Kept because it is the default in config.py."
+      : name;
+    rerankerPicker.append(choice);
+  }
+  rerankerPicker.value = options.defaults.reranker || "";
+
+  hybridToggle.checked = options.defaults.hybrid;
+
+  for (const k of K_CHOICES.filter((value) => value <= options.max_k)) {
+    const choice = el("option", null, String(k));
+    choice.value = String(k);
+    kPicker.append(choice);
+  }
+  kPicker.value = String(options.defaults.k);
+}
+
+// Which of the six hues a citation wears. k is 5, so in practice n never wraps;
+// the modulo is there so a larger k cannot produce a colourless card.
+function hue(n) {
+  return String(((n - 1) % HUES) + 1);
+}
+
+function setStatus(node, text, kind) {
+  node.textContent = text;
+  node.hidden = !text;
+  if (kind) node.dataset.kind = kind;
+  else delete node.dataset.kind;
+}
+
+function clearAnswer() {
+  answerBox.replaceChildren();
+  sourceList.replaceChildren();
+  sourcesHeading.hidden = true;
+  footer.hidden = true;
+}
+
+function renderAnswer(text, cited) {
+  let at = 0;
+  for (const match of text.matchAll(MARKER)) {
+    answerBox.append(text.slice(at, match.index));
+    const n = Number(match[1]);
+    if (cited.has(n)) {
+      const link = el("a", null, match[1]);
+      link.href = "#source-" + n;
+      link.dataset.hue = hue(n);
+      link.title = "Jump to source " + n;
+      answerBox.append(link);
+    } else {
+      // A marker with no source behind it stays visible as plain text rather
+      // than becoming a link to nowhere.
+      answerBox.append(match[0]);
+    }
+    at = match.index + match[0].length;
+  }
+  answerBox.append(text.slice(at));
+}
+
+function renderSource(source) {
+  const item = el("li");
+  item.id = "source-" + source.n;
+  item.dataset.hue = hue(source.n);
+
+  const line = el("p", "cite");
+  const marker = el("span", "n", String(source.n));
+
+  const link = el("a", null, source.source);
+  link.href = source.url;
+  link.target = "_blank";
+  link.rel = "noopener noreferrer";
+  link.title = "Wikipedia, at the revision this corpus indexed";
+
+  line.append(marker, link, el("span", "score", source.score.toFixed(3)));
+
+  const fold = el("details");
+  fold.append(
+    el("summary", null, "the passage the model was given"),
+    el("blockquote", null, source.text),
+  );
+
+  item.append(line, fold);
+  sourceList.append(item);
+}
+
+form.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const question = box.value.trim();
+  if (!question) return;
+
+  clearAnswer();
+  submit.disabled = true;
+  const started = performance.now();
+  setStatus(statusLine, "Searching the corpus and writing an answer… a few seconds.");
+
+  try {
+    const response = await fetch("/ask", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        question: question,
+        model: modelPicker.value,
+        // "" means switch it off; null would mean "leave the server's default
+        // alone", and those are different requests.
+        reranker: rerankerPicker.value,
+        hybrid: hybridToggle.checked,
+        k: Number(kPicker.value),
+      }),
+    });
+    if (!response.ok) {
+      const detail = await response.json().catch(() => ({}));
+      const error = new Error(detail.detail || "Request failed.");
+      error.status = response.status;
+      throw error;
+    }
+    const data = await response.json();
+    const seconds = ((performance.now() - started) / 1000).toFixed(1);
+
+    if (data.sources.length === 0) {
+      // Not an error. The corpus was asked and had nothing, which is the
+      // behaviour Phase 6 built on purpose.
+      setStatus(statusLine, "No source in the corpus covers this. The answer below is a refusal, not a failure.", "refusal");
+    } else {
+      setStatus(statusLine, "");
+    }
+
+    renderAnswer(data.answer, new Set(data.sources.map((s) => s.n)));
+    // /ask returns sources in the order the answer first mentions them, so a
+    // list can read 5, 2, 3, 4. Numbered things are looked up by their number.
+    for (const source of [...data.sources].sort((a, b) => a.n - b.n)) {
+      renderSource(source);
+    }
+    sourcesHeading.hidden = data.sources.length === 0;
+
+    // What produced this answer, stated on the answer. Phase 8 shipped a
+    // measurement whose reranker was off and nobody noticed.
+    const used = data.configuration;
+    footer.textContent = [
+      used.model,
+      "reranker " + (used.reranker ? used.reranker.split("/").pop() : "off"),
+      "hybrid " + (used.hybrid ? "on" : "off"),
+      "k " + used.k,
+      seconds + " s",
+      data.license,
+    ].join("  ·  ");
+    footer.hidden = false;
+  } catch (error) {
+    setStatus(
+      statusLine,
+      error.status === 503
+        ? "The system is unreachable — the search index or the model is down. Nothing was asked of the corpus. Try again shortly."
+        : "Something went wrong talking to the server: " + error.message,
+      "error",
+    );
+  } finally {
+    submit.disabled = false;
+  }
+});
+
+// --- the evaluation view ----------------------------------------------------
+
+const runPicker = document.getElementById("run-picker");
+const suitePicker = document.getElementById("suite-picker");
+const evalStatus = document.getElementById("eval-status");
+const conditions = document.getElementById("conditions");
+const cards = document.getElementById("cards");
+const tableHeading = document.getElementById("table-heading");
+const kindsTable = document.getElementById("kinds");
+const stripHeading = document.getElementById("strip-heading");
+const strip = document.getElementById("strip");
+const legend = document.getElementById("legend");
+const evalNote = document.getElementById("eval-note");
+
+let loadedRun = null;
+let runsListed = false;
+
+const pct = (v) => (v === null ? null : (v * 100).toFixed(1) + "%");
+
+// The six metric cards, in the order they answer questions about a run:
+// was it found at all, was it found early, and what did it cost.
+// Each card explains itself on hover, twice: the exact definition, then the
+// same thing in ordinary words. Both live here rather than in the panel below,
+// which no longer repeats them.
+const CARDS = [
+  { label: "recall@5", hue: "1",
+    exact: "Of the questions that have a correct answer on file, how often at least one correct passage appeared in the five the model was shown.",
+    plain: "Did the right page make it into the handful it actually read?",
+    of: (s) => pct(s.recall_at_5), fill: (s) => s.recall_at_5 },
+  { label: "recall@20", hue: "2",
+    exact: "The same, but looking twenty deep instead of five.",
+    plain: "If we let it look further down the pile, is the right page there at all?",
+    of: (s) => pct(s.recall_at_20), fill: (s) => s.recall_at_20 },
+  { label: "coverage@5", hue: "3",
+    exact: "Of every passage that should have come back, the fraction that did. A question needing three sections and getting one scores 33%, even though recall counts it as a hit.",
+    plain: "It found a right answer. Did it find all of them?",
+    of: (s) => pct(s.coverage_at_5), fill: (s) => s.coverage_at_5 },
+  { label: "MRR", hue: "5",
+    exact: "Mean reciprocal rank. Position of the first correct passage as a score: rank 1 is 1.00, rank 2 is 0.50, rank 4 is 0.25.",
+    plain: "Not just whether the right page was there, but how near the top it sat.",
+    of: (s) => (s.mrr === null ? null : s.mrr.toFixed(2)), fill: (s) => s.mrr },
+  { label: "refusals", hue: "4",
+    exact: "How often the system declined to answer rather than inventing something. Some questions are unanswerable on purpose.",
+    plain: "Saying “I don’t know” when it genuinely does not know is the behaviour being tested, not a failure.",
+    of: (s) => pct(s.refusal_rate), fill: (s) => s.refusal_rate },
+  { label: "p50", hue: "6",
+    exact: "The middle question’s total time — half were faster, half slower. Reported, never used to pass or fail: three identical runs moved it by 893 ms on their own.",
+    plain: "A typical wait. It wobbles too much to prove anything.",
+    of: (s) => Math.round(s.p50_total_ms) + " ms",
+    fill: (s) => Math.min(1, s.p50_total_ms / 10000) },
+];
+
+// Label, how to read the cell, whether the cell carries a bar, and the
+// description shown on hovering the column heading.
+const COLUMNS = [
+  ["kind", (s) => s.kind, false, "what sort of question: literal, spanning two articles, reworded, or unanswerable on purpose"],
+  ["n", (s) => String(s.questions), false, "how many questions of this sort"],
+  ["r@5", (s) => pct(s.recall_at_5), true, "recall@5 — how often the right passage was among the five it read"],
+  ["r@20", (s) => pct(s.recall_at_20), false, "recall@20 — how often it was there at all, looking twenty deep"],
+  ["cov@5", (s) => pct(s.coverage_at_5), false, "coverage@5 — of every passage that should have come back, how many did"],
+  ["MRR", (s) => (s.mrr === null ? null : s.mrr.toFixed(2)), false, "how near the top the first right passage sat (1.00 = first place)"],
+  ["arts", (s) => s.mean_distinct_articles_at_5.toFixed(1), false, "how many different articles the five passages came from — five slots holding one article three times do the work of three"],
+  ["refuse", (s) => pct(s.refusal_rate), false, "how often it declined instead of inventing an answer"],
+  ["p50 ms", (s) => String(Math.round(s.p50_total_ms)), false, "the middle question's wait; too wobbly to prove anything"],
+];
+
+const OUTCOMES = [
+  ["hit", "found in the top 5"],
+  ["deep", "found, but ranked below 5"],
+  ["miss", "never found"],
+  ["none", "no answer key — the refusal cases"],
+];
+
+// A model or reranker is published as a full path. The last segment is the
+// name a person recognises; the whole thing stays available on hover.
+function shortName(identifier) {
+  return identifier.split("/").pop();
+}
+
+function renderConditions(meta, questions) {
+  conditions.replaceChildren();
+  const facts = [
+    ["run", meta.run_id, null],
+    ["questions", String(questions), null],
+    ["chunks", meta.points.toLocaleString("en"), null],
+    ["k", String(meta.k), null],
+    ["answering model", shortName(meta.generation_model), meta.generation_model],
+    ["reranker", meta.reranker ? shortName(meta.reranker) : "off", meta.reranker],
+    ["hybrid search", meta.hybrid || "off", meta.hybrid],
+  ];
+  for (const [name, value, full] of facts) {
+    const fact = el("div", "fact");
+    const shown = el("span", "v", value);
+    // The last two are switches, and a run with one flipped is not comparable
+    // to a run without it. They are shown as lit or unlit, not as text to read.
+    if (name === "reranker" || name === "hybrid search") {
+      shown.classList.add("state");
+      shown.dataset.on = full ? "yes" : "no";
+    }
+    if (full && full !== value) shown.title = full;
+    fact.append(el("span", "k", name), shown);
+    conditions.append(fact);
+  }
+}
+
+function renderCards(row) {
+  cards.replaceChildren();
+  for (const spec of CARDS) {
+    const value = spec.of(row);
+    const card = el("div", "card");
+    card.dataset.hue = spec.hue;
+    // Focusable so the description is reachable without a mouse: a hover-only
+    // explanation does not exist for anyone using a keyboard or a phone.
+    card.tabIndex = 0;
+    card.append(el("span", "label", spec.label));
+
+    const shown = el("span", "value", value === null ? "n/a" : value);
+    if (value === null) shown.classList.add("na");
+    card.append(shown);
+
+    const hint = el("div", "hint");
+    hint.append(el("span", "exact", spec.exact), el("span", "plain", spec.plain));
+    card.append(hint);
+
+    const meter = el("div", "meter");
+    const fill = el("i");
+    fill.style.width = Math.round(100 * Math.max(0, Math.min(1, spec.fill(row) ?? 0))) + "%";
+    meter.append(fill);
+    card.append(meter);
+    cards.append(card);
+  }
+}
+
+function renderTable(rows) {
+  kindsTable.replaceChildren();
+  const head = el("thead");
+  const headRow = el("tr");
+  for (const [name, , , hint] of COLUMNS) {
+    const cell = el("th", null, name);
+    cell.title = hint;
+    headRow.append(cell);
+  }
+  head.append(headRow);
+
+  const body = el("tbody");
+  for (const row of rows) {
+    const tr = el("tr");
+    for (const [, read, withBar] of COLUMNS) {
+      const value = read(row);
+      const td = el("td");
+      if (value === null) {
+        td.append(el("span", "na", "n/a"));
+      } else {
+        if (withBar) {
+          const bar = el("span", "bar");
+          const fill = el("i");
+          fill.style.width = Math.round(100 * (row.recall_at_5 ?? 0)) + "%";
+          bar.append(fill);
+          td.append(bar);
+        }
+        td.append(value);
+      }
+      tr.append(td);
+    }
+    body.append(tr);
+  }
+  kindsTable.append(head, body);
+}
+
+function outcomeOf(question) {
+  if (!question.scored) return "none";
+  if (question.hit_at_5) return "hit";
+  return question.first_hit_rank === null ? "miss" : "deep";
+}
+
+function renderStrip(questions) {
+  strip.replaceChildren();
+  for (const question of questions) {
+    const cell = el("li");
+    cell.dataset.outcome = outcomeOf(question);
+    cell.title =
+      question.question_id +
+      " · " + question.kind +
+      (question.scored
+        ? " · first hit at rank " + (question.first_hit_rank ?? "never")
+        : " · no answer key") +
+      " · " + Math.round(question.total_ms) + " ms";
+    strip.append(cell);
+  }
+
+  legend.replaceChildren();
+  for (const [outcome, text] of OUTCOMES) {
+    const item = el("li");
+    const swatch = el("span", "swatch");
+    swatch.dataset.outcome = outcome;
+    item.append(swatch, text);
+    legend.append(item);
+  }
+  legend.hidden = false;
+}
+
+function showSuite() {
+  if (!loadedRun) return;
+  const suite = suitePicker.value;
+  const rows = loadedRun.suites[suite] || [];
+  const overall = rows[rows.length - 1];
+  if (!overall) return;
+
+  renderCards(overall);
+  renderTable(rows);
+  renderStrip(
+    loadedRun.questions.filter((q) => suite === "all" || q.suite === suite),
+  );
+  tableHeading.hidden = false;
+  kindsTable.hidden = false;
+  stripHeading.hidden = false;
+
+  evalNote.textContent =
+    "Read from eval/runs/ on disk. Nothing on this page can start an evaluation — " +
+    "that costs money and belongs at a terminal.";
+  evalNote.hidden = false;
+}
+
+async function loadRun(runId) {
+  setStatus(evalStatus, "Reading " + runId + "…");
+  try {
+    loadedRun = await getJSON("/runs/" + encodeURIComponent(runId));
+    setStatus(evalStatus, "");
+
+    suitePicker.replaceChildren();
+    for (const suite of Object.keys(loadedRun.suites).sort()) {
+      const option = el("option", null, suite === "all" ? "all questions" : suite + " only");
+      option.value = suite;
+      suitePicker.append(option);
+    }
+    suitePicker.value = loadedRun.suites.golden ? "golden" : "all";
+
+    renderConditions(loadedRun.meta, loadedRun.questions.length);
+    showSuite();
+  } catch (error) {
+    setStatus(evalStatus, "Could not read that run: " + error.message, "error");
+  }
+}
+
+async function listRuns() {
+  if (runsListed) return;
+  runsListed = true;
+  setStatus(evalStatus, "Looking for saved runs…");
+  try {
+    const runs = await getJSON("/runs");
+    if (runs.length === 0) {
+      setStatus(evalStatus, "No runs on disk yet. `uv run eurohistory evaluate` writes one.", "refusal");
+      return;
+    }
+    runPicker.replaceChildren();
+    for (const run of runs) {
+      const option = el(
+        "option",
+        null,
+        run.run_id + "  ·  " + run.questions + " questions  ·  " + run.points.toLocaleString("en") + " chunks",
+      );
+      option.value = run.run_id;
+      runPicker.append(option);
+    }
+    setStatus(evalStatus, "");
+    await loadRun(runs[0].run_id);
+  } catch (error) {
+    runsListed = false;
+    setStatus(evalStatus, "Could not list runs: " + error.message, "error");
+  }
+}
+
+runPicker.addEventListener("change", () => loadRun(runPicker.value));
+suitePicker.addEventListener("change", showSuite);
+
+// --- routing ----------------------------------------------------------------
+// The two views are real links rather than buttons, so a view can be linked to
+// and the back button works. #source-N stays on the ask view.
+
+function route() {
+  const wantsEval = location.hash.startsWith("#eval");
+  document.body.dataset.view = wantsEval ? "eval" : "ask";
+  document.getElementById("view-ask").hidden = wantsEval;
+  document.getElementById("view-eval").hidden = !wantsEval;
+  document.getElementById("tab-ask").setAttribute("aria-current", wantsEval ? "false" : "page");
+  document.getElementById("tab-eval").setAttribute("aria-current", wantsEval ? "page" : "false");
+  if (wantsEval) listRuns();
+}
+
+window.addEventListener("hashchange", route);
+route();
+
+loadOptions().catch((error) => {
+  // The controls are useless if the server never said what it accepts, and a
+  // silently-empty dropdown is worse than a stated failure.
+  setStatus(statusLine, "Could not read this server's settings: " + error.message, "error");
+});
+</script>
+</body>
+</html>
