@@ -454,3 +454,180 @@ kind = "unanswerable"
 suite = "extended"
 text = "How does a plant turn sunlight into sugar?"
 note = "Out of domain on purpose, a second floor point beside transformer-attention. Verified: zero sections."
+
+# ================================================================ temporal (18)
+# Phase 22's subset. Every question names a period -- a year, a range, a decade
+# or a phrase that resolves to one -- and every answer key was chosen by reading
+# the section, not by matching a heading.
+#
+# What makes these different from the sixty above: the corpus holds the same
+# topic in several periods, so the words alone cannot separate them. "Cold War"
+# names five sections of one article, covering 1947-1953, 1953-1962, 1962-1979,
+# 1979-1985 and 1985-1991. A search that does not know what a year is has no
+# reason to prefer the right one.
+#
+# Deliberately mixed, so this set cannot be passed by reading headings alone.
+# Nine of the ten easy questions have their answer in a section whose heading
+# names the period; the tenth (t-berlin-wall-fall-1989) does not, and neither do
+# most of the multi answers -- "Western response: The Berlin Airlift",
+# "Background", "Causes", "History", "Fall", "Effects", "New member states".
+# A technique that only reads headings scores well on the first block and badly
+# on the second, and that gap is worth seeing.
+#
+# suite = "temporal" so this block is reported on its own. The sixty above are
+# untouched, byte for byte, so every comparison back to Phase 7 still holds.
+
+# ---------------------------------------------------------------- easy (10)
+# One article. The period is what separates the right section from its siblings.
+
+[[question]]
+id = "t-cold-war-1947-1953"
+kind = "easy"
+suite = "temporal"
+text = "What was American policy toward the Soviet Union in the years between 1947 and 1953?"
+expected = ["325329:3"]
+note = "Cold War has five period sections. This one carries the Long Telegram, containment, the Truman Doctrine and the Korean War. The other four cover 1953-1962, 1962-1979, 1979-1985 and 1985-1991 and are the competition."
+
+[[question]]
+id = "t-cold-war-1979-1985"
+kind = "easy"
+suite = "temporal"
+text = "Why did tensions between the superpowers rise again between 1979 and 1985?"
+expected = ["325329:6"]
+note = "Cold War, Renewal of tensions (1979-1985). Opens on the Saur Revolution, the Soviet invasion of Afghanistan and the end of detente. Same article and same vocabulary as the question above, a different decade."
+
+[[question]]
+id = "t-churchill-1930s"
+kind = "easy"
+suite = "temporal"
+text = "What was Churchill doing during the 1930s, in the years before he returned to government?"
+expected = ["33265:8"]
+note = "Winston Churchill has twelve period sections. Wilderness Years: 1929-1939 is the answer; Prime Minister: 1940-1945 is 30,944 characters against its 6,255 and is the section a year-blind search reaches for."
+
+[[question]]
+id = "t-western-front-1916"
+kind = "easy"
+suite = "temporal"
+text = "What were the main offensives on the Western Front in 1916?"
+expected = ["51499:3"]
+note = "Western Front (World War I) is split into bare year headings 1914, 1915, 1916, 1917, 1918. The 1916 section opens on Falkenhayn, bleeding France white, and the choice of Verdun. Five near-identical siblings and only the number tells them apart."
+
+[[question]]
+id = "t-atlantic-late-1940"
+kind = "easy"
+suite = "temporal"
+text = "How did the U-boat campaign against Allied shipping go between the middle of 1940 and early 1941?"
+expected = ["57765:5"]
+note = "Battle of the Atlantic, June 1940 - February 1941. Nine period sections in that article, all about U-boats and convoys. Worded without the phrase Happy Time on purpose, which would make it a keyword question rather than a temporal one."
+
+[[question]]
+id = "t-poland-1970s"
+kind = "easy"
+suite = "temporal"
+text = "How did Poland's economy develop during the 1970s?"
+expected = ["1665978:4"]
+note = "History of Poland (1945-1989), Gierek decade (1970-1980) -- large-scale Western borrowing. Gierek is left out of the question on purpose: naming him would make the heading match on a word."
+
+[[question]]
+id = "t-ec-1973-1993"
+kind = "easy"
+suite = "temporal"
+text = "How did the European Community change between 1973 and 1993?"
+expected = ["39767:5"]
+note = "History of the European Union, 1973-1993: Enlargement to Delors -- Denmark, Ireland and the UK joining, the first direct parliamentary elections. Eight period sections in that article, covering 1948 to 2020."
+
+[[question]]
+id = "t-eisenhower-1945-1953"
+kind = "easy"
+suite = "temporal"
+text = "What did Eisenhower do between the end of the Second World War and his election as president?"
+expected = ["8182:7"]
+note = "Dwight D. Eisenhower, After World War II (1945-1953) -- military governor of the American zone, the concentration camps, the Nuremberg evidence. The period is given as two events rather than as years, which is the relative-expression case."
+
+[[question]]
+id = "t-yugoslavia-1943"
+kind = "easy"
+suite = "temporal"
+text = "What offensives were launched against the Yugoslav Partisans in 1943?"
+expected = ["7148715:4"]
+note = "World War II in Yugoslavia, 1943 -- Operations Weiss and Schwarz, Neretva and Sutjeska. Sibling sections are bare years 1941, 1942, 1944 and 1945 about the same war in the same country."
+
+[[question]]
+id = "t-berlin-wall-fall-1989"
+kind = "easy"
+suite = "temporal"
+text = "How did the Berlin Wall come to be opened in the autumn of 1989?"
+expected = ["3722:8"]
+note = "Berlin Wall, Fall -- and the heading carries no year at all, which is why it is here. The competing section is Start of the construction (1961), whose heading does. A method that reads only headings gets this one exactly wrong."
+
+# ---------------------------------------------------------------- multi (6)
+# The period spans several articles. Most of these answers sit in sections whose
+# headings say nothing about time.
+
+[[question]]
+id = "t-eu-joined-2004-2007"
+kind = "multi"
+suite = "temporal"
+text = "Which countries joined the European Union between 2004 and 2007, and how did they get in?"
+expected = ["21133193:4", "24299732:1", "324164:4"]
+note = "Two dated articles and one undated one. 2004 enlargement -- New member states and 2007 enlargement -- Negotiations carry the year only in the article title; Enlargement of the European Union -- Historical enlargements carries it in neither."
+
+[[question]]
+id = "t-eastern-europe-1989"
+kind = "multi"
+suite = "temporal"
+text = "What brought communist rule across eastern Europe to an end in 1989?"
+expected = ["4584893:2", "3722:8", "1665978:5"]
+note = "Revolutions of 1989 -- History (the strikes from April 1988 onward), Berlin Wall -- Fall, and History of Poland -- Final decade (1980-1989). Three articles, one year, and only one of the three headings names it."
+
+[[question]]
+id = "t-berlin-1961"
+kind = "multi"
+suite = "temporal"
+text = "What brought Berlin to a crisis in 1961?"
+expected = ["18360765:1", "3722:3"]
+note = "Berlin Crisis of 1961 -- History, heading undated and article title dated, and Berlin Wall -- Start of the construction (1961), dated in the heading. The competing material is the 1948-49 blockade and the 1989 fall, both about Berlin, both about a crisis."
+
+[[question]]
+id = "t-berlin-1948-1949"
+kind = "multi"
+suite = "temporal"
+text = "How was West Berlin kept supplied when the city was cut off in 1948 and 1949?"
+expected = ["24008586:3", "24008586:4", "24008586:5"]
+note = "Berlin Blockade: the blockade section is dated in its heading, the airlift section and the end-of-blockade section are the substance and the first of those carries no year. Competes directly with t-berlin-1961 and t-eastern-europe-1989 for the same words."
+
+[[question]]
+id = "t-1970s-economy"
+kind = "multi"
+suite = "temporal"
+text = "What hit western European economies during the 1970s?"
+expected = ["244180:4", "244180:5", "24292743:2"]
+note = "1973 oil crisis -- Effects and Consequences, and 1973-1975 recession -- United Kingdom. All three headings are undated; two of the three article titles carry the years. The question names a decade and no event."
+
+[[question]]
+id = "t-weimar-early-1920s"
+kind = "multi"
+suite = "temporal"
+text = "Why did German money lose its value in the years just after the First World War?"
+expected = ["17285549:1", "17285549:4", "33685:3"]
+note = "Hyperinflation in the Weimar Republic -- Background and Causes, and Weimar Republic -- History. Not one of the three headings or article titles carries a year, and the period is given only as just after the First World War. The hardest case here for any date filter to help with, and the one most likely to be hurt by a narrow one."
+
+# ---------------------------------------------------------------- unanswerable (2)
+# Right topic, right kind of question, a period the corpus does not cover. Both
+# verified by reading every match in Silver rather than a window around it --
+# the seveso-1976 mistake recorded in the D-087 verdict.
+
+[[question]]
+id = "t-nato-vilnius-2023"
+kind = "unanswerable"
+suite = "temporal"
+text = "What did NATO agree at its 2023 summit in Vilnius?"
+note = "Verified: three sections mention the 2023 summit and each says only that it was held in Vilnius -- Lithuania (Government and politics), Vilnius (lead), Vilnius (History). No agenda, no communique, no decision. NATO itself is covered at length, and so are the 2006 Riga and 2008 Bucharest summits, which is what makes this a period gap rather than a topic gap."
+
+[[question]]
+id = "t-pandemic-2020"
+kind = "multi"
+suite = "temporal"
+text = "How did European governments respond to the pandemic in 2020?"
+expected = ["72671:4", "2991932:4", "14532:2"]
+note = "CORRECTED after the D-096 comparison closed. This was written as unanswerable and it is not. The check that passed it read a window around a regex match instead of the section -- the identical mistake recorded in the D-087 verdict for seveso-1976, committed inside the phase whose own file cites it. Read properly, Angela Merkel (Chancellorship) carries a COVID-19 subsection with Germany's crisis team and containment policy, Ursula von der Leyen (President of the European Commission) carries the Schengen border-control decision and Next Generation EU across twelve mentions, and Italy (History) carries the extraordinary economic measures. The system answered it from five sources, grounded and cited, in both Phase 22 runs. Those two runs keep the old empty key in their own records and remain comparable to each other; no run before this edit is comparable to any run after it."

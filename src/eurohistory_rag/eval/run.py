@@ -216,6 +216,7 @@ def build_meta(
     reranker: str = "",
     hybrid: str = "",
     verifier: str = "",
+    temporal: str = "",
     note: str = "",
 ) -> RunMeta:
     """Capture the conditions this run happened under."""
@@ -233,5 +234,6 @@ def build_meta(
         reranker=reranker,
         hybrid=hybrid,
         verifier=verifier,
+        temporal=temporal,
         note=note,
     )

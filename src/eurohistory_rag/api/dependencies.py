@@ -52,6 +52,7 @@ def get_search_service() -> SearchService:
         get_vector_store(),
         reranker=get_reranker(),
         hybrid=settings.hybrid_enabled,
+        temporal=settings.temporal_enabled,
     )
 
 
@@ -147,6 +148,10 @@ def configured_search_service(*, hybrid: bool, reranker: str | None) -> SearchSe
         get_vector_store(),
         reranker=get_named_reranker(reranker) if reranker else None,
         hybrid=hybrid,
+        # Not switchable per request, unlike the three above. Phase 19 made the
+        # knobs the eval sweeps switchable; this one is a setting until the
+        # D-096 verdict says what its default should be.
+        temporal=settings.temporal_enabled,
     )
 
 

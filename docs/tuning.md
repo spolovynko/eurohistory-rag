@@ -51,6 +51,10 @@ answers — or, for the last two, what the measurement of it says.
 | `reranker_enabled` | `false` default, `true` in `.env` | `core/config.py` | D-069 | Whether reranking runs at all. The one knob here that lives in `.env`, because it is the on/off switch a before/after run needs to flip |
 | `reranker_model` | `cross-encoder/ms-marco-MiniLM-L6-v2` | `core/config.py` | D-070, D-071 | Which cross-encoder scores the pool. **Probe any replacement by hand before trusting a run** — see D-071 |
 | `RRF_K` | 60 | `retrieval/search.py` | D-076 | The "do not over-trust first place" dial in fusion. A chunk earns `1/(RRF_K + rank)` in each list. At 0, rank 1 is worth double rank 2; at 60 they are nearly equal, so agreement across both searches outweighs topping one |
+| `temporal_enabled` | `false` default | `core/config.py` | D-096 | Whether the year-overlap arm runs and gets fused in. **Needs payloads carrying `year_start` / `year_end`** — run `eurohistory index --payload-only` after a Gold rebuild, which is free. Off after the D-096 verdict: measured no recall@5 gain on the suite it was built for and cost recall@20 elsewhere |
+| `ERAS` | 10 named periods | `retrieval/temporal.py` | D-096 | Which years "the interwar years", "the Cold War", "the early Cold War" and the rest mean. Every row is a judgement somebody could argue with; the Cold War's start date has a literature of its own. Only consulted when no year or decade is stated |
+| `_DECADE_PARTS` | early 0-3, mid 4-6, late 6-9 | `retrieval/temporal.py` | D-096 | Which slice of a decade "early", "mid" and "late" mean. Early and late are four years and overlap the middle, which is the permissive direction |
+| `_DIRECTIONAL` | 12 words | `retrieval/temporal.py` | D-096 | Words that make a date a reference point rather than a period — "after 1918" is not the year 1918. A question containing one resolves to no period at all unless it states an explicit range or decade. 43 of 78 evaluation questions take this path |
 | `hybrid_enabled` | `false` default | `core/config.py` | D-074 | Whether the BM25 keyword search runs and gets fused in. Lives in `.env` for the same reason as `reranker_enabled`: it is the switch a before/after run flips. **Needs an index built with sparse vectors** — turning it on against a pre-Phase-9 collection finds nothing |
 | `SYSTEM_PROMPT` | `system_prompt.md` | `generation/system_prompt.md` | D-054 to D-057 | The standing rules the answering model works under. Not a number, but the single biggest lever on answer quality in this phase |
 | `TEMPERATURE` | 0.0 | `generation/client.py` | D-052 | How much the model varies run to run. 0 so the same question gives the same answer, which is what makes Phase 7's before/after comparable |
@@ -110,6 +114,8 @@ with the corpus, not as a fixed cost.
 | `CHUNK_SIZE` / `CHUNK_OVERLAP` / `MIN_TAIL_CHARS` | `chunk` → `index` | seconds + an embedding pass |
 | `DEFAULT_K` / `MAX_PER_DOCUMENT` / `OVERFETCH` / `RERANK_TOP_N` / `RRF_K` | nothing | free, takes effect next query |
 | `hybrid_enabled` | `index` **if the collection predates Phase 9** | free to flip; a rebuild is a few cents |
+| `temporal_enabled` | `chunk` then `index --payload-only` **if the payloads predate Phase 22** | free to flip; the payload refresh is free too — no vector is re-embedded |
+| `ERAS` / `_DECADE_PARTS` / `_DIRECTIONAL` | nothing | free, takes effect next query |
 | `reranker_enabled` / `reranker_model` | nothing | free; a new model downloads once, then ~1 s per query |
 | `judge_model` | nothing; re-run `judge` on the affected runs | a few cents per run, and a `judge-probe` first |
 | `SAMPLE_SEED` / `DEFAULT_COUNT` | `synthesize`, then `evaluate --questions` | a few cents to write, a few more to run |

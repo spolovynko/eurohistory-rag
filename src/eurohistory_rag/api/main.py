@@ -658,6 +658,10 @@ def create_app() -> FastAPI:
             model=body.model or settings.generation_model,
             reranker=_chosen_reranker(body.reranker, settings) or "",
             hybrid=(settings.hybrid_enabled if body.hybrid is None else body.hybrid),
+            # Not switchable from the page, unlike the four above. This one is a
+            # setting until the D-096 verdict argues a default for it, and mypy
+            # found this call site the moment the field lost its default.
+            temporal=settings.temporal_enabled,
         )
 
         run_id = new_run_id()

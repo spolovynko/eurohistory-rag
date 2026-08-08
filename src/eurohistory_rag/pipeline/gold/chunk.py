@@ -15,6 +15,7 @@ break leaves a piece too large to embed usefully.
 import re
 from collections.abc import Sequence
 
+from eurohistory_rag.pipeline.gold.dates import chunk_span
 from eurohistory_rag.pipeline.gold.store import Chunk
 from eurohistory_rag.pipeline.silver.store import SilverRow
 
@@ -183,6 +184,13 @@ def chunk_document(doc: SilverRow, size: int, overlap: int) -> list[Chunk]:
 
     prefix = f"{doc.title} — {doc.heading}" if doc.heading else doc.title
 
+    # One span per chunk rather than one per document: a 76,000-character
+    # section becomes seventy chunks, and when the period has to be read from
+    # the body they are about different years. When the heading or the title
+    # declares one, every chunk of the section inherits it, which is correct --
+    # that is the scope the editor wrote.
+    spans = [chunk_span(doc.heading, doc.title, body) for body in bodies]
+
     return [
         Chunk(
             chunk_id=f"{doc.doc_id}:{position}",
@@ -204,8 +212,11 @@ def chunk_document(doc: SilverRow, size: int, overlap: int) -> list[Chunk]:
             revision_id=doc.revision_id,
             revision_timestamp=doc.revision_timestamp,
             license=doc.license,
+            year_start=None if span is None else span.start,
+            year_end=None if span is None else span.end,
+            year_source="" if span is None else span.source,
         )
-        for position, body in enumerate(bodies)
+        for position, (body, span) in enumerate(zip(bodies, spans, strict=True))
     ]
 
 

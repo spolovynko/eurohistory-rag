@@ -20,11 +20,20 @@ from eurohistory_rag.api import main as main_module
 from eurohistory_rag.api.jobs import EvalJob, get_job
 from eurohistory_rag.api.main import create_app
 from eurohistory_rag.eval.execute import PREDICTION_FILE, RunConfig
-from eurohistory_rag.eval.questions import Question
+from eurohistory_rag.eval.questions import (
+    QUESTIONS_PATH,
+    Question,
+    load_questions,
+)
 from eurohistory_rag.eval.record import RUNS_DIR
 from eurohistory_rag.eval.run import Cancelled
 
 PREDICTION = "recall@5 will not move at all; anything above 70% is impossible."
+
+# The size of the real committed set. Read rather than typed: the count grows
+# whenever a suite is added -- Phase 22 took it from 60 to 78 -- and a literal
+# here turns that into three unrelated test failures.
+COMMITTED = len(load_questions(QUESTIONS_PATH))
 
 
 @pytest.fixture
@@ -186,7 +195,7 @@ def test_a_request_from_another_machine_is_refused(
     )
     with TestClient(create_app(), client=("10.0.0.7", 5000)) as client:
         response = client.post(
-            "/eval/run", json={"prediction": PREDICTION, "questions": 60}
+            "/eval/run", json={"prediction": PREDICTION, "questions": COMMITTED}
         )
 
     assert response.status_code == 403
@@ -205,7 +214,7 @@ def test_a_quote_for_a_different_number_of_questions_is_refused(
     client, job, _ = app_with_job
 
     response = client.post(
-        "/eval/run", json={"prediction": PREDICTION, "questions": 60}
+        "/eval/run", json={"prediction": PREDICTION, "questions": COMMITTED}
     )
 
     assert response.status_code == 422
@@ -228,7 +237,7 @@ def test_a_failing_precondition_refuses_before_anything_is_spent(
     )
     with TestClient(create_app(), client=("127.0.0.1", 5000)) as client:
         response = client.post(
-            "/eval/run", json={"prediction": PREDICTION, "questions": 60}
+            "/eval/run", json={"prediction": PREDICTION, "questions": COMMITTED}
         )
 
     assert response.status_code == 503
@@ -389,11 +398,13 @@ def test_the_changed_knobs_are_derived_from_the_baseline(tmp_path: Path) -> None
         model="gpt-4.1-mini",
         reranker="cross-encoder/ms-marco-MiniLM-L6-v2",
         hybrid=False,
+        temporal=False,
     )
 
     assert experiment_module.changed_fields(baseline, same) == frozenset()
     assert experiment_module.changed_fields(
-        baseline, RunConfig(k=10, model="gpt-4.1-nano", reranker="", hybrid=True)
+        baseline,
+        RunConfig(k=10, model="gpt-4.1-nano", reranker="", hybrid=True, temporal=False),
     ) == frozenset({"k", "generation_model", "reranker", "hybrid"})
 
 
@@ -401,7 +412,9 @@ def test_a_missing_baseline_declares_nothing_rather_than_raising(
     tmp_path: Path,
 ) -> None:
     """A directory that is not a run is not a comparison, and not a crash."""
-    config = RunConfig(k=5, model="gpt-4.1-mini", reranker="", hybrid=False)
+    config = RunConfig(
+        k=5, model="gpt-4.1-mini", reranker="", hybrid=False, temporal=False
+    )
 
     assert experiment_module.changed_fields(tmp_path / "nope", config) == frozenset()
 

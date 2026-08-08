@@ -49,6 +49,7 @@ COMPARABILITY_FIELDS = (
     "reranker",
     "hybrid",
     "verifier",
+    "temporal",
 )
 
 # The question set is compared as a field alongside the others, because a

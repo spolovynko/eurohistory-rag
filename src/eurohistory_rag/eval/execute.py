@@ -57,6 +57,13 @@ class RunConfig:
     model: str
     reranker: str
     hybrid: bool
+    # No default, deliberately. This field was added with `= False` and the CLI,
+    # which builds this object field by field, never passed it -- so a run made
+    # with the flag on measured the flag off, and `meta.json` was the only thing
+    # that said so. That is the Phase 8 A/A accident repeated inside the phase
+    # that cites it. `VectorStore.upsert` made its sparse argument required for
+    # this exact reason; this follows it. See the D-096 fourth addendum.
+    temporal: bool
 
     @classmethod
     def from_settings(cls, settings: Settings) -> "RunConfig":
@@ -66,6 +73,7 @@ class RunConfig:
             model=settings.generation_model,
             reranker=settings.reranker_model if settings.reranker_enabled else "",
             hybrid=settings.hybrid_enabled,
+            temporal=settings.temporal_enabled,
         )
 
 
@@ -96,6 +104,7 @@ def build_stack(
         store,
         reranker=LocalReranker(config.reranker) if config.reranker else None,
         hybrid=config.hybrid,
+        temporal=config.temporal,
     )
     generator = OpenAIGenerator(
         api_key=settings.openai_api_key.get_secret_value(), model=config.model
@@ -160,6 +169,7 @@ def execute(
         overfetch=OVERFETCH,
         reranker=config.reranker,
         hybrid=f"bm25+rrf(k={RRF_K})" if config.hybrid else "",
+        temporal="year-overlap+rrf" if config.temporal else "",
         verifier=settings.verify_model if settings.verify_enabled else "",
         note=note,
     )

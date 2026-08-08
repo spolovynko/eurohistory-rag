@@ -39,7 +39,8 @@ TARGET_COUNTS: dict[Kind, int] = {
 
 # Which batch a question was written in. "golden" is Phase 7's original thirty,
 # about a corpus that ran 1914-1945; "extended" is Phase 15's thirty, written
-# after the corpus grew to 1914-2024.
+# after the corpus grew to 1914-2024; "temporal" is Phase 22's eighteen, every
+# one of which names a period the corpus covers in several places at once.
 #
 # This exists so one run can be scored twice: the golden thirty alone, which
 # reproduces every earlier baseline, and the whole set. Phase 14 grew the corpus
@@ -51,7 +52,24 @@ TARGET_COUNTS: dict[Kind, int] = {
 # new questions carry the line. A synthetic set names itself, because its kind
 # already decides the answer and a file nobody hand-edits should not have to
 # repeat it.
-Suite = Literal["golden", "extended", "synthetic"]
+Suite = Literal["golden", "extended", "temporal", "synthetic"]
+
+# The shape each hand-written suite is meant to have. Phase 7's 8/8/8/6 applies
+# to the two suites written to that plan; the temporal eighteen were written to
+# a different one and say so here rather than tripping a warning on every run.
+# A suite absent from this table is not checked at all -- a synthetic set is 150
+# questions of one kind by design.
+SUITE_TARGETS: dict[Suite, dict[Kind, int]] = {
+    "golden": TARGET_COUNTS,
+    "extended": TARGET_COUNTS,
+    # No paraphrase row: rewording is what the extended suite tests, and a
+    # temporal question already is a paraphrase of the heading it must find.
+    # 7 multi and 1 unanswerable rather than 6 and 2: t-pandemic-2020 was
+    # written as unanswerable, the corpus answers it perfectly well, and it was
+    # reclassified after the D-096 comparison closed. The count records the
+    # correction rather than hiding it.
+    "temporal": {"easy": 10, "multi": 7, "paraphrase": 0, "unanswerable": 1},
+}
 
 # Silver builds doc_ids as "{page_id}:{position}". Checking the shape on load
 # catches a mistyped key without this module having to open the corpus.

@@ -31,6 +31,12 @@ _COLUMNS: dict[str, DataType | DataTypeClass] = {
     "revision_id": pl.Int64,  # which version this text came from
     "revision_timestamp": pl.Datetime("us", "UTC"),
     "license": pl.Utf8,  # CC BY-SA travels with the text
+    # The period this chunk covers, and which of the three rungs said so.
+    # Nullable on purpose: 26.7% of chunks name no year anywhere, and a chunk
+    # with no span is filtered out of nothing. See pipeline/gold/dates.py.
+    "year_start": pl.Int32,
+    "year_end": pl.Int32,
+    "year_source": pl.Utf8,  # "heading" | "title" | "text" | ""
 }
 
 GOLD_SCHEMA = pl.Schema(_COLUMNS)
@@ -57,6 +63,9 @@ class Chunk:
     revision_id: int
     revision_timestamp: dt.datetime
     license: str
+    year_start: int | None = None
+    year_end: int | None = None
+    year_source: str = ""
 
 
 def to_frame(chunks: Sequence[Chunk]) -> pl.DataFrame:
@@ -75,6 +84,9 @@ def to_frame(chunks: Sequence[Chunk]) -> pl.DataFrame:
                 "revision_id": chunk.revision_id,
                 "revision_timestamp": chunk.revision_timestamp,
                 "license": chunk.license,
+                "year_start": chunk.year_start,
+                "year_end": chunk.year_end,
+                "year_source": chunk.year_source,
             }
             for chunk in chunks
         ],
