@@ -113,7 +113,14 @@ def stack(
     )
 
 
-CONFIG = RunConfig(k=5, model="gpt-4.1-mini", reranker="", hybrid=False, temporal=False)
+CONFIG = RunConfig(
+    k=5,
+    model="gpt-4.1-mini",
+    reranker="",
+    hybrid=False,
+    temporal=False,
+    conversation=False,
+)
 
 
 def test_a_run_writes_the_four_files_the_cli_writes(tmp_path: Path) -> None:
@@ -152,6 +159,7 @@ def test_the_configuration_reaches_meta_json(tmp_path: Path) -> None:
             reranker="cross-encoder/x",
             hybrid=True,
             temporal=True,
+            conversation=False,
         ),
         run_id="2026-01-01T0000Z",
         runs_dir=tmp_path,

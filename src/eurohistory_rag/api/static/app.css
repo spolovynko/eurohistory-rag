@@ -245,6 +245,11 @@
     color: var(--quiet);
     font-size: .92rem;
   }
+  /* `display: flex` above is an author rule and beats the browser's own
+     `[hidden] { display: none }`, so a status with its text cleared kept
+     showing its pulsing dot -- on screen after every answered question since
+     Phase 18, and only noticed once Phase 24 put a line underneath it. */
+  .status[hidden] { display: none; }
   .status::before {
     content: "";
     flex: none;
@@ -262,6 +267,50 @@
     70%  { box-shadow: 0 0 0 9px transparent; }
     100% { box-shadow: 0 0 0 0 transparent; }
   }
+
+  /* --- the conversation ---------------------------------------------------- */
+  /*
+     Everything before the current turn, quieter than it and kept on screen
+     because the next question is allowed to point back at it. Quieter, not
+     hidden: a follow-up whose subject has scrolled away is unreadable.
+  */
+
+  #thread:not(:empty) { margin: 1.9rem 0 0; }
+  .turn {
+    padding: 0 0 1.1rem;
+    margin: 0 0 1.1rem;
+    border-bottom: 1px solid var(--rule);
+    color: var(--quiet);
+  }
+  .turn .asked { margin: 0; font-weight: 600; color: var(--ink); }
+  .turn .said {
+    margin: .5rem 0 0;
+    line-height: 1.65;
+    white-space: pre-wrap;
+    font-size: .95rem;
+  }
+
+  /* What the server actually searched for, once the history had been folded
+     in. Present only when the question changed, so its absence is information
+     too. */
+  .rewritten {
+    margin: .45rem 0 0;
+    font-size: .87rem;
+    color: var(--quiet);
+    font-style: italic;
+  }
+
+  button.ghost {
+    background: none;
+    border: 1px solid var(--rule);
+    color: var(--quiet);
+    border-radius: var(--radius);
+    padding: .35rem .8rem;
+    font: inherit;
+    font-size: .85rem;
+    cursor: pointer;
+  }
+  button.ghost:hover { color: var(--ink); border-color: var(--faint); }
 
   /* --- the answer --------------------------------------------------------- */
 

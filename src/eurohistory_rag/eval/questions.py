@@ -52,7 +52,9 @@ TARGET_COUNTS: dict[Kind, int] = {
 # new questions carry the line. A synthetic set names itself, because its kind
 # already decides the answer and a file nobody hand-edits should not have to
 # repeat it.
-Suite = Literal["golden", "extended", "temporal", "factual", "synthetic"]
+Suite = Literal[
+    "golden", "extended", "temporal", "factual", "conversation", "synthetic"
+]
 
 # The shape each hand-written suite is meant to have. Phase 7's 8/8/8/6 applies
 # to the two suites written to that plan; the temporal eighteen were written to
@@ -74,11 +76,36 @@ SUITE_TARGETS: dict[Suite, dict[Kind, int]] = {
     # kind but whether the fact is in the prose (5) or only in the infobox (9),
     # and that is `expected_answer` plus the note, not a column. D-097.
     "factual": {"easy": 14, "multi": 0, "paraphrase": 0, "unanswerable": 0},
+    # Ten referential follow-ups, three controls whose text is copied verbatim
+    # from a question already in the file, and one whose answer the corpus does
+    # not hold. The kinds describe the *resolved* question -- "how did the
+    # Soviets respond" is an easy single-article lookup once you know what it
+    # refers to, and the whole phase is about that "once you know". D-098.
+    "conversation": {"easy": 8, "multi": 4, "paraphrase": 1, "unanswerable": 1},
 }
 
 # Silver builds doc_ids as "{page_id}:{position}". Checking the shape on load
 # catches a mistyped key without this module having to open the corpus.
 DocId = Annotated[str, Field(pattern=r"^\d+:\d+$")]
+
+
+class Turn(BaseModel):
+    """One completed exchange that happened before the question being scored.
+
+    Both halves, because a follow-up can point at either: "how did the Soviets
+    respond?" refers to what was asked, and "what happened to him?" refers to a
+    name that appears only in what was answered.
+
+    The assistant text in eval/questions.toml is a real answer this system gave,
+    captured from the running system rather than written by hand. An invented
+    answer would be an easier thing to resolve a pronoun against than the one a
+    reader actually sees, and the eval would flatter the feature it is testing.
+    """
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    user: str = Field(min_length=1)
+    assistant: str = Field(min_length=1)
 
 
 class Question(BaseModel):
@@ -99,6 +126,11 @@ class Question(BaseModel):
     # retrieving the right article, only by the answer containing 248,717, and
     # no rank-based metric can see the difference. D-097.
     expected_answer: tuple[str, ...] = Field(default=())
+    # The exchange that came before, oldest first. Empty for all 92 questions
+    # written before Phase 24, which is what keeps them single-turn and
+    # byte-identical: a question with no history is asked exactly as it always
+    # was, by every caller, with or without the rewriter. D-098.
+    history: tuple[Turn, ...] = Field(default=())
     suite: Suite = "golden"
     note: str = ""
 
@@ -126,6 +158,21 @@ class Question(BaseModel):
                 raise ValueError(f"{self.id}: unanswerable question has expected ids")
         elif not self.expected:
             raise ValueError(f"{self.id}: answerable question has no expected ids")
+        return self
+
+    @model_validator(mode="after")
+    def _history_matches_suite(self) -> "Question":
+        """A conversation question has an exchange before it; nothing else does.
+
+        Both halves matter. A conversation case without history is a single-turn
+        question hiding in the suite that measures follow-ups, and a history
+        attached to any other suite would silently move a question the golden,
+        extended, temporal and factual tables are the control for.
+        """
+        if self.suite == "conversation" and not self.history:
+            raise ValueError(f"{self.id}: conversation question has no history")
+        if self.suite != "conversation" and self.history:
+            raise ValueError(f"{self.id}: history outside the conversation suite")
         return self
 
 

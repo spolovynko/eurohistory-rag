@@ -140,14 +140,16 @@ def test_the_page_never_writes_server_text_as_html() -> None:
 
 
 def test_every_control_on_the_page_is_accounted_for() -> None:
-    """Three buttons and three inputs, each one named here.
+    """Four buttons and three inputs, each one named here.
 
     The count is asserted rather than removed because it is the line that makes
-    growing the page a decision somebody takes on purpose. Phase 20 is exactly
+    growing the page a decision somebody takes on purpose. Phase 20 was exactly
     that decision: Ask, Start and Cancel, and a second hybrid switch because the
-    evaluation view carries its own copy of the settings row.
+    evaluation view carries its own copy of the settings row. Phase 24 adds the
+    fourth -- "Start again", which is the only way to end a conversation, and
+    without it the history grows for as long as the tab is open. D-098.
     """
-    assert PAGE.count("<button") == 3
+    assert PAGE.count("<button") == 4
     assert PAGE.count("<input") == 3
     assert 'type="checkbox" id="hybrid-toggle"' in PAGE
     assert 'type="checkbox" id="run-hybrid"' in PAGE
@@ -182,3 +184,18 @@ def test_the_openapi_schema_lists_the_page() -> None:
     schema = TestClient(create_app()).get("/openapi.json").json()
 
     assert "/" in schema["paths"]
+
+
+def test_the_page_sends_the_conversation_back_with_every_question() -> None:
+    """The conversation lives in the tab, not on the server.
+
+    Asserted here because it is a design decision with a consequence: a reload
+    loses the thread, and nothing on the server has to know whose thread it was.
+    D-098.
+    """
+    assert "history: history.slice(-HISTORY_SENT)" in SCRIPTS
+
+
+def test_the_page_shows_what_was_actually_searched_for() -> None:
+    """A rewrite nobody can see is Phase 8's dead switch with better manners."""
+    assert '"understood as: " + data.standalone' in SCRIPTS

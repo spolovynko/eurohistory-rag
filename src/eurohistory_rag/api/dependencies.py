@@ -68,7 +68,29 @@ def get_generation_service() -> GenerationService:
         api_key=settings.openai_api_key.get_secret_value(),
         model=settings.generation_model,
     )
-    return GenerationService(get_search_service(), generator, verifier=get_verifier())
+    return GenerationService(
+        get_search_service(),
+        generator,
+        verifier=get_verifier(),
+        rewriter=get_rewriter(),
+    )
+
+
+@lru_cache(maxsize=1)
+def get_rewriter() -> OpenAIGenerator | None:
+    """The follow-up rewriter's client, or None when conversation is off.
+
+    Its own function for the reason `get_verifier` is: "the feature is off" is
+    one value in one place, and a request that carries no history never reaches
+    it either way. Phase 24, D-098.
+    """
+    settings = get_settings()
+    if not settings.conversation_enabled:
+        return None
+    return OpenAIGenerator(
+        api_key=settings.openai_api_key.get_secret_value(),
+        model=settings.rewrite_model,
+    )
 
 
 @lru_cache(maxsize=1)
@@ -163,4 +185,5 @@ def configured_generation_service(
         configured_search_service(hybrid=hybrid, reranker=reranker),
         get_generator(model),
         verifier=get_verifier(),
+        rewriter=get_rewriter(),
     )

@@ -11,6 +11,9 @@ const box = document.getElementById("question");
 const submit = document.getElementById("submit");
 const statusLine = document.getElementById("status");
 const answerBox = document.getElementById("answer");
+const thread = document.getElementById("thread");
+const newChat = document.getElementById("new-chat");
+const rewrittenLine = document.getElementById("rewritten");
 const sourcesHeading = document.getElementById("sources-heading");
 const sourceList = document.getElementById("sources");
 const footer = document.getElementById("footer");
@@ -27,6 +30,46 @@ const nodes = {
 const MARKER = /\[(\d+)\]/g;
 const HUES = 6;
 
+// --- the conversation -------------------------------------------------------
+//
+// The thread lives here, in the page, and is sent back with every question.
+// The server keeps nothing: this tab already holds what it is displaying, and a
+// server-side copy would need session ids and eviction in a system with no
+// authentication in it anywhere. D-098.
+
+// How many completed exchanges travel with a question. The rewriter reads the
+// last two; sending a few more costs a few hundred bytes and means the cap is
+// the server's decision rather than this file's.
+const HISTORY_SENT = 6;
+
+let history = [];
+// The exchange currently on screen, waiting to be pushed up into the thread
+// when the next question is asked. Null before the first answer.
+let onScreen = null;
+
+function archive() {
+  if (!onScreen) return;
+  const turn = el("article", "turn");
+  turn.append(el("p", "asked", onScreen.question));
+  if (onScreen.standalone) {
+    turn.append(el("p", "rewritten", "understood as: " + onScreen.standalone));
+  }
+  turn.append(el("div", "said", onScreen.answer));
+  thread.append(turn);
+  onScreen = null;
+  newChat.hidden = false;
+}
+
+newChat.addEventListener("click", () => {
+  history = [];
+  onScreen = null;
+  thread.replaceChildren();
+  newChat.hidden = true;
+  clearAnswer();
+  setStatus(statusLine, "");
+  box.focus();
+});
+
 // Which of the six hues a citation wears. k is 5, so in practice n never wraps;
 // the modulo is there so a larger k cannot produce a colourless card.
 function hue(n) {
@@ -38,6 +81,7 @@ function clearAnswer() {
   sourceList.replaceChildren();
   sourcesHeading.hidden = true;
   footer.hidden = true;
+  rewrittenLine.hidden = true;
 }
 
 function renderAnswer(text, cited) {
@@ -117,6 +161,12 @@ form.addEventListener("submit", async (event) => {
   const question = box.value.trim();
   if (!question) return;
 
+  // Emptied here rather than left for editing. On a one-shot page keeping the
+  // question was convenient; with a thread it means the next question is typed
+  // onto the end of the last one, which is what happened the first time this
+  // was tried in a browser.
+  box.value = "";
+  archive();
   clearAnswer();
   submit.disabled = true;
   const started = performance.now();
@@ -131,7 +181,11 @@ form.addEventListener("submit", async (event) => {
         // The one line that chooses the streamed shape of the same endpoint.
         Accept: "text/event-stream",
       },
-      body: JSON.stringify({ question: question, ...chosen(nodes) }),
+      body: JSON.stringify({
+        question: question,
+        history: history.slice(-HISTORY_SENT),
+        ...chosen(nodes),
+      }),
     });
     if (!response.ok) {
       const detail = await response.json().catch(() => ({}));
@@ -174,7 +228,7 @@ form.addEventListener("submit", async (event) => {
         setStatus(statusLine, data, "error");
         return;
       }
-      if (name === "done") finish(data, started, firstWordAt);
+      if (name === "done") finish(data, started, firstWordAt, question);
     });
 
     if (!failed && firstWordAt === null) {
@@ -195,10 +249,19 @@ form.addEventListener("submit", async (event) => {
 
 // The end of a stream: markers become links, the passages the answer ignored
 // come off the list, and the two clocks are reported.
-function finish(data, started, firstWordAt) {
+function finish(data, started, firstWordAt, question) {
   const cited = new Set(data.sources.map((s) => s.n));
   answerBox.replaceChildren();
   renderAnswer(data.answer, cited);
+
+  // Only when the conversation changed the question. A reader who sees the
+  // wrong subject here knows immediately why the answer is about the wrong
+  // thing, which is the one failure this change can introduce.
+  rewrittenLine.textContent = "understood as: " + data.standalone;
+  rewrittenLine.hidden = !data.standalone;
+
+  history.push({ user: question, assistant: data.answer });
+  onScreen = { question: question, answer: data.answer, standalone: data.standalone };
 
   for (const item of [...sourceList.children]) {
     if (!cited.has(Number(item.id.replace("source-", "")))) item.remove();

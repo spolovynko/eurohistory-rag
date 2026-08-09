@@ -12,6 +12,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from eurohistory_rag.generation.rewrite import Turn
+
 # Where runs land. One directory per run, so the records, the readable dump and
 # the summary of a single run never get separated from each other.
 RUNS_DIR = Path("eval/runs")
@@ -56,6 +58,11 @@ class RunMeta:
     # empty so every run already on disk reads back as a run without it, which
     # is what makes those runs valid "before" halves. Phase 22, D-096.
     temporal: str = ""
+    # The model that rewrote follow-ups into standalone questions, or "" when
+    # conversation was off. A model name rather than a flag, same as `verifier`:
+    # "conversation was on" does not identify a run, and the rewriter is a
+    # second model whose choice is part of what was measured. Phase 24, D-098.
+    conversation: str = ""
     note: str = ""
 
 
@@ -151,6 +158,16 @@ class EvalRecord:
     # answer. Empty on every run made before Phase 23. D-097.
     expected_answers: list[str] = field(default_factory=list)
 
+    # The exchange that came before this question, and the question as it was
+    # actually embedded after the history was folded into it. `standalone` is
+    # empty whenever nothing was rewritten, which is every question with no
+    # history and every run made before Phase 24 -- so an empty value means "the
+    # search used `question`, exactly as written". Recorded because a rewriter
+    # that is wrong is wrong in a sentence nobody would otherwise ever see: the
+    # ranks would move and the reason would be invisible. D-098.
+    history: list[Turn] = field(default_factory=list)
+    standalone: str = ""
+
     prompt_tokens: int | None = None
     completion_tokens: int | None = None
     error: str | None = None
@@ -198,5 +215,6 @@ def read_records(directory: Path) -> list[EvalRecord]:
         raw = json.loads(line)
         raw["retrieved"] = [Retrieved(**item) for item in raw["retrieved"]]
         raw["citations"] = [CitationRef(**item) for item in raw["citations"]]
+        raw["history"] = [Turn(**item) for item in raw.get("history", [])]
         records.append(EvalRecord(**raw))
     return records

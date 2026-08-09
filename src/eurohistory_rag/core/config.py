@@ -108,6 +108,23 @@ class Settings(BaseSettings):
     # bias and says so rather than hiding it -- the same trade as judge_model.
     verify_model: str = "gpt-4.1-mini"
 
+    # Conversation: a follow-up is rewritten into a standalone question before
+    # anything is embedded. **On by default, and the only flag here that is.**
+    #
+    # Every other switch above defaults off so that a clean checkout reproduces
+    # the "before" half of its own measurement. That argument does not apply to
+    # this one, because a question with no history never reaches the rewriter --
+    # measured, not asserted: 0 of the 92 single-turn questions changed a single
+    # chunk between runs 2026-08-09T1126Z and 2026-08-09T1341Z. So leaving it
+    # off would cost the whole feature and protect nothing. The before half is
+    # reproduced by setting this false, and that run is on disk. D-098.
+    conversation_enabled: bool = True
+
+    # Which model rewrites the follow-up. Its own setting for the reason
+    # verify_model is: rewriting a question and answering one are different
+    # jobs, and this is the line that lets a cheaper model do the first.
+    rewrite_model: str = "gpt-4.1-mini"
+
 
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:

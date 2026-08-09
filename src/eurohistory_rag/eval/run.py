@@ -14,6 +14,7 @@ from datetime import UTC, datetime
 from eurohistory_rag.eval.questions import Question
 from eurohistory_rag.eval.record import CitationRef, EvalRecord, Retrieved, RunMeta
 from eurohistory_rag.generation.client import GenerationUnavailable
+from eurohistory_rag.generation.rewrite import Turn
 from eurohistory_rag.generation.service import CITATION, GenerationService
 from eurohistory_rag.retrieval.search import SearchResult, SearchService
 
@@ -77,6 +78,19 @@ def to_retrieved(
     ]
 
 
+def history(question: Question) -> list[Turn]:
+    """The exchange before this question, in the shape a record stores.
+
+    Two nearly identical types on purpose. `questions.Turn` is validated input a
+    person edits, so it is a pydantic model with rules; `rewrite.Turn` is what
+    the rest of the system passes around, and it is a plain dataclass because
+    that is what a record is made of. Collapsing them would make the run format
+    and the answer path depend on the question file's schema, which is the
+    coupling `suite` and `expected_answers` already avoid.
+    """
+    return [Turn(user=t.user, assistant=t.assistant) for t in question.history]
+
+
 def markers_in(text: str) -> list[int]:
     """Every [n] the answer wrote, in order, including invented ones.
 
@@ -100,13 +114,20 @@ def run_question(
     call should not throw away the twenty-nine questions already answered.
     """
     started = time.perf_counter()
-    results = search.search(question.text, k=retrieval_k)
+    # What actually gets embedded. With no rewriter, or with no history, this is
+    # the question as written -- which is why every one of the 92 single-turn
+    # questions takes the identical path it took before this phase existed.
+    standalone = generation.standalone(question.text, history(question))
+    results = search.search(standalone, k=retrieval_k)
     search_ms = _elapsed_ms(started)
 
     sent = results[:answer_k]
     generation_started = time.perf_counter()
     try:
-        answer = generation.answer_from(question.text, sent)
+        # The resolved question, not the typed one: the model is asked what the
+        # reader meant. Identical to `question.text` for every single-turn
+        # question, so nothing outside the conversation suite can move.
+        answer = generation.answer_from(standalone, sent)
     except GenerationUnavailable as failure:
         logger.warning("%s: generation failed: %s", question.id, failure)
         generate_ms = _elapsed_ms(generation_started)
@@ -117,6 +138,8 @@ def run_question(
             suite=question.suite,
             expected_doc_ids=list(question.expected),
             expected_answers=list(question.expected_answer),
+            history=history(question),
+            standalone="" if standalone == question.text else standalone,
             retrieved=to_retrieved(results, with_text=answer_k),
             answer="",
             generation_model="",
@@ -137,6 +160,8 @@ def run_question(
         suite=question.suite,
         expected_doc_ids=list(question.expected),
         expected_answers=list(question.expected_answer),
+        history=history(question),
+        standalone="" if standalone == question.text else standalone,
         retrieved=to_retrieved(results, with_text=answer_k),
         answer=answer.text,
         revised=answer.revised,
@@ -219,6 +244,7 @@ def build_meta(
     hybrid: str = "",
     verifier: str = "",
     temporal: str = "",
+    conversation: str = "",
     note: str = "",
 ) -> RunMeta:
     """Capture the conditions this run happened under."""
@@ -237,5 +263,6 @@ def build_meta(
         hybrid=hybrid,
         verifier=verifier,
         temporal=temporal,
+        conversation=conversation,
         note=note,
     )

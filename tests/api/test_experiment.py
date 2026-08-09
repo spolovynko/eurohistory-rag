@@ -399,12 +399,20 @@ def test_the_changed_knobs_are_derived_from_the_baseline(tmp_path: Path) -> None
         reranker="cross-encoder/ms-marco-MiniLM-L6-v2",
         hybrid=False,
         temporal=False,
+        conversation=False,
     )
 
     assert experiment_module.changed_fields(baseline, same) == frozenset()
     assert experiment_module.changed_fields(
         baseline,
-        RunConfig(k=10, model="gpt-4.1-nano", reranker="", hybrid=True, temporal=False),
+        RunConfig(
+            k=10,
+            model="gpt-4.1-nano",
+            reranker="",
+            hybrid=True,
+            temporal=False,
+            conversation=False,
+        ),
     ) == frozenset({"k", "generation_model", "reranker", "hybrid"})
 
 
@@ -413,7 +421,12 @@ def test_a_missing_baseline_declares_nothing_rather_than_raising(
 ) -> None:
     """A directory that is not a run is not a comparison, and not a crash."""
     config = RunConfig(
-        k=5, model="gpt-4.1-mini", reranker="", hybrid=False, temporal=False
+        k=5,
+        model="gpt-4.1-mini",
+        reranker="",
+        hybrid=False,
+        temporal=False,
+        conversation=False,
     )
 
     assert experiment_module.changed_fields(tmp_path / "nope", config) == frozenset()

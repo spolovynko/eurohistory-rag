@@ -7,6 +7,7 @@ reaches the caller -- not whether the model writes good history.
 
 import pytest
 
+from eurohistory_rag.generation.rewrite import Turn
 from eurohistory_rag.generation.service import Answer, GenerationService, cited
 from eurohistory_rag.retrieval.search import SearchResult
 from tests.fakes import FakeGenerator, UnavailableGenerator
@@ -342,3 +343,64 @@ def test_nothing_streams_while_the_groundedness_gate_is_on(
     assert isinstance(pieces[0], Answer)
     assert pieces[0].text == "The wall went up [1]."
     assert pieces[0].first_token_ms is None
+
+
+# --- conversation -----------------------------------------------------------
+
+
+def test_a_follow_up_is_resolved_before_anything_is_searched(
+    results: list[SearchResult],
+) -> None:
+    """The one place the history is used, and the reason the rest is unchanged.
+
+    Everything below this line -- retrieval, the answer prompt, the citations,
+    every metric -- receives one self-contained question and cannot tell a
+    second turn from a first.
+    """
+    search = StubSearchService(results)
+    generation = GenerationService(
+        search,  # type: ignore[arg-type]
+        FakeGenerator(answer="It came down in 1989 [1]."),
+        rewriter=FakeGenerator(answer="When did the Berlin Wall come down?"),
+    )
+    history = [Turn(user="Why was the Berlin Wall built?", assistant="To stop [1].")]
+
+    resolved = generation.standalone("When did it come down?", history)
+
+    assert resolved == "When did the Berlin Wall come down?"
+
+
+def test_a_question_with_no_history_is_never_rewritten(
+    results: list[SearchResult],
+) -> None:
+    """What keeps the 92 single-turn questions byte-identical.
+
+    The rewriter is configured and would happily return something else; it is
+    not called, because there is nothing to resolve.
+    """
+    rewriter = FakeGenerator(answer="something else entirely")
+    generation = GenerationService(
+        StubSearchService(results),  # type: ignore[arg-type]
+        FakeGenerator(),
+        rewriter=rewriter,
+    )
+
+    assert generation.standalone("What was the Marshall Plan?") == (
+        "What was the Marshall Plan?"
+    )
+    assert rewriter.calls == []
+
+
+def test_with_conversation_off_a_history_changes_nothing(
+    results: list[SearchResult],
+) -> None:
+    """The before half of the before/after, as a test rather than as a promise."""
+    generation = GenerationService(
+        StubSearchService(results),  # type: ignore[arg-type]
+        FakeGenerator(),
+    )
+    history = [Turn(user="Why was the Berlin Wall built?", assistant="To stop [1].")]
+
+    assert generation.standalone("When did it come down?", history) == (
+        "When did it come down?"
+    )

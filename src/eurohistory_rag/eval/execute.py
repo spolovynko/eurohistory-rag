@@ -64,6 +64,11 @@ class RunConfig:
     # that cites it. `VectorStore.upsert` made its sparse argument required for
     # this exact reason; this follows it. See the D-096 fourth addendum.
     temporal: bool
+    # Whether a follow-up is rewritten into a standalone question before it is
+    # embedded. No default, for the same reason `temporal` has none: the CLI
+    # builds this object field by field, and a field with a default is a field
+    # a caller can silently forget to pass. D-096's fourth addendum.
+    conversation: bool
 
     @classmethod
     def from_settings(cls, settings: Settings) -> "RunConfig":
@@ -74,6 +79,7 @@ class RunConfig:
             reranker=settings.reranker_model if settings.reranker_enabled else "",
             hybrid=settings.hybrid_enabled,
             temporal=settings.temporal_enabled,
+            conversation=settings.conversation_enabled,
         )
 
 
@@ -117,7 +123,19 @@ def build_stack(
         if settings.verify_enabled
         else None
     )
-    return search, GenerationService(search, generator, verifier=verifier), store
+    rewriter = (
+        OpenAIGenerator(
+            api_key=settings.openai_api_key.get_secret_value(),
+            model=settings.rewrite_model,
+        )
+        if config.conversation
+        else None
+    )
+    return (
+        search,
+        GenerationService(search, generator, verifier=verifier, rewriter=rewriter),
+        store,
+    )
 
 
 def execute(
@@ -170,6 +188,7 @@ def execute(
         reranker=config.reranker,
         hybrid=f"bm25+rrf(k={RRF_K})" if config.hybrid else "",
         temporal="year-overlap+rrf" if config.temporal else "",
+        conversation=settings.rewrite_model if config.conversation else "",
         verifier=settings.verify_model if settings.verify_enabled else "",
         note=note,
     )

@@ -9,6 +9,7 @@ from eurohistory_rag.eval.questions import (
     QUESTIONS_PATH,
     SUITE_TARGETS,
     Question,
+    Turn,
     counts,
     load_questions,
     unknown_doc_ids,
@@ -105,3 +106,67 @@ def test_committed_ground_truth_points_at_real_sections() -> None:
         pytest.skip("Silver not built")
     known = set(polars.read_parquet(silver, columns=["doc_id"])["doc_id"].to_list())
     assert unknown_doc_ids(load_questions(QUESTIONS_PATH), known) == {}
+
+
+# --- conversation -----------------------------------------------------------
+
+
+def test_a_conversation_question_must_carry_its_history() -> None:
+    """Without it the case is a single-turn question hiding in the suite that
+    exists to measure follow-ups."""
+    with pytest.raises(ValidationError, match="no history"):
+        Question(
+            id="c1",
+            kind="easy",
+            text="When did it come down?",
+            expected=("3722:8",),
+            suite="conversation",
+        )
+
+
+def test_history_outside_the_conversation_suite_is_refused() -> None:
+    """The golden, extended, temporal and factual tables are the control.
+
+    A history attached to one of them would move a question those tables exist
+    to hold still, and it would move it invisibly.
+    """
+    with pytest.raises(ValidationError, match="outside the conversation suite"):
+        Question(
+            id="q1",
+            kind="easy",
+            text="Why?",
+            expected=("1:0",),
+            history=(Turn(user="and?", assistant="yes"),),
+        )
+
+
+def test_the_committed_conversation_cases_all_have_an_exchange() -> None:
+    """Read from the file rather than asserted about it in the abstract."""
+    conversation = [
+        q for q in load_questions(QUESTIONS_PATH) if q.suite == "conversation"
+    ]
+
+    assert len(conversation) == 14
+    assert all(q.history for q in conversation)
+    assert all(turn.assistant.strip() for q in conversation for turn in q.history)
+
+
+def test_the_three_controls_repeat_a_question_that_already_exists() -> None:
+    """The impossible check for this suite, guarded so it cannot silently rot.
+
+    Each control's text is copied verbatim from a question in another suite. In
+    a run with no rewriting the pair must retrieve identically, and that is only
+    a meaningful check while the two strings stay equal.
+    """
+    questions = load_questions(QUESTIONS_PATH)
+    by_id = {q.id: q for q in questions}
+    pairs = {
+        "c-shift-wannsee": "wannsee-decisions",
+        "c-shift-moscow": "stopped-short-of-moscow",
+        "c-shift-easter-rising": "f-easter-rising-deaths",
+    }
+
+    for control, twin in pairs.items():
+        assert by_id[control].text == by_id[twin].text
+        assert by_id[control].expected == by_id[twin].expected
+        assert by_id[control].expected_answer == by_id[twin].expected_answer

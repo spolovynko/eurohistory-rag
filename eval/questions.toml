@@ -787,3 +787,224 @@ text = "How many Soviet soldiers were killed putting down the Hungarian Revoluti
 expected = ["351949:3"]
 expected_answer = ["699"]
 note = "CONTROL, and the conflict test. Soviet invasion says 'On the Soviet side, 699 men were killed, 1,450 wounded, and 51 missing in action.' The infobox says 722 killed and 1,540 wounded. This phase picks neither; it puts both in front of the model. If the answer moves from 699 to 722 the infobox is overriding a sourced sentence, and that shows up here as a number."
+
+
+# ============================================================= conversation (14)
+# Phase 24's subset. Every one of these is a *second* turn: the question on its
+# own is not a question, it is a pointer back into the exchange above it. The
+# `history` array is the turns that came before, and the assistant text in it is
+# a real answer this system gave -- captured from the running system on
+# 2026-08-09, not written by hand -- so the eval feeds the rewriter the same
+# thing a browser would.
+#
+# Ten are referential: "it", "him", "the company", "respond" to what. Three are
+# CONTROLS whose text is byte-identical to a question already in this file, with
+# unrelated history attached -- they exist so a rewriter that contaminates every
+# question is visible as a regression rather than as an average. One is
+# unanswerable.
+#
+# Every expected id was chosen by searching the whole corpus with the running
+# system, at depth 20, and then reading the section. Not by guessing, and not by
+# reading one article. D-087, D-096 and D-097 each recorded a question written
+# the other way.
+
+
+[[question]]
+id = "c-wall-fall"
+kind = "easy"
+suite = "conversation"
+text = "When did it come down?"
+expected = ["3722:8", "849186:10"]
+expected_answer = ["9 November 1989", "November 9, 1989", "1989-11-09"]
+note = ''''It' is the Wall, named only in turn 1. Berlin Wall - Fall carries the night of 9 November 1989 in full, from Schabowski's press conference to Harald Jaeger opening Bornholmer Strasse at 22:45; Inner German border - Fall of the inner German border covers the same days from the other side. Searched bare, the corpus-wide top 20 still puts Berlin Wall - Fall at rank 1 -- the reranker rescues it, because 'come down' and 'wall' are the same words the section uses. This case is here as one that may already work.'''
+
+[[question.history]]
+user = '''Why was the Berlin Wall built?'''
+assistant = '''
+The Berlin Wall was built primarily to prevent East German citizens from fleeing to the West [1][2]. The East German government claimed it was an "anti-fascist protective rampart" intended to dissuade aggression from the West and to counter the activities of Western agents in Eastern Europe, but most people believed its main purpose was to stop East Germans from entering or fleeing to West Berlin [2][4]. The Wall physically closed off West Berlin from East Berlin and East Germany, sealing all Eastern access points to West Berlin to prevent Easterners from leaving without a permit, which was rarely granted [5].
+'''
+
+[[question]]
+id = "c-prague-response"
+kind = "easy"
+suite = "conversation"
+text = "How did the Soviets respond?"
+expected = ["23821:4", "15224410:5"]
+note = ''''Respond' to what is only in turn 1. Prague Spring - Soviet invasion gives the night of 20-21 August 1968, 165,000 troops and 4,600 tanks; Warsaw Pact invasion of Czechoslovakia - Invasion and intervention is the same event at length. Searched bare over the whole corpus, Prague Spring - Soviet invasion is at rank 6 and the top five are the Baltic Way, the Berlin Blockade, the Soviet invasion of Poland and the Soviet-Afghan War.'''
+
+[[question.history]]
+user = '''What was the Prague Spring?'''
+assistant = '''
+The Prague Spring was a period of political liberalization and mass protest in the Czechoslovak Socialist Republic that began on 5 January 1968 when reformist Alexander Dubček was elected First Secretary of the Communist Party of Czechoslovakia (KSČ) [1][2]. It involved attempts to grant additional rights to citizens through partial decentralization of the economy and democratization, including loosening restrictions on the media, speech, and travel, and discussions about dividing the country into a federation [1][2][4][5]. The reforms aimed to create "socialism with a human face," maintaining Communist Party rule but with internal democracy, greater freedom of expression, rehabilitation of victims of Stalinist purges, economic decentralization, and human rights reforms such as an independent judiciary [5]. The Prague Spring ended on 21 August 1968 when the Soviet Union and four other Warsaw Pact members invaded Czechoslovakia to suppress the reforms [1][2].
+'''
+
+[[question]]
+id = "c-marshall-eastern"
+kind = "multi"
+suite = "conversation"
+text = "Did the eastern bloc have its own version of it?"
+expected = ["7965087:0", "19766:6"]
+note = ''''It' is the Marshall Plan. Molotov Plan says in its own words that it 'can be seen as the Soviet Union's version of the Marshall Plan' and that it became Comecon; Marshall Plan - Rejection by Stalin is the other half. Searched bare over the whole corpus, all twenty results are Eastern Bloc sections and the Iron Curtain -- the Molotov Plan does not appear at any depth.'''
+
+[[question.history]]
+user = '''What was the Marshall Plan?'''
+assistant = '''
+The Marshall Plan, officially called the European Recovery Program (ERP), was an American initiative enacted in 1948 to provide foreign aid to Western Europe. It involved the transfer of $13.3 billion to 17 European countries to support economic recovery after World War II. The goals were to rebuild war-torn regions, remove trade barriers, modernize industry, improve European prosperity, and prevent the spread of communism. It also aimed to promote economic integration across Europe and encourage increased productivity and modern business practices. The plan operated for four years starting April 3, 1948, and was largely replaced by the Mutual Security Act in 1951. Although the Soviet Union and its allies were offered aid, they refused it under Soviet pressure. By 1952, the economies of all participant states had surpassed pre-war levels, with output at least 35% higher than in 1938. The Marshall Plan also played a major role in setting the stage for Western Europe's rapid post-war growth and was one of the first elements of European integration by erasing trade barriers and coordinating the economy continentally [1][2][3][5][4].
+'''
+
+[[question]]
+id = "c-suez-britain"
+kind = "multi"
+suite = "conversation"
+text = "How did it change Britain's standing?"
+expected = ["4721:8", "58568:12"]
+note = ''''It' is the Suez Crisis. British Empire - Decolonisation and decline says it 'very publicly exposed Britain's limitations to the world and confirmed Britain's decline on the world stage and its end as a first-rate power'; Suez Crisis - Aftermath has a Britain subsection. Searched bare, the top twenty are the British Empire and the United Kingdom in general, reaching back to 1801 -- the right article, the wrong century, and no Suez.'''
+
+[[question.history]]
+user = '''What was the Suez Crisis?'''
+assistant = '''
+The Suez Crisis was a British–French–Israeli invasion of Egypt in 1956. It began with Israel invading on 29 October to reopen the Straits of Tiran and the Gulf of Aqaba, which Egypt had blockaded, preventing Israeli passage. The United Kingdom and France joined the invasion on 31 October after issuing a joint ultimatum for a ceasefire, aiming to depose Egyptian president Gamal Abdel Nasser and regain control of the Suez Canal, which Nasser had nationalised earlier that year. The three countries faced heavy political pressure from the United States, the Soviet Union, and the United Nations, leading to their withdrawal from Egypt. The crisis demonstrated that the UK and France could no longer pursue independent foreign policies without US consent, strengthened Nasser's standing, humiliated the British and French, and led to the establishment of a UN emergency force to police the Egypt–Israel border [1][2][3][4][5].
+'''
+
+[[question]]
+id = "c-chernobyl-evacuated"
+kind = "easy"
+suite = "conversation"
+text = "How many people had to leave their homes?"
+expected = ["2589713:2"]
+expected_answer = ["53,000", "135,000", "350,000"]
+note = '''Chernobyl disaster - Emergency response states all three figures: 53,000 out of Pripyat by 15:00 on 27 April, 135,000 long-term evacuees, and about 350,000 permanently resettled by 2000. Any of them answers the question, so all three are accepted. Searched bare over the whole corpus, the top twenty are the Algerian War, the Blitz, the Holocaust and the Ukrainian refugee crisis; the right section is at rank 6.'''
+
+[[question.history]]
+user = '''What caused the Chernobyl disaster?'''
+assistant = '''
+The Chernobyl disaster was caused by a combination of reactor design flaws and operator error [4]. The accident sequence began with a rapid power spike in the reactor, which led to an increase in fuel temperature and steam buildup, causing fuel cladding failure and rupture of the fuel channels [1]. Several hypotheses exist about the second, larger explosion: one suggests it was caused by the combustion of hydrogen produced by reactions involving steam and reactor materials; another proposes a thermal explosion due to uncontrollable escape of fast neutrons after complete water loss in the reactor core; and a further theory posits a runaway prompt criticality similar to a fizzled nuclear weapon explosion [2].
+'''
+
+[[question]]
+id = "c-solidarity-leader"
+kind = "easy"
+suite = "conversation"
+text = "Who led it?"
+expected = ["28869:0", "28869:1", "27123535:2"]
+expected_answer = ["Wałęsa", "Walesa"]
+note = '''The Solidarity lead calls Lech Walesa 'Solidarity's leader'; Lech Walesa - Solidarity movement is his side of it. Both spellings are accepted because the corpus writes the diacritics and a model may not. Searched bare over the whole corpus, nothing about Poland appears at any of the twenty ranks -- the list is the League of Nations, Attlee, the Allied Control Council and the Holocaust Memorial Museum's governance.'''
+
+[[question.history]]
+user = '''What was Solidarity in Poland?'''
+assistant = '''
+Solidarity in Poland was an independent trade union founded in August 1980 at the Lenin Shipyard in Gdańsk. It was the first independent trade union in a Warsaw Pact country to be recognized by the state and grew to have a membership peak of 10 million in September 1981, representing one-third of the country's working-age population [1]. Initially a non-political movement aiming at civil society reconstruction, it evolved into a broad anti-authoritarian social movement dominated by the working class and supported by intellectual dissidents, including those associated with the Catholic Church and non-communist leftists, adhering to nonviolent resistance [4]. The government tried to destroy Solidarity in the early 1980s through martial law and political repression, but the union survived underground with financial support from the Vatican and the United States, eventually entering negotiations with the government in the late 1980s [5]. These negotiations led to the 1989 round table talks and the first pluralistic elections since 1947, resulting in a Solidarity-led coalition government and the election of Lech Wałęsa as President in 1990 [5].
+'''
+
+[[question]]
+id = "c-winter-war-end"
+kind = "easy"
+suite = "conversation"
+text = "How did it end?"
+expected = ["33924:7", "33924:9"]
+note = ''''It' is the Winter War. Winter War - Soviet breakthrough in February and Aftermath and casualties carry the Moscow Peace Treaty and the ceded territory. Searched bare over the whole corpus, every one of the twenty results is a different war ending -- the end of the Second World War in Europe, the Cold War, Stalingrad, Kursk, the Russian Civil War.'''
+
+[[question.history]]
+user = '''Why did the Soviet Union attack Finland in 1939?'''
+assistant = '''
+The Soviet Union attacked Finland in 1939 because, according to the Molotov-Ribbentrop Pact of August 1939, Finland was assigned to the Soviet sphere of influence. The Soviets demanded territorial and other concessions from Finland, including the destruction of the defensive Mannerheim Line, but Finland rejected these demands. The Soviet Union justified the invasion with a staged incident at the border and aimed to conquer Finland and install a communist puppet government in Helsinki. The Soviets also feared that the Axis powers would use Finland as a base to attack them, and thus sought to secure their position by invading Finland [2][3][4][5].
+'''
+
+[[question]]
+id = "c-euro-outside"
+kind = "multi"
+suite = "conversation"
+text = "Which countries stayed out?"
+expected = ["9472:3", "13705897:1"]
+note = '''Euro - EU members not using the euro lists Czechia, Hungary, Poland, Romania and Sweden as committed but not in, and Denmark's opt-out; Opt-outs in the European Union - Current opt-outs is the formal version. Searched bare, Opt-outs - Current opt-outs is already at rank 5 but rank 1 is Schengen Area - Opt-outs, which is the same word about a different thing. This case may score as a hit before any rewriting and be wrong for the reader anyway.'''
+
+[[question.history]]
+user = '''When was the euro introduced?'''
+assistant = '''
+The euro was introduced in non-physical form on 1 January 1999, when the national currencies of participating countries ceased to exist independently and their exchange rates were locked at fixed rates against each other [1]. Physical euro coins and banknotes entered into circulation on 1 January 2002, becoming the day-to-day operating currency of its original members [2][3].
+'''
+
+[[question]]
+id = "c-yugoslavia-siege"
+kind = "easy"
+suite = "conversation"
+text = "Which city was under siege the longest?"
+expected = ["182821:0", "182821:2"]
+expected_answer = ["Sarajevo"]
+note = '''The Siege of Sarajevo lead states 1,425 days, 'the longest siege of a capital city in the history of modern warfare'. Searched bare the corpus answers Sarajevo at rank 1 anyway -- but ranks 2 to 20 are Leningrad, Paris 1870 and Budapest, which is the honest reading of the question without its history. A second case kept because it may already work.'''
+
+[[question.history]]
+user = '''How did Yugoslavia break up?'''
+assistant = '''
+Yugoslavia broke up after a period of political and economic crisis in the 1980s, leading the constituent republics of the Socialist Federal Republic of Yugoslavia to split apart in the early 1990s [1]. The federal system, established after World War II with six republics and two autonomous provinces, was initially stable under Josip Broz Tito but weakened after his death in 1980, leaving the federal government unable to handle rising economic and political challenges [2]. Increasing nationalist grievances and tensions between federalists (mainly Croats and Slovenes) and unitarists (mainly Serbs) contributed to the breakdown, with the 1974 constitution attempting to manage these tensions by formalizing national rights and decentralizing power to autonomous regions like Kosovo and Vojvodina [3]. The independence declarations, such as Bosnia and Herzegovina's in 1991, led to ethnic divisions and the creation of Serb Autonomous Regions, escalating conflict [5]. The final blow was Bosnia and Herzegovina's independence in 1992, after which the Serb-dominated Federal Republic of Yugoslavia was formed by Serbia and Montenegro, but was not internationally recognized as the successor state, marking the effective dissolution of Yugoslavia [4]. The breakup triggered a series of inter-ethnic wars from 1991 to 2001, primarily affecting Bosnia and Herzegovina, parts of Croatia, and Kosovo [1].
+'''
+
+[[question]]
+id = "c-dubcek-after"
+kind = "multi"
+suite = "conversation"
+text = "What happened to him after that?"
+expected = ["42897:5", "42897:6", "23821:5"]
+note = ''''Him' is Dubcek, named in the turn-1 answer and nowhere in the question. Prague Spring - Aftermath has him replaced by Husak in April 1969, expelled and made a forestry official; Alexander Dubcek - Exile in Bratislava and Velvet Revolution are the rest of his life. Searched bare over the whole corpus, every one of the twenty results is a different man's fate -- Mengele, Hitler, Lenin, Himmler, Heydrich, Globocnik.'''
+
+[[question.history]]
+user = '''What was the Prague Spring?'''
+assistant = '''
+The Prague Spring was a period of political liberalization and mass protest in the Czechoslovak Socialist Republic that began on 5 January 1968 when reformist Alexander Dubček was elected First Secretary of the Communist Party of Czechoslovakia (KSČ) [1][2]. It involved attempts to grant additional rights to citizens through partial decentralization of the economy and democratization, including loosening restrictions on the media, speech, and travel, and discussions about dividing the country into a federation [1][2][4][5]. The reforms aimed to create "socialism with a human face," maintaining Communist Party rule but with internal democracy, greater freedom of expression, rehabilitation of victims of Stalinist purges, economic decentralization, and human rights reforms such as an independent judiciary [5]. The Prague Spring ended on 21 August 1968 when the Soviet Union and four other Warsaw Pact members invaded Czechoslovakia to suppress the reforms [1][2].
+'''
+
+[[question]]
+id = "c-shift-wannsee"
+kind = "easy"
+suite = "conversation"
+text = "What was discussed and decided at the Wannsee Conference?"
+expected = ["33862:4", "33862:5", "33862:0"]
+note = '''CONTROL, and the text is byte-identical to the golden question wannsee-decisions. The history is about the Berlin Wall and has nothing to do with it: a rewriter that folds the history into every question would drag Berlin into this one. In the run before any rewriting exists, this must retrieve exactly what wannsee-decisions retrieves -- same twenty chunks, same order -- and that is the impossible check for this suite. wannsee-decisions hit at rank 1 in 2026-08-09T1022Z.'''
+
+[[question.history]]
+user = '''Why was the Berlin Wall built?'''
+assistant = '''
+The Berlin Wall was built primarily to prevent East German citizens from fleeing to the West [1][2]. The East German government claimed it was an "anti-fascist protective rampart" intended to dissuade aggression from the West and to counter the activities of Western agents in Eastern Europe, but most people believed its main purpose was to stop East Germans from entering or fleeing to West Berlin [2][4]. The Wall physically closed off West Berlin from East Berlin and East Germany, sealing all Eastern access points to West Berlin to prevent Easterners from leaving without a permit, which was rarely granted [5].
+'''
+
+[[question]]
+id = "c-shift-moscow"
+kind = "paraphrase"
+suite = "conversation"
+text = "What stopped the German advance short of the Soviet capital in the winter of 1941?"
+expected = ["573888:5", "573888:4"]
+note = '''CONTROL, byte-identical to the golden paraphrase question stopped-short-of-moscow, which hit at rank 3 in 2026-08-09T1022Z. The history is about the euro. Paraphrase is the weakest kind in this eval at 37.5% recall@5, so it is the kind most likely to break if a rewriter adds words that do not belong.'''
+
+[[question.history]]
+user = '''When was the euro introduced?'''
+assistant = '''
+The euro was introduced in non-physical form on 1 January 1999, when the national currencies of participating countries ceased to exist independently and their exchange rates were locked at fixed rates against each other [1]. Physical euro coins and banknotes entered into circulation on 1 January 2002, becoming the day-to-day operating currency of its original members [2][3].
+'''
+
+[[question]]
+id = "c-shift-easter-rising"
+kind = "easy"
+suite = "conversation"
+text = "How many people died in the Easter Rising?"
+expected = ["10350:6"]
+expected_answer = ["485"]
+note = '''CONTROL, byte-identical to the factual question f-easter-rising-deaths, which hit at rank 3 in 2026-08-09T1022Z and states 485. The history is about Solidarity in Poland. This control carries a number, so contamination shows up in fact_rate as well as in rank.'''
+
+[[question.history]]
+user = '''What was Solidarity in Poland?'''
+assistant = '''
+Solidarity in Poland was an independent trade union founded in August 1980 at the Lenin Shipyard in Gdańsk. It was the first independent trade union in a Warsaw Pact country to be recognized by the state and grew to have a membership peak of 10 million in September 1981, representing one-third of the country's working-age population [1]. Initially a non-political movement aiming at civil society reconstruction, it evolved into a broad anti-authoritarian social movement dominated by the working class and supported by intellectual dissidents, including those associated with the Catholic Church and non-communist leftists, adhering to nonviolent resistance [4]. The government tried to destroy Solidarity in the early 1980s through martial law and political repression, but the union survived underground with financial support from the Vatican and the United States, eventually entering negotiations with the government in the late 1980s [5]. These negotiations led to the 1989 round table talks and the first pluralistic elections since 1947, resulting in a Solidarity-led coalition government and the election of Lech Wałęsa as President in 1990 [5].
+'''
+
+[[question]]
+id = "c-vw-diesel"
+kind = "unanswerable"
+suite = "conversation"
+text = "And why was the company prosecuted over the software in its diesel engines?"
+note = ''''The company' is Volkswagen, named only in turn 1. Verified corpus-wide: zero of 8,894 Silver sections match 'dieselgate' or 'emissions scandal', and the twelve that match 'diesel engine' are submarines, tanks and Latvia. This is the same gap as the extended question vw-emissions-scandal, deliberately, so the pair can be compared: one names the company and refuses, one relies on the history. A rewriter that resolves 'the company' correctly must still produce a refusal, and one that resolves it wrongly will answer about something else.'''
+
+[[question.history]]
+user = '''What was the Volkswagen Beetle originally built for?'''
+assistant = '''
+The Volkswagen Beetle was originally conceived in the early 1930s because Adolf Hitler, the leader of Nazi Germany, decided there was a need for a people's car—an inexpensive, simple, mass-produced car—to serve Germany's new road network, the Reichsautobahn [1].
+'''

@@ -1,0 +1,86 @@
+gate: 2026-08-09T1126Z -> 2026-08-09T1341Z
+
+
+COMPARABILITY
+  warn conversation                                -> gpt-4.1-mini  declared
+
+RETRIEVAL
+  ok   conversation recall@5                 0.462 -> 0.923       no drop
+  ok   conversation recall@20                0.692 -> 1.000       no drop
+  ok   conversation coverage@5               0.295 -> 0.603       no drop
+  ok   conversation MRR                      0.332 -> 0.674       no drop
+  ok   conversation fact rate                0.600 -> 1.000       no drop
+  ok   conversation top-1 score              0.502 -> 0.689       drop <= 0.001
+  ok   extended recall@5                     0.625 -> 0.625       no drop
+  ok   extended recall@20                    0.917 -> 0.917       no drop
+  ok   extended coverage@5                   0.389 -> 0.389       no drop
+  ok   extended MRR                          0.453 -> 0.453       no drop
+  ok   extended fact rate                      n/a -> n/a         no drop
+  ok   extended top-1 score                  0.594 -> 0.594       drop <= 0.001
+  ok   factual recall@5                      1.000 -> 1.000       no drop
+  ok   factual recall@20                     1.000 -> 1.000       no drop
+  ok   factual coverage@5                    1.000 -> 1.000       no drop
+  ok   factual MRR                           0.792 -> 0.792       no drop
+  ok   factual fact rate                     0.857 -> 0.857       no drop
+  ok   factual top-1 score                   0.661 -> 0.661       drop <= 0.001
+  ok   golden recall@5                       0.750 -> 0.750       no drop
+  ok   golden recall@20                      1.000 -> 1.000       no drop
+  ok   golden coverage@5                     0.479 -> 0.479       no drop
+  ok   golden MRR                            0.536 -> 0.536       no drop
+  ok   golden fact rate                        n/a -> n/a         no drop
+  ok   golden top-1 score                    0.654 -> 0.654       drop <= 0.001
+  ok   temporal recall@5                     0.882 -> 0.882       no drop
+  ok   temporal recall@20                    1.000 -> 1.000       no drop
+  ok   temporal coverage@5                   0.755 -> 0.755       no drop
+  ok   temporal MRR                          0.644 -> 0.644       no drop
+  ok   temporal fact rate                      n/a -> n/a         no drop
+  ok   temporal top-1 score                  0.678 -> 0.678       drop <= 0.001
+  ok   all recall@5                          0.739 -> 0.804       no drop
+  ok   all recall@20                         0.935 -> 0.978       no drop
+  ok   all coverage@5                        0.560 -> 0.603       no drop
+  ok   all MRR                               0.544 -> 0.593       no drop
+  ok   all fact rate                         0.789 -> 0.895       no drop
+  ok   all top-1 score                       0.622 -> 0.647       drop <= 0.001
+
+BEHAVIOUR
+  ok   conversation refusals                     1 -> 1           no change
+  ok   conversation invalid markers              0 -> 0           no rise
+  ok   conversation answers with no citation          0 -> 0           no rise
+  ok   conversation errors                       0 -> 0           no rise
+  ok   extended refusals                         5 -> 5           no change
+  ok   extended invalid markers                  0 -> 0           no rise
+  ok   extended answers with no citation          0 -> 0           no rise
+  ok   extended errors                           0 -> 0           no rise
+  ok   factual refusals                          1 -> 1           no change
+  ok   factual invalid markers                   0 -> 0           no rise
+  ok   factual answers with no citation          1 -> 1           no rise
+  ok   factual errors                            0 -> 0           no rise
+  ok   golden refusals                           2 -> 2           no change
+  ok   golden invalid markers                    0 -> 0           no rise
+  ok   golden answers with no citation           0 -> 0           no rise
+  ok   golden errors                             0 -> 0           no rise
+  ok   temporal refusals                         0 -> 0           no change
+  ok   temporal invalid markers                  0 -> 0           no rise
+  ok   temporal answers with no citation          0 -> 0           no rise
+  ok   temporal errors                           0 -> 0           no rise
+  ok   all refusals                              9 -> 9           no change
+  ok   all invalid markers                       0 -> 0           no rise
+  ok   all answers with no citation              1 -> 1           no rise
+  ok   all errors                                0 -> 0           no rise
+
+LATENCY
+  --   conversation p50 ms                    3469 -> 3950        moved 481, floor 900
+  --   conversation p50 first token ms        1032 -> 1911        moved 880, floor 900
+  --   extended p50 ms                        3604 -> 3484        moved 120, floor 900
+  --   extended p50 first token ms            1082 -> 1105        moved 22, floor 900
+  --   factual p50 ms                         1507 -> 1610        moved 103, floor 900
+  --   factual p50 first token ms             1130 -> 1095        moved 35, floor 900
+  --   golden p50 ms                          3830 -> 3846        moved 16, floor 900
+  --   golden p50 first token ms              1105 -> 1128        moved 22, floor 900
+  --   temporal p50 ms                        3655 -> 3997        moved 342, floor 900
+  --   temporal p50 first token ms            1047 -> 1026        moved 21, floor 900
+  --   all p50 ms                             3516 -> 3609        moved 93, floor 900
+  --   all p50 first token ms                 1098 -> 1115        moved 17, floor 900
+
+GATE PASSED -- 73 checks
+

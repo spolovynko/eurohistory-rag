@@ -32,6 +32,7 @@ from eurohistory_rag.eval.execute import RunConfig
 from eurohistory_rag.eval.questions import QUESTIONS_PATH, load_questions
 from eurohistory_rag.eval.record import RUNS_DIR, new_run_id
 from eurohistory_rag.generation.client import GenerationUnavailable
+from eurohistory_rag.generation.rewrite import Turn
 from eurohistory_rag.generation.service import Citation, GenerationService
 from eurohistory_rag.retrieval.search import DEFAULT_K, SearchResult, SearchService
 from eurohistory_rag.retrieval.vectorstore import VectorStore, VectorStoreUnavailable
@@ -113,6 +114,21 @@ class SearchResponse(BaseModel):
     results: list[SearchHit]
 
 
+class HistoryTurn(BaseModel):
+    """One completed exchange the client is sending back.
+
+    The client keeps the conversation, not the server. A browser tab already
+    holds the thread it is displaying, so storing a second copy here would mean
+    session ids, eviction and a whole class of "whose conversation is this"
+    questions -- for a system with no authentication anywhere in it. The cost is
+    that the client can lie about what was said, which on localhost is a cost of
+    nothing. D-098.
+    """
+
+    user: str = Field(min_length=1, max_length=500)
+    assistant: str = Field(min_length=1, max_length=8000)
+
+
 class AskRequest(BaseModel):
     """A question, how widely to search for it, and how to answer it.
 
@@ -127,6 +143,12 @@ class AskRequest(BaseModel):
     hybrid: bool | None = None
     reranker: str | None = None
     model: str | None = None
+    # The exchange that came before, oldest first. Empty on a first turn and on
+    # every call the eval runner and Phases 6 to 23 ever made, so a request that
+    # sends none behaves exactly as it did before this field existed. Capped
+    # here rather than trusted: the body arrives from a browser, and only the
+    # last two turns are ever read. D-098.
+    history: list[HistoryTurn] = Field(default_factory=list, max_length=20)
 
 
 class Configuration(BaseModel):
@@ -242,6 +264,12 @@ class AskResponse(BaseModel):
     license: str
     sources: list[AnswerSource]
     configuration: Configuration
+    # The question as it was actually searched and answered, when the history
+    # changed it; empty when it did not. On screen this is the difference
+    # between "the system understood me" and "the system answered something
+    # else", and it is the only place a wrong rewrite is visible at all. Phase 8
+    # shipped a switch nobody could see was off; this is the same rule. D-098.
+    standalone: str = ""
 
 
 # What a client sends in `Accept` to be given the answer as it is written. HTTP
@@ -265,6 +293,7 @@ def _sse(event: str, payload: object) -> str:
 def _answer_events(
     service: GenerationService,
     question: str,
+    standalone: str,
     results: list[SearchResult],
     used: Configuration,
 ) -> Iterator[str]:
@@ -284,14 +313,15 @@ def _answer_events(
         [SearchHit.from_result(result).model_dump() for result in results],
     )
     try:
-        for piece in service.stream_from(question, results):
+        for piece in service.stream_from(standalone, results):
             if isinstance(piece, str):
                 yield _sse("token", piece)
             else:
                 yield _sse(
                     "done",
                     AskResponse(
-                        question=piece.question,
+                        question=question,
+                        standalone="" if standalone == question else standalone,
                         answer=piece.text,
                         model=piece.model,
                         license=CORPUS_LICENSE,
@@ -496,17 +526,27 @@ def create_app() -> FastAPI:
             # the half that can fail before a single byte has left, so a dead
             # Qdrant is still an honest 503 rather than an apology inside a
             # response that already claimed success.
-            results = service.search(request.question, k=request.k)
+            # The history is folded in before anything is embedded, and this is
+            # the only place it is used. Empty history means this returns the
+            # question untouched, so every caller that sends none -- the eval
+            # runner included -- takes the path it has taken since Phase 6.
+            standalone = service.standalone(
+                request.question,
+                [Turn(user=t.user, assistant=t.assistant) for t in request.history],
+            )
+            results = service.search(standalone, k=request.k)
             if streaming:
                 return StreamingResponse(
-                    _answer_events(service, request.question, results, used),
+                    _answer_events(
+                        service, request.question, standalone, results, used
+                    ),
                     media_type=SSE_TYPE,
                     # Buffering proxies are the one thing that can undo this
                     # phase: an intermediary holding the response back until it
                     # is complete restores exactly the blank screen we removed.
                     headers={"Cache-Control": "no-store", "X-Accel-Buffering": "no"},
                 )
-            answer = service.answer_from(request.question, results)
+            answer = service.answer_from(standalone, results)
         except (VectorStoreUnavailable, GenerationUnavailable) as error:
             # Two different failures, one message: the caller can do nothing
             # differently about a dead Qdrant than about a dead OpenAI.
@@ -515,7 +555,8 @@ def create_app() -> FastAPI:
                 detail="Answering is temporarily unavailable.",
             ) from error
         return AskResponse(
-            question=answer.question,
+            question=request.question,
+            standalone="" if standalone == request.question else standalone,
             answer=answer.text,
             model=answer.model,
             license=CORPUS_LICENSE,
@@ -662,6 +703,7 @@ def create_app() -> FastAPI:
             # setting until the D-096 verdict argues a default for it, and mypy
             # found this call site the moment the field lost its default.
             temporal=settings.temporal_enabled,
+            conversation=settings.conversation_enabled,
         )
 
         run_id = new_run_id()

@@ -522,3 +522,53 @@ def test_a_dead_store_is_still_a_real_503_even_when_a_stream_was_asked_for() -> 
         )
 
     assert response.status_code == 503
+
+
+# --- conversation -----------------------------------------------------------
+
+
+def conversing_client(answer: str, rewritten: str) -> TestClient:
+    """An /ask wired to a stub search, a canned answer and a canned rewrite."""
+    app = create_app()
+    search = StubSearchService([result("30030:1:0"), result("30030:1:1")])
+    app.dependency_overrides[get_generation_service] = lambda: GenerationService(
+        search,  # type: ignore[arg-type]
+        FakeGenerator(answer=answer),
+        rewriter=FakeGenerator(answer=rewritten),
+    )
+    return TestClient(app)
+
+
+def test_an_answer_says_what_it_was_actually_asked() -> None:
+    """A rewrite nobody can see is Phase 8's dead switch with better manners.
+
+    `question` stays what the reader typed and `standalone` is what was
+    searched, so a wrong resolution is visible on screen rather than only as a
+    rank that moved.
+    """
+    body = (
+        conversing_client("It came down in 1989 [1].", "When did the Wall come down?")
+        .post(
+            "/ask",
+            json={
+                "question": "When did it come down?",
+                "history": [{"user": "Why was it built?", "assistant": "To [1]."}],
+            },
+        )
+        .json()
+    )
+
+    assert body["question"] == "When did it come down?"
+    assert body["standalone"] == "When did the Wall come down?"
+
+
+def test_a_question_with_no_history_reports_no_rewrite() -> None:
+    """Every call made by the eval runner, and every first turn anyone types."""
+    body = (
+        conversing_client("Aid arrived [1].", "something else")
+        .post("/ask", json={"question": "how much was the Marshall Plan?"})
+        .json()
+    )
+
+    assert body["standalone"] == ""
+    assert body["question"] == "how much was the Marshall Plan?"

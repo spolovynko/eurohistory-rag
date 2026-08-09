@@ -50,6 +50,7 @@ COMPARABILITY_FIELDS = (
     "hybrid",
     "verifier",
     "temporal",
+    "conversation",
 )
 
 # The question set is compared as a field alongside the others, because a

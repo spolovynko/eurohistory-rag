@@ -8,7 +8,7 @@ own -- /search proves that -- and generation is not useful without retrieval.
 
 import logging
 import re
-from collections.abc import Iterator
+from collections.abc import Iterator, Sequence
 from dataclasses import dataclass
 
 from eurohistory_rag.generation.client import (
@@ -18,6 +18,7 @@ from eurohistory_rag.generation.client import (
     complete,
 )
 from eurohistory_rag.generation.messages import build_messages
+from eurohistory_rag.generation.rewrite import Turn, rewrite
 from eurohistory_rag.generation.verify import verify
 from eurohistory_rag.retrieval.search import SearchResult, SearchService
 
@@ -105,14 +106,38 @@ class GenerationService:
         search: SearchService,
         generator: Generator,
         verifier: Generator | None = None,
+        rewriter: Generator | None = None,
     ) -> None:
         self._search = search
         self._generator = generator
+        # The model that turns a follow-up into a standalone question, or None
+        # when conversation is off. Its own client rather than a flag on the
+        # answering one, for the reason the verifier is: they are two different
+        # jobs and there is no rule saying the same model has to be good at
+        # both. D-098.
+        self._rewriter = rewriter
         # The groundedness gate, or None when it is off. Presence rather than a
         # boolean plus a client: one concept to reason about, one thing that can
         # be forgotten. It is a `Generator` because checking is the same shape
         # as answering -- messages in, text out -- with a different prompt.
         self._verifier = verifier
+
+    def standalone(self, question: str, history: Sequence[Turn] = ()) -> str:
+        """The question with the conversation folded into it.
+
+        A second turn is not a question -- "when did it come down?" has no
+        subject, and the subject is in the turn above. This is where that gets
+        put back, and it is deliberately the *only* place: everything downstream
+        keeps receiving one self-contained question, so retrieval, the prompt,
+        the citations and every metric are unchanged.
+
+        Returns the question untouched when there is no history or no rewriter,
+        which is every one of the 92 single-turn evaluation questions and every
+        first turn anyone ever types. D-098.
+        """
+        if self._rewriter is None or not history:
+            return question
+        return rewrite(self._rewriter, question, history)
 
     def ask(self, question: str, k: int | None = None) -> Answer:
         """Find the chunks, ask the model, return the answer and its sources.

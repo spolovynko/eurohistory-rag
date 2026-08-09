@@ -125,7 +125,17 @@ def render_transcript(meta: RunMeta, records: Sequence[EvalRecord]) -> str:
             "",
             "=" * 78,
             f"[{record.question_id}] ({record.kind})  {_verdict(record)}",
-            record.question,
+        ]
+        # The conversation above the question, printed in full. A follow-up read
+        # on its own is unreadable -- "who led it?" -- and the whole point of
+        # this suite is what "it" was. The rewritten form goes next to it,
+        # because a wrong rewrite explains a rank nothing else can.
+        for turn in record.history:
+            out += [f"  turn: {turn.user}", f"  said: {turn.assistant}", ""]
+        out.append(record.question)
+        if record.standalone:
+            out.append(f"  -> searched as: {record.standalone}")
+        out += [
             "",
             f"expected: {', '.join(record.expected_doc_ids) or '(nothing)'}",
         ]
