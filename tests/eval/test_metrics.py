@@ -9,6 +9,7 @@ from eurohistory_rag.eval.metrics import (
     invalid_markers,
     reciprocal_rank,
     refused,
+    states_fact,
     summarise,
     summarise_by_kind,
 )
@@ -29,6 +30,7 @@ def make_record(
     sources_sent: int = 5,
     total_ms: float = 100.0,
     ttft_ms: float | None = None,
+    expected_answers: list[str] | None = None,
 ) -> EvalRecord:
     """An EvalRecord with only the fields a metric reads set meaningfully."""
     docs = doc_ids if doc_ids is not None else ["1:0", "2:0", "3:0"]
@@ -61,6 +63,7 @@ def make_record(
         generate_ms=90.0,
         total_ms=total_ms,
         first_token_ms=ttft_ms,
+        expected_answers=expected_answers or [],
     )
 
 
@@ -150,3 +153,67 @@ def test_summarise_by_kind_adds_a_total_row_last() -> None:
     summaries = summarise_by_kind(records)
     assert [s.kind for s in summaries] == ["easy", "multi", "all"]
     assert summaries[-1].questions == 2
+
+
+# --- the fact metric --------------------------------------------------------
+
+
+def test_a_question_asking_for_no_particular_value_is_not_scored() -> None:
+    """Most questions want an explanation, and recall already judges those."""
+    assert states_fact(make_record()) is None
+
+
+def test_a_figure_counts_however_its_thousands_are_punctuated() -> None:
+    """The box writes 41,291 and the prose writes 41291. Same number."""
+    record = make_record(
+        answer="Switzerland covers 41,291 km2 [1].", expected_answers=["41291"]
+    )
+    assert states_fact(record) is True
+
+
+def test_a_number_inside_a_longer_number_does_not_count() -> None:
+    """Otherwise "1,485 dead" would be scored as stating 485."""
+    record = make_record(
+        answer="There were 1,485 deaths [1].", expected_answers=["485"]
+    )
+    assert states_fact(record) is False
+
+
+def test_a_year_immediately_before_the_figure_still_counts() -> None:
+    """The regression that shipped in the first version of this metric.
+
+    "in 1956, 699 Soviet soldiers were killed" was scored as NOT stating 699,
+    because the normalisation removed the comma *and the space* and left
+    `1956699`. Spaces are kept now. D-097.
+    """
+    record = make_record(
+        answer="In 1956, 699 Soviet soldiers were killed [1].",
+        expected_answers=["699"],
+    )
+    assert states_fact(record) is True
+
+
+def test_any_one_of_the_accepted_forms_is_enough() -> None:
+    """A date can be written several ways and all of them are the same date."""
+    record = make_record(
+        answer="It entered into force on January 10, 1920 [1].",
+        expected_answers=["10 January 1920", "January 10, 1920"],
+    )
+    assert states_fact(record) is True
+
+
+def test_the_summary_leaves_the_fact_rate_unset_when_nothing_asks_for_one() -> None:
+    """Reporting 0.0% for the golden thirty would read as a failure."""
+    assert summarise([make_record()]).fact_rate is None
+
+
+def test_the_summary_counts_only_the_questions_that_ask_for_a_value() -> None:
+    """One right, one wrong, and one that is not this metric's business."""
+    records = [
+        make_record(question_id="a", answer="41,291 km2", expected_answers=["41291"]),
+        make_record(question_id="b", answer="no idea", expected_answers=["108333"]),
+        make_record(question_id="c"),
+    ]
+    summary = summarise(records)
+    assert summary.fact_questions == 2
+    assert summary.fact_rate == 0.5

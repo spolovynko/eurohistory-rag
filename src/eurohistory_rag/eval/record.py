@@ -144,6 +144,13 @@ class EvalRecord:
     # months later and the file it was written from may have grown since. D-087.
     suite: str = "golden"
 
+    # The written forms that would count as stating the fact asked for, copied
+    # from the question. Carried into the record for the same reason `suite` is:
+    # `rescore` reads a run off disk long after questions.toml has moved on, and
+    # a metric that looked the key up live would score an old run against a new
+    # answer. Empty on every run made before Phase 23. D-097.
+    expected_answers: list[str] = field(default_factory=list)
+
     prompt_tokens: int | None = None
     completion_tokens: int | None = None
     error: str | None = None

@@ -14,6 +14,7 @@ from typing import Any
 import polars as pl
 
 from eurohistory_rag.pipeline.gold.chunk import chunk_document
+from eurohistory_rag.pipeline.gold.infobox import infobox_chunks
 from eurohistory_rag.pipeline.gold.store import Chunk, to_frame, write
 from eurohistory_rag.pipeline.silver.store import SilverRow
 
@@ -76,15 +77,29 @@ def build(silver_root: Path, gold_root: Path, size: int, overlap: int) -> BuildR
     )
 
     chunks: list[Chunk] = []
+    facts: list[Chunk] = []
+    seen: set[int] = set()
     for row in documents.iter_rows(named=True):
-        chunks.extend(chunk_document(to_document(row), size, overlap))
+        document = to_document(row)
+        chunks.extend(chunk_document(document, size, overlap))
+        # One box per article, not per section. Silver repeats the article's
+        # metadata on every one of its rows (D-030), so the first row seen for a
+        # page is the whole article's box.
+        if document.page_id not in seen:
+            seen.add(document.page_id)
+            facts.extend(infobox_chunks(document, size))
 
-    frame = to_frame(chunks)
+    # Appended after every prose chunk rather than beside its own article, so
+    # that the ids and the order of the existing chunks are untouched. That is
+    # what lets `index --resume` skip the corpus it has already paid to embed
+    # and pay only for these. D-097.
+    frame = to_frame(chunks + facts)
     path = write(gold_root, frame)
     logger.info(
-        "done: %d chunks from %d documents in %.1fs",
+        "done: %d chunks from %d documents, %d of them infobox, in %.1fs",
         frame.height,
         documents.height,
+        len(facts),
         time.monotonic() - started,
     )
     return BuildReport(documents=documents.height, chunks=frame.height, path=path)

@@ -52,7 +52,7 @@ TARGET_COUNTS: dict[Kind, int] = {
 # new questions carry the line. A synthetic set names itself, because its kind
 # already decides the answer and a file nobody hand-edits should not have to
 # repeat it.
-Suite = Literal["golden", "extended", "temporal", "synthetic"]
+Suite = Literal["golden", "extended", "temporal", "factual", "synthetic"]
 
 # The shape each hand-written suite is meant to have. Phase 7's 8/8/8/6 applies
 # to the two suites written to that plan; the temporal eighteen were written to
@@ -69,6 +69,11 @@ SUITE_TARGETS: dict[Suite, dict[Kind, int]] = {
     # reclassified after the D-096 comparison closed. The count records the
     # correction rather than hiding it.
     "temporal": {"easy": 10, "multi": 7, "paraphrase": 0, "unanswerable": 1},
+    # All fourteen are single-article lookups of one stated value, so they are
+    # all "easy" by Phase 7's definition. The split that matters here is not the
+    # kind but whether the fact is in the prose (5) or only in the infobox (9),
+    # and that is `expected_answer` plus the note, not a column. D-097.
+    "factual": {"easy": 14, "multi": 0, "paraphrase": 0, "unanswerable": 0},
 }
 
 # Silver builds doc_ids as "{page_id}:{position}". Checking the shape on load
@@ -87,6 +92,13 @@ class Question(BaseModel):
     kind: Kind
     text: str = Field(min_length=1)
     expected: tuple[DocId, ...] = Field(default=())
+    # The written forms that count as stating the fact this question asks for.
+    # Empty for every question that asks for an explanation rather than a value
+    # -- recall and coverage already say whether those found the right section.
+    # A question that asks "how large was West Germany" is not answered by
+    # retrieving the right article, only by the answer containing 248,717, and
+    # no rank-based metric can see the difference. D-097.
+    expected_answer: tuple[str, ...] = Field(default=())
     suite: Suite = "golden"
     note: str = ""
 

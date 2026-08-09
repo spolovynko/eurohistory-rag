@@ -631,3 +631,159 @@ suite = "temporal"
 text = "How did European governments respond to the pandemic in 2020?"
 expected = ["72671:4", "2991932:4", "14532:2"]
 note = "CORRECTED after the D-096 comparison closed. This was written as unanswerable and it is not. The check that passed it read a window around a regex match instead of the section -- the identical mistake recorded in the D-087 verdict for seveso-1976, committed inside the phase whose own file cites it. Read properly, Angela Merkel (Chancellorship) carries a COVID-19 subsection with Germany's crisis team and containment policy, Ursula von der Leyen (President of the European Commission) carries the Schengen border-control decision and Next Generation EU across twelve mentions, and Italy (History) carries the extraordinary economic measures. The system answered it from five sources, grounded and cited, in both Phase 22 runs. Those two runs keep the old empty key in their own records and remain comparable to each other; no run before this edit is comparable to any run after it."
+
+# ================================================================ Phase 23
+# Fourteen factual-lookup questions, suite = "factual". D-097.
+#
+# Each one asks for a single stated value -- an area, a date a treaty entered
+# into force, a casualty total -- of the kind Wikipedia writes in an infobox.
+# Silver keeps every infobox field (D-031); Gold drops them (D-041), so nothing
+# retrievable carries them today.
+#
+# The set is half control on purpose:
+#
+#   9 questions whose fact appears ONLY in the infobox. Found by comparing every
+#     numeric infobox value against the whole prose of its own article with
+#     commas and spaces normalised away (715 such facts corpus-wide), then
+#     verified by READING every section of the article. Not a window around a
+#     regex match -- that mistake produced seveso-1976 in D-087 and
+#     t-pandemic-2020 in D-096, and it is not making a third appearance.
+#
+#   5 questions whose fact is in the prose, quoted in the note from the section
+#     text. These are what the change must not damage.
+#
+# `expected` is the article's LEAD section, because that is where the infobox
+# sits on the page and where D-097 files the fact chunk. Recall is therefore not
+# the interesting number here -- `expected_answer` and the fact_rate metric are.
+# `expected_answer` lists accepted written forms; the match strips commas and
+# spaces, folds case, and will not match a number inside a longer number.
+#
+# The 78 questions above are untouched, byte for byte.
+
+# ---------------------------------------------------------------- easy (14)
+
+[[question]]
+id = "f-west-germany-area"
+kind = "easy"
+suite = "factual"
+text = "How large was West Germany in square kilometres?"
+expected = ["33166:0"]
+expected_answer = ["248,717"]
+note = "INFOBOX ONLY. area_km2 = 248,717. Read all 7 sections of West Germany: the string km2 does not occur once, and the only match for 'area of' is 'the area of West Berlin'. The article never states its own size in any unit."
+
+[[question]]
+id = "f-east-germany-area"
+kind = "easy"
+suite = "factual"
+text = "What was the total land area of East Germany?"
+expected = ["13058:0"]
+expected_answer = ["108,333"]
+note = "INFOBOX ONLY. area_km2 = 108,333. Read all 8 sections: no km2, no square miles, and the single 'area' match is 'in the area of religious education' in Demographics."
+
+[[question]]
+id = "f-second-polish-republic-area"
+kind = "easy"
+suite = "factual"
+text = "How many square kilometres did the Second Polish Republic cover between the wars?"
+expected = ["14245:0"]
+expected_answer = ["388,634"]
+note = "INFOBOX ONLY. area_km2 = 388,634. The article has a Geography section and it states no total. Its river figures were removed by cleaning and read 'the Vistula within boundaries of the Second Polish Republic was , the Niemen (), the Oder ()' -- the same {{convert}} loss as Schengen below."
+
+[[question]]
+id = "f-schengen-area-size"
+kind = "easy"
+suite = "factual"
+text = "What is the total area of the Schengen Area in square kilometres?"
+expected = ["16565139:0"]
+expected_answer = ["4595131"]
+note = "CORRECTED after the D-097 comparison closed: NOT infobox-only. The Schengen Area article's own lead reads 'an area of about .' -- the sentence is there and the number gone, because D-027's allow-list drops {{convert}} -- but a DIFFERENT article, Schengen Agreement, states '4595131 square kilometres (1774190 sq mi)' in its prose. The scan that chose this question compared each infobox against its own article only, and the corpus is 1,271 articles. Both runs answered it correctly and both remain comparable; it is a control, not a gap."
+
+[[question]]
+id = "f-austrian-empire-area"
+kind = "easy"
+suite = "factual"
+text = "How large was the Austrian Empire in square kilometres?"
+expected = ["266894:0"]
+expected_answer = ["698,700"]
+note = "INFOBOX ONLY. area_km2 = 698,700. No km2 anywhere in the article."
+
+[[question]]
+id = "f-versailles-in-force"
+kind = "easy"
+suite = "factual"
+text = "On exactly what date did the Treaty of Versailles enter into force?"
+expected = ["30030:0"]
+expected_answer = ["10 January 1920", "January 10, 1920", "1920-01-10"]
+note = "CORRECTED after the D-097 comparison closed: infobox-only WITHIN ITS OWN ARTICLE, not within the corpus. date_effective = 10 January 1920. All 8 sections of Treaty of Versailles read: the coming-into-force date appears only as 'the ratification of the treaty in January 1920'. But the date occurs 12 times elsewhere in Gold -- League of Nations says 'it became effective with the rest of the Treaty on 10 January 1920'. Run A missed it and Run B found it in the box, so it measures retrieval as much as storage."
+
+[[question]]
+id = "f-saint-germain-in-force"
+kind = "easy"
+suite = "factual"
+text = "When did the Treaty of Saint-Germain-en-Laye come into force?"
+expected = ["464190:0"]
+expected_answer = ["16 July 1920", "July 16, 1920", "1920-07-16"]
+note = "CORRECTED after the D-097 comparison closed: infobox-only within its own article, not within the corpus. date_effective = 16 July 1920. All three sections read and none gives an entry-into-force date, but World War I -- Aftermath lists 'Austria on 16 July 1920' among the dates the state of war ceased. Four occurrences in Gold. Same class as f-versailles-in-force."
+
+[[question]]
+id = "f-locarno-in-force"
+kind = "easy"
+suite = "factual"
+text = "On what date did the Locarno Treaties enter into force?"
+expected = ["266937:0"]
+expected_answer = ["14 September 1926", "September 14, 1926", "1926-09-14"]
+note = "INFOBOX ONLY, and deliberately the hardest. date_effective is stored as '1926 9 14' -- a {{start date}} template flattened by cleaning, so even the fact chunk carries it in that shape. All 7 sections read: the prose gives the signing (1 December, in London) and 'Germany was accepted into the League of Nations with a permanent seat on the Council on 10 September 1926' -- a nearby wrong date that reads right."
+
+[[question]]
+id = "f-western-front-allied-dead"
+kind = "easy"
+suite = "factual"
+text = "How many Allied soldiers died on the Western Front during the First World War in total?"
+expected = ["51499:0"]
+expected_answer = ["2,041,000"]
+note = "INFOBOX ONLY. casualties1 = 'Military dead: 2,041,000 Civilian dead: 534,500'. All 11 sections read: the article is full of per-battle figures -- 700,000 at Verdun, 420,000 British and 200,000 French on the Somme, 120,000 in a week under Nivelle -- and states no war-long total for either side. The failure to expect here is a plausible sum, not a refusal."
+
+[[question]]
+id = "f-rome-in-force"
+kind = "easy"
+suite = "factual"
+text = "When did the Treaty of Rome come into force?"
+expected = ["78006:0"]
+expected_answer = ["1 January 1958", "January 1, 1958", "1958-01-01"]
+note = "CONTROL -- in the prose. The lead says 'signed on 25 March 1957 ... and it came into force on 1 January 1958'. Infobox and prose agree. Must still be answered after the change."
+
+[[question]]
+id = "f-switzerland-area"
+kind = "easy"
+suite = "factual"
+text = "How many square kilometres does Switzerland cover?"
+expected = ["26748:3"]
+expected_answer = ["41291"]
+note = "CONTROL -- in the prose. Geography opens 'Switzerland encompasses diverse landscapes and climates across its 41291 km2'. The box says 41,291; the two agree once the comma is normalised, which is why the comparison has to normalise."
+
+[[question]]
+id = "f-winter-war-finnish-dead"
+kind = "easy"
+suite = "factual"
+text = "How many Finns were killed or went missing in the Winter War?"
+expected = ["33924:9"]
+expected_answer = ["25,904"]
+note = "CONTROL -- in the prose. Aftermath and casualties: 'According to revised estimates in 2005 by Finnish historians, 25,904 people died or went missing and 43,557 were wounded on the Finnish side'."
+
+[[question]]
+id = "f-easter-rising-deaths"
+kind = "easy"
+suite = "factual"
+text = "How many people died in the Easter Rising?"
+expected = ["10350:6"]
+expected_answer = ["485"]
+note = "CONTROL -- in the prose. Casualties opens 'The Easter Rising resulted in at least 485 deaths, according to the Glasnevin Trust', then breaks it down 260 civilians, 126 UK forces, 82 rebels, 17 police."
+
+[[question]]
+id = "f-hungary-1956-soviet-dead"
+kind = "easy"
+suite = "factual"
+text = "How many Soviet soldiers were killed putting down the Hungarian Revolution of 1956?"
+expected = ["351949:3"]
+expected_answer = ["699"]
+note = "CONTROL, and the conflict test. Soviet invasion says 'On the Soviet side, 699 men were killed, 1,450 wounded, and 51 missing in action.' The infobox says 722 killed and 1,540 wounded. This phase picks neither; it puts both in front of the model. If the answer moves from 699 to 722 the infobox is overriding a sourced sentence, and that shows up here as a number."

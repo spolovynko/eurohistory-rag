@@ -314,6 +314,10 @@ def _retrieval_checks(suite: str, before: Summary, after: Summary) -> list[Check
             after.coverage_at_5,
         ),
         _no_drop("retrieval", f"{suite} MRR", before.mrr, after.mrr),
+        # Not a rank metric, and it gates for the same reason they do: it is
+        # computed by string comparison against a key written before the run, so
+        # it cannot drift the way a judged number can. D-097.
+        _no_drop("retrieval", f"{suite} fact rate", before.fact_rate, after.fact_rate),
         _no_drop(
             "retrieval",
             f"{suite} top-1 score",

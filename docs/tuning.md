@@ -55,6 +55,8 @@ answers — or, for the last two, what the measurement of it says.
 | `ERAS` | 10 named periods | `retrieval/temporal.py` | D-096 | Which years "the interwar years", "the Cold War", "the early Cold War" and the rest mean. Every row is a judgement somebody could argue with; the Cold War's start date has a literature of its own. Only consulted when no year or decade is stated |
 | `_DECADE_PARTS` | early 0-3, mid 4-6, late 6-9 | `retrieval/temporal.py` | D-096 | Which slice of a decade "early", "mid" and "late" mean. Early and late are four years and overlap the middle, which is the permissive direction |
 | `_DIRECTIONAL` | 12 words | `retrieval/temporal.py` | D-096 | Words that make a date a reference point rather than a period — "after 1918" is not the year 1918. A question containing one resolves to no period at all unless it states an explicit range or decade. 43 of 78 evaluation questions take this path |
+| `HEADING` | `"Infobox"` | `pipeline/gold/infobox.py` | D-097 | What the infobox chunk calls itself, and so what a reader sees as the source name of a fact taken from a box. Every article with a box gets one chunk per `CHUNK_SIZE` of fields — 1,421 chunks over 988 articles |
+| `SKIP_FIELDS` | 16 prefixes | `pipeline/silver/article.py` | D-031, D-097 | Infobox fields dropped as presentational — images, captions, map pins. Written in Phase 3 when the box was read only for its type; **it now decides what is retrievable**, so a fact behind one of these prefixes cannot be found |
 | `hybrid_enabled` | `false` default | `core/config.py` | D-074 | Whether the BM25 keyword search runs and gets fused in. Lives in `.env` for the same reason as `reranker_enabled`: it is the switch a before/after run flips. **Needs an index built with sparse vectors** — turning it on against a pre-Phase-9 collection finds nothing |
 | `SYSTEM_PROMPT` | `system_prompt.md` | `generation/system_prompt.md` | D-054 to D-057 | The standing rules the answering model works under. Not a number, but the single biggest lever on answer quality in this phase |
 | `TEMPERATURE` | 0.0 | `generation/client.py` | D-052 | How much the model varies run to run. 0 so the same question gives the same answer, which is what makes Phase 7's before/after comparable |
@@ -115,6 +117,7 @@ with the corpus, not as a fixed cost.
 | `DEFAULT_K` / `MAX_PER_DOCUMENT` / `OVERFETCH` / `RERANK_TOP_N` / `RRF_K` | nothing | free, takes effect next query |
 | `hybrid_enabled` | `index` **if the collection predates Phase 9** | free to flip; a rebuild is a few cents |
 | `temporal_enabled` | `chunk` then `index --payload-only` **if the payloads predate Phase 22** | free to flip; the payload refresh is free too — no vector is re-embedded |
+| `HEADING`, `SKIP_FIELDS` | `chunk` then `index --resume` | ~$0.008 — resume skips every batch already stored and pays only for the infobox chunks. A full `index` would be $0.26 **and** would move every cosine score in the fourth decimal, which is exactly what a before/after cannot afford |
 | `ERAS` / `_DECADE_PARTS` / `_DIRECTIONAL` | nothing | free, takes effect next query |
 | `reranker_enabled` / `reranker_model` | nothing | free; a new model downloads once, then ~1 s per query |
 | `judge_model` | nothing; re-run `judge` on the affected runs | a few cents per run, and a `judge-probe` first |

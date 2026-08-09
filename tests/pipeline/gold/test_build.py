@@ -130,3 +130,37 @@ def test_provenance_survives_the_round_trip(tmp_path: Path) -> None:
     assert chunk["revision_id"] == 30130
     assert chunk["license"] == "CC BY-SA 4.0"
     assert chunk["text"] == "Article 30030 — Section 2\n\nA short section."
+
+
+def test_the_infobox_arrives_once_per_article_after_every_prose_chunk(
+    tmp_path: Path,
+) -> None:
+    """Once per article, not once per section, and at the end of the table.
+
+    Both halves are load-bearing. Silver repeats the box on every section row,
+    so a naive loop would write it fifty times; and appending at the end is what
+    leaves the existing chunk ids and their order untouched, which is what lets
+    `index --resume` skip the corpus it has already paid to embed. D-097.
+    """
+    silver = tmp_path / "silver"
+    gold = tmp_path / "gold"
+    write_silver(
+        silver,
+        [
+            silver_row(1, 0, long_text("alpha", 40)),
+            silver_row(1, 1, long_text("beta", 40)),
+            silver_row(2, 0, long_text("gamma", 40)),
+        ],
+    )
+
+    build(silver, gold, size=1200, overlap=150)
+    frame = pl.read_parquet(gold / "chunks.parquet")
+    is_infobox = frame["chunk_id"].str.contains(":infobox:")
+
+    assert frame.filter(is_infobox)["chunk_id"].to_list() == [
+        "1:infobox:0",
+        "2:infobox:0",
+    ]
+    prose = frame.slice(0, int((~is_infobox).sum()))
+    assert not prose["chunk_id"].str.contains(":infobox:").any()
+    assert frame.filter(is_infobox)["doc_id"].to_list() == ["1:0", "2:0"]

@@ -5,6 +5,7 @@ no judgement. That is the line: what a machine can count lives in this module,
 and what only a person can decide stays out of it and goes in the scores file.
 """
 
+import re
 from collections.abc import Collection, Sequence
 from dataclasses import dataclass
 from statistics import mean
@@ -69,6 +70,54 @@ def refused(record: EvalRecord) -> bool:
     return REFUSAL in record.answer.lower()
 
 
+def _flatten(text: str) -> str:
+    """Lowercase, with thousands commas removed.
+
+    So that `41,291` and `41291` are the same figure, which they are: the
+    infobox writes one and the prose the other, and a comparison that called
+    them different would have scored the Switzerland control wrong.
+
+    **Spaces are kept, and the first version of this function removed them.**
+    That version scored `f-hungary-1956-soviet-dead` as not stating 699 while
+    the answer opened "in 1956, 699 Soviet soldiers were killed": with the comma
+    and the space gone the text read `1956699`, so the digit-boundary guard
+    below saw 699 sitting inside a longer number and refused it. The
+    normalisation manufactured the collision the guard exists to catch. Found by
+    reading the answer next to the verdict, not by any test. D-097.
+    """
+    return text.lower().replace(",", "")
+
+
+def states_fact(record: EvalRecord) -> bool | None:
+    """Did the answer state the value the question asked for?
+
+    None when the question asks for no particular value, which is most of them
+    -- an explanation is judged by whether the right section came back, and this
+    metric would report a meaningless False for it.
+
+    A bare number is matched at digit boundaries, so an answer saying "1,485"
+    does not count as stating "485". Everything else is a plain substring: the
+    answer is prose and the fact can be phrased into it any number of ways.
+    """
+    if not record.expected_answers:
+        return None
+    answer = _flatten(record.answer)
+    return any(
+        re.search(_boundaries(_flatten(wanted)), answer)
+        for wanted in record.expected_answers
+    )
+
+
+def _boundaries(wanted: str) -> str:
+    """The expected form as a regex, guarded against landing inside a number."""
+    pattern = re.escape(wanted)
+    if wanted[:1].isdigit():
+        pattern = r"(?<!\d)" + pattern
+    if wanted[-1:].isdigit():
+        pattern = pattern + r"(?!\d)"
+    return pattern
+
+
 def invalid_markers(record: EvalRecord) -> list[int]:
     """Markers pointing at a source that was never sent.
 
@@ -123,6 +172,12 @@ class Summary:
     recall_at_20: float | None
     coverage_at_5: float | None
     mrr: float | None
+    # The share of questions asking for a stated value whose answer states it,
+    # and how many such questions there were. None when the set contains none,
+    # which is every suite but the factual one -- reporting 0.0 there would read
+    # as a failure rather than as "not applicable". D-097.
+    fact_rate: float | None
+    fact_questions: int
     mean_top_score: float
     mean_distinct_docs_at_5: float
     mean_distinct_articles_at_5: float
@@ -161,6 +216,7 @@ def summarise(records: Collection[EvalRecord], kind: str = "all") -> Summary:
     would read as a failure rather than as "not applicable".
     """
     scored = [r for r in records if r.expected_doc_ids]
+    with_facts = [r for r in records if r.expected_answers]
     totals = [r.total_ms for r in records]
     prompts = [r.prompt_tokens for r in records if r.prompt_tokens is not None]
     completions = [
@@ -174,6 +230,10 @@ def summarise(records: Collection[EvalRecord], kind: str = "all") -> Summary:
         recall_at_20=mean(hit_at(r, 20) for r in scored) if scored else None,
         coverage_at_5=mean(coverage_at(r, 5) for r in scored) if scored else None,
         mrr=mean(reciprocal_rank(r) for r in scored) if scored else None,
+        fact_rate=(
+            mean(bool(states_fact(r)) for r in with_facts) if with_facts else None
+        ),
+        fact_questions=len(with_facts),
         mean_top_score=(
             mean(r.retrieved[0].score for r in records if r.retrieved)
             if any(r.retrieved for r in records)

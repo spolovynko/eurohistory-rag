@@ -13,6 +13,7 @@ from eurohistory_rag.eval.metrics import (
     first_token_ms,
     invalid_markers,
     refused,
+    states_fact,
     summarise_by_kind,
 )
 from eurohistory_rag.eval.record import EvalRecord, RunMeta
@@ -32,7 +33,7 @@ def render_summary(summaries: Sequence[Summary]) -> str:
     """The comparison table: one row per question kind, plus the total."""
     header = (
         f"{'kind':<13}{'n':>3}  {'r@5':>6} {'r@20':>6} {'cov@5':>6} {'MRR':>6} "
-        f"{'top':>6} {'docs':>5} {'arts':>5} {'refuse':>7} "
+        f"{'top':>6} {'docs':>5} {'arts':>5} {'refuse':>7} {'fact':>6} "
         f"{'ttft':>7} {'p50ms':>7} {'p95ms':>7} {'gen ms':>7}"
     )
     lines = [header, "-" * len(header)]
@@ -43,6 +44,7 @@ def render_summary(summaries: Sequence[Summary]) -> str:
             f"{_pct(s.coverage_at_5):>6} {_num(s.mrr):>6} "
             f"{s.mean_top_score:>6.3f} {s.mean_distinct_docs_at_5:>5.1f} "
             f"{s.mean_distinct_articles_at_5:>5.1f} {_pct(s.refusal_rate):>7} "
+            f"{_pct(s.fact_rate):>6} "
             f"{s.p50_first_token_ms:>7.0f} {s.p50_total_ms:>7.0f} "
             f"{s.p95_total_ms:>7.0f} {s.mean_generate_ms:>7.0f}"
         )
@@ -126,9 +128,14 @@ def render_transcript(meta: RunMeta, records: Sequence[EvalRecord]) -> str:
             record.question,
             "",
             f"expected: {', '.join(record.expected_doc_ids) or '(nothing)'}",
-            "",
-            "retrieved:",
         ]
+        stated = states_fact(record)
+        if stated is not None:
+            out.append(
+                f"expected answer: {' | '.join(record.expected_answers)}"
+                f"   -> {'STATED' if stated else 'NOT STATED'}"
+            )
+        out += ["", "retrieved:"]
         for item in record.retrieved[:10]:
             mark = "*" if item.doc_id in wanted else " "
             sent = "<" if item.rank <= record.sources_sent else " "

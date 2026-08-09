@@ -1,6 +1,7 @@
 """Command-line entry points for the pipeline."""
 
 import datetime as dt
+import json
 from dataclasses import replace
 from pathlib import Path
 from typing import Annotated
@@ -25,6 +26,7 @@ from eurohistory_rag.eval.questions import (
 )
 from eurohistory_rag.eval.record import (
     RUNS_DIR,
+    RunMeta,
     read_records,
 )
 from eurohistory_rag.generation.client import OpenAIGenerator
@@ -465,8 +467,18 @@ def rescore(
     verdicts: fixing a metric should never cost another thirty model calls.
     The first baseline needed exactly this -- it reported no refusals because
     the phrase being matched had been guessed instead of read out of the prompt.
+
+    The transcript is rewritten as well as the summary, which this command
+    claimed to do and did not. A corrected summary sitting next to a stale
+    transcript is worse than no rescore at all: the transcript is the file a
+    person reads to check the number, and in Phase 23 it disagreed with the
+    summary for exactly one question. D-097.
     """
     records = read_records(run)
     summary = report_module.render_by_suite(records)
     (run / "summary.txt").write_text(summary + "\n", encoding="utf-8")
+    meta = RunMeta(**json.loads((run / "meta.json").read_text(encoding="utf-8")))
+    (run / "transcript.txt").write_text(
+        report_module.render_transcript(meta, records) + "\n", encoding="utf-8"
+    )
     typer.echo(summary)
