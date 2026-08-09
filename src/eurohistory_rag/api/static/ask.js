@@ -171,6 +171,11 @@ form.addEventListener("submit", async (event) => {
   submit.disabled = true;
   const started = performance.now();
   let firstWordAt = null;
+  // When the passages landed. Its own clock because it is a different question
+  // from "when did the answer start": retrieval finishing late and the model
+  // starting late are different faults, and until Phase 25 the page reported
+  // only the second one.
+  let sourcesAt = null;
   setStatus(statusLine, "Searching the corpus…");
 
   try {
@@ -199,6 +204,7 @@ form.addEventListener("submit", async (event) => {
 
     await readEvents(response.body, (name, data) => {
       if (name === "sources") {
+        sourcesAt = performance.now();
         // Retrieval is done and generation has not started. These are the
         // passages the model is being shown, numbered as it sees them, and
         // they are on screen roughly three seconds before the answer is.
@@ -228,7 +234,7 @@ form.addEventListener("submit", async (event) => {
         setStatus(statusLine, data, "error");
         return;
       }
-      if (name === "done") finish(data, started, firstWordAt, question);
+      if (name === "done") finish(data, started, sourcesAt, firstWordAt, question);
     });
 
     if (!failed && firstWordAt === null) {
@@ -249,7 +255,7 @@ form.addEventListener("submit", async (event) => {
 
 // The end of a stream: markers become links, the passages the answer ignored
 // come off the list, and the two clocks are reported.
-function finish(data, started, firstWordAt, question) {
+function finish(data, started, sourcesAt, firstWordAt, question) {
   const cited = new Set(data.sources.map((s) => s.n));
   answerBox.replaceChildren();
   renderAnswer(data.answer, cited);
@@ -276,8 +282,9 @@ function finish(data, started, firstWordAt, question) {
   }
 
   // What produced this answer, stated on the answer, and what it cost in the
-  // only two numbers a reader feels: when the words started, and when they
-  // stopped. Phase 8 shipped a measurement whose reranker was off unnoticed.
+  // three numbers a reader feels: when the passages appeared, when the words
+  // started, and when they stopped. Phase 8 shipped a measurement whose
+  // reranker was off unnoticed.
   const used = data.configuration;
   const total = (performance.now() - started) / 1000;
   footer.textContent = [
@@ -285,6 +292,7 @@ function finish(data, started, firstWordAt, question) {
     "reranker " + (used.reranker ? used.reranker.split("/").pop() : "off"),
     "hybrid " + (used.hybrid ? "on" : "off"),
     "k " + used.k,
+    "passages " + ((sourcesAt - started) / 1000).toFixed(1) + " s",
     "first word " + ((firstWordAt - started) / 1000).toFixed(1) + " s",
     "done " + total.toFixed(1) + " s",
     data.license,

@@ -21,7 +21,9 @@ from eurohistory_rag.api.dependencies import (
     get_vector_store,
 )
 from eurohistory_rag.api.main import create_app
+from eurohistory_rag.core.config import get_settings
 from eurohistory_rag.generation.service import GenerationService
+from eurohistory_rag.retrieval.rerank import RerankUnavailable
 from eurohistory_rag.retrieval.search import SearchResult
 from eurohistory_rag.retrieval.vectorstore import VectorStoreUnavailable
 from tests.fakes import FakeGenerator, UnavailableGenerator
@@ -572,3 +574,99 @@ def test_a_question_with_no_history_reports_no_rewrite() -> None:
 
     assert body["standalone"] == ""
     assert body["question"] == "how much was the Marshall Plan?"
+
+
+# --- the warm start ---------------------------------------------------------
+#
+# Phase 25, D-099. Four facts, none of which reads a model off disk: the
+# warm-up is skipped when switched off, it runs when it is not, a failure to
+# load leaves the process serving but not ready, and a reranker that is simply
+# disabled is not a failure.
+
+
+def test_warm_start_is_skipped_when_switched_off(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The setting conftest relies on actually prevents the load.
+
+    If this ever stops being true, 649 offline tests start reading 88 MB off
+    disk and the failure looks like slowness rather than a bug.
+    """
+    called = False
+
+    def spy() -> None:
+        nonlocal called
+        called = True
+
+    monkeypatch.setenv("WARM_START", "false")
+    get_settings.cache_clear()
+    monkeypatch.setattr("eurohistory_rag.api.main.get_reranker", spy)
+
+    with TestClient(create_app()):
+        pass
+
+    assert called is False
+
+
+def test_warm_start_loads_the_reranker_before_the_first_request(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The whole phase in one assertion: the load happens during startup.
+
+    The spy stands in for the model, so this proves the ordering without
+    reading a byte of it.
+    """
+    loaded_at: list[str] = []
+
+    monkeypatch.setenv("WARM_START", "true")
+    get_settings.cache_clear()
+    monkeypatch.setattr(
+        "eurohistory_rag.api.main.get_reranker",
+        lambda: loaded_at.append("startup"),
+    )
+
+    with TestClient(create_app()) as test_client:
+        assert loaded_at == ["startup"]
+        test_client.get("/health")
+
+    assert loaded_at == ["startup"]
+
+
+def test_a_reranker_that_will_not_load_leaves_the_process_up_but_not_ready(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A missing model is a 503 on /ready, not a process that refuses to start.
+
+    /health still answers ok, because the process is alive -- that is the whole
+    distinction between the two endpoints.
+    """
+
+    def explode() -> None:
+        raise RerankUnavailable("no weights on this machine")
+
+    monkeypatch.setenv("WARM_START", "true")
+    get_settings.cache_clear()
+    monkeypatch.setattr("eurohistory_rag.api.main.get_reranker", explode)
+
+    app = create_app()
+    app.dependency_overrides[get_vector_store] = lambda: StubStore(True)
+    with TestClient(app) as test_client:
+        assert test_client.get("/health").status_code == 200
+        ready = test_client.get("/ready")
+
+    assert ready.status_code == 503
+    assert "Reranker" in ready.json()["detail"]
+
+
+def test_a_disabled_reranker_is_ready_rather_than_broken(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """None means switched off, and switched off is a working configuration."""
+    monkeypatch.setenv("WARM_START", "true")
+    monkeypatch.setenv("RERANKER_ENABLED", "false")
+    get_settings.cache_clear()
+
+    app = create_app()
+    app.dependency_overrides[get_vector_store] = lambda: StubStore(True)
+    with TestClient(app) as test_client:
+        assert test_client.get("/ready").status_code == 200

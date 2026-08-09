@@ -2,7 +2,9 @@
 
 import json
 import logging
-from collections.abc import Iterator
+import time
+from collections.abc import AsyncIterator, Iterator
+from contextlib import asynccontextmanager
 from importlib.resources import files
 from pathlib import Path
 from typing import Annotated
@@ -15,6 +17,7 @@ from eurohistory_rag import __version__
 from eurohistory_rag.api.dependencies import (
     configured_generation_service,
     get_generation_service,
+    get_reranker,
     get_search_service,
     get_vector_store,
 )
@@ -34,6 +37,7 @@ from eurohistory_rag.eval.record import RUNS_DIR, new_run_id
 from eurohistory_rag.generation.client import GenerationUnavailable
 from eurohistory_rag.generation.rewrite import Turn
 from eurohistory_rag.generation.service import Citation, GenerationService
+from eurohistory_rag.retrieval.rerank import RerankUnavailable
 from eurohistory_rag.retrieval.search import DEFAULT_K, SearchResult, SearchService
 from eurohistory_rag.retrieval.vectorstore import VectorStore, VectorStoreUnavailable
 
@@ -63,6 +67,14 @@ STATIC = {
 PAGE = STATIC["index.html"][0]
 
 logger = logging.getLogger(__name__)
+
+# Startup messages go to uvicorn's own logger rather than this module's. Under
+# uvicorn the root logger sits at WARNING and `configure_logging` is never
+# called -- it belongs to the CLI's entry points -- so a plain logger.info at
+# startup is written to nowhere. This is the one place that matters: whether the
+# model was loaded before the port opened is the only externally visible fact
+# this phase produces, and Phase 8 is what a switch nobody can see costs. D-099.
+startup_logger = logging.getLogger("uvicorn.error")
 
 
 class SearchHit(BaseModel):
@@ -361,6 +373,45 @@ def _chosen_reranker(requested: str | None, settings: Settings) -> str | None:
     return requested or None
 
 
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+    """Read the reranker's weights before this process accepts a connection.
+
+    A lazily-built singleton is the right default and the wrong thing here. It
+    is right when the cost is small or the object may never be needed; the
+    reranker is neither, and "amortised over every request" is a comfort that
+    means nothing when the sample that pays is a person waiting on their first
+    question. Measured in a browser: 6.5 s to the first word against 1.5 s for
+    the second, with the whole difference before the passages even appear.
+
+    Blocking rather than backgrounded, on purpose. uvicorn runs this before it
+    binds its socket, so during the load a probe is refused rather than
+    answered -- which is exactly what "not ready" means, and it needs no state
+    machine to say it. The alternative was a thread and a loading flag, and it
+    buys nothing for a two-second job.
+
+    A failure here does not stop the process. A server that will not start
+    because a model is missing is worse than one that starts and says which
+    part of it is unusable, and /ready is where it says so. D-099.
+    """
+    app.state.reranker_ready = True
+    settings = get_settings()
+    if settings.warm_start:
+        began = time.perf_counter()
+        try:
+            reranker = get_reranker()
+        except (RerankUnavailable, OSError):
+            app.state.reranker_ready = False
+            startup_logger.exception("reranker failed to load; /ready will refuse")
+        else:
+            if reranker is not None:
+                elapsed = (time.perf_counter() - began) * 1000
+                startup_logger.info(
+                    "reranker %s ready in %.0f ms", settings.reranker_model, elapsed
+                )
+    yield
+
+
 def create_app() -> FastAPI:
     """Build and return a new FastAPI application.
 
@@ -368,7 +419,12 @@ def create_app() -> FastAPI:
     independent app. Tests can build one per test, and from Phase 5 onward can
     build one wired to fakes, without touching the app uvicorn serves.
     """
-    app = FastAPI(title="Eurohistory RAG API", version=__version__)
+    app = FastAPI(title="Eurohistory RAG API", version=__version__, lifespan=lifespan)
+    # The value the lifespan overwrites, set here so an app whose lifespan never
+    # ran -- a TestClient built without a `with`, an app mounted inside another
+    # -- still answers /ready rather than raising. Optimistic by default,
+    # because "nobody tried to load it" is not the same fact as "it failed".
+    app.state.reranker_ready = True
 
     @app.get("/", summary="The one page", response_class=HTMLResponse)
     def page() -> str:
@@ -405,8 +461,9 @@ def create_app() -> FastAPI:
         """
         return {"status": "ok"}
 
-    @app.get("/ready", summary="Readiness check — is the vector store reachable?")
+    @app.get("/ready", summary="Readiness check — can this process serve a search?")
     def ready(
+        http: Request,
         store: Annotated[VectorStore, Depends(get_vector_store)],
     ) -> dict[str, str]:
         """Report whether this process can actually serve a search.
@@ -415,11 +472,22 @@ def create_app() -> FastAPI:
         answering "ok" while Qdrant is down is not a bug in /health -- liveness
         and readiness are different questions, and a restarter that conflates
         them will keep restarting a healthy process because a database is down.
+
+        Two things now, not one. The store is the dependency that can go away
+        while the process runs; the reranker is the one that can fail to arrive
+        at all, and a process answering "ready" with no reranker would serve
+        every question through a different retrieval path without saying so --
+        Phase 8's dead switch, wearing a health check. D-099.
         """
         if not store.is_ready():
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                 detail="Vector store unreachable or collection missing.",
+            )
+        if not http.app.state.reranker_ready:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Reranker failed to load; retrieval would be unranked.",
             )
         return {"status": "ready"}
 

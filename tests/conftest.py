@@ -28,6 +28,12 @@ def stub_environment(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
     """
     monkeypatch.setenv("OPENAI_API_KEY", "test-key-not-real")
     monkeypatch.setenv("WIKIPEDIA_USER_AGENT", "eurohistory-rag-tests")
+    # Phase 25 loads the reranker in the app's lifespan, and `TestClient` runs
+    # the lifespan. Left on, every test using the `client` fixture would read 88
+    # MB off disk on this machine -- and download it on one that has never run
+    # the reranker. The suite must pass with Docker stopped and nothing
+    # fetched, so the warm-up is off here and tested explicitly instead. D-099.
+    monkeypatch.setenv("WARM_START", "false")
     get_settings.cache_clear()
     yield
     get_settings.cache_clear()

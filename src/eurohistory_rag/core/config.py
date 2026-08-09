@@ -82,6 +82,17 @@ class Settings(BaseSettings):
     # says it should. Phase 8 turns it on in .env, measures, and then decides.
     reranker_enabled: bool = False
 
+    # Load the reranker when the process starts instead of inside the first
+    # request. On by default, unlike every other flag in this file, because it
+    # cannot change an answer -- the same model produces the same scores whether
+    # it was read at second 0 or second 30, so there is no comparison for a
+    # forgotten flag to contaminate. It changes only who waits.
+    #
+    # The tests switch it off. `TestClient` runs the lifespan, so leaving it on
+    # would make 649 offline tests read 88 MB off disk, and download it on a
+    # machine that has never run the reranker. Phase 25, D-099.
+    warm_start: bool = True
+
     # Hybrid search: BM25 keyword results fused with the dense ones. Off by
     # default for the same reason as the reranker -- with it off the system
     # behaves exactly as the Phase 8 run did, so a forgotten flag cannot

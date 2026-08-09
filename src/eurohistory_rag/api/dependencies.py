@@ -109,19 +109,25 @@ def get_verifier() -> OpenAIGenerator | None:
     )
 
 
-@lru_cache(maxsize=1)
 def get_reranker() -> Reranker | None:
     """The one reranker for this process, or None when it is switched off.
 
-    Its own function, and cached, because building it reads ~280 MB of weights
-    off disk -- doing that per request would cost more than the search it is
-    meant to improve. Returns None rather than raising when disabled, so the
-    off state is an ordinary value the caller passes straight through.
+    Returns None rather than raising when disabled, so the off state is an
+    ordinary value the caller passes straight through.
+
+    Delegates to `get_named_reranker` rather than caching its own instance, and
+    that is the whole fix for half of Phase 25's cold start. The page sends a
+    reranker name on every request, so every request was overridden; FastAPI
+    resolved this function *and then* the handler built a configured service
+    through `get_named_reranker`. Same model, two caches, two loads of 88 MB --
+    2,181 ms and 2,066 ms measured on a cold process, and both copies resident
+    for the life of it. One cache, keyed by name, is the only cache needed.
+    D-099.
     """
     settings = get_settings()
     if not settings.reranker_enabled:
         return None
-    return LocalReranker(settings.reranker_model)
+    return get_named_reranker(settings.reranker_model)
 
 
 # --- per-request configuration ----------------------------------------------
