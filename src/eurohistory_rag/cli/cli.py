@@ -17,6 +17,7 @@ from eurohistory_rag.eval import probes as probes_module
 from eurohistory_rag.eval import report as report_module
 from eurohistory_rag.eval import sweep as sweep_module
 from eurohistory_rag.eval import synthetic as synthetic_module
+from eurohistory_rag.eval import timeline as timeline_module
 from eurohistory_rag.eval.metrics import summarise
 from eurohistory_rag.eval.questions import (
     QUESTIONS_PATH,
@@ -455,6 +456,72 @@ def gate(
     typer.echo(gate_module.render(verdict, baseline.name, candidate.name))
     if not verdict.passed:
         raise typer.Exit(code=1)
+
+
+@app.command()
+def trace(
+    run: Annotated[Path, typer.Argument(help="A run directory under eval/runs/.")],
+    question: Annotated[
+        str, typer.Option("--question", help="One question id, for its own timeline.")
+    ] = "",
+    replay: Annotated[
+        bool, typer.Option(help="Ask that question again and diff the retrieval.")
+    ] = False,
+    answer: Annotated[
+        bool, typer.Option(help="Also regenerate the answer. Costs about $0.002.")
+    ] = False,
+) -> None:
+    """Where a run's time went, and optionally ask one of its questions again.
+
+    Free and offline with no options: it reads spans already on disk, the same
+    way `rescore` reads answers already on disk. `--replay` is the one form that
+    touches the network -- one embedding call for the retrieval half, which
+    rounds to nothing, plus one generation if `--answer` is given.
+
+    Replaying uses the **recorded** standalone question rather than the typed
+    one, so a follow-up is not silently rewritten a second time by a rewriter
+    D-100 measured as non-deterministic. What it compares is retrieval: same
+    question, same corpus, same twenty chunks, or something changed that nobody
+    declared. D-101.
+    """
+    records = read_records(run)
+    if not question:
+        typer.echo(timeline_module.render_run(records))
+        return
+
+    chosen = next((r for r in records if r.question_id == question), None)
+    if chosen is None:
+        typer.echo(f"No question {question!r} in {run.name}.")
+        raise typer.Exit(code=1)
+
+    if not replay:
+        typer.echo(timeline_module.render_one(chosen))
+        return
+
+    settings = get_settings()
+    meta = RunMeta(**json.loads((run / "meta.json").read_text(encoding="utf-8")))
+    # The run's own settings, not today's. Replaying a run under a different
+    # reranker and reporting "retrieval changed" would be true and useless.
+    config = replace(
+        execute_module.RunConfig.from_settings(settings),
+        k=meta.k,
+        model=meta.generation_model,
+        reranker=meta.reranker,
+        hybrid=bool(meta.hybrid),
+        temporal=bool(meta.temporal),
+        conversation=bool(meta.conversation),
+    )
+    search, generation, _ = execute_module.build_stack(settings, config)
+    typer.echo(
+        timeline_module.render_replay(
+            timeline_module.replay(
+                chosen,
+                search,
+                generation if answer else None,
+                depth=len(chosen.retrieved),
+            )
+        )
+    )
 
 
 @app.command()

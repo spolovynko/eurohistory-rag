@@ -217,3 +217,22 @@ When a new number appears and you are unsure:
    table above.
 4. **None of the above?** → an implementation detail. Prefix it with `_` and
    leave it where it is. It does not belong on this page.
+
+
+---
+
+## Tracing has no knob, and that is the decision
+
+Phase 28 added per-stage timing to `retrieval/search.py` and
+`generation/service.py`. It is **always on** and there is no setting for it,
+which is why it does not appear in the table above.
+
+The argument for a switch is that instrumentation costs something. Measured: it
+costs eight spans of two `time.perf_counter()` readings, on the order of a
+microsecond against a four-second query, and `search_ms` moved 472.9 -> 487.0 ms
+between runs — network variance on one embedding call, an order of magnitude
+larger than anything the spans could contribute.
+
+The argument against a switch is stronger and it is Phase 8's: **a flag that
+can be off is a flag that can be off during the measurement.** An instrument
+nobody can accidentally disable is worth more than a microsecond. D-101.

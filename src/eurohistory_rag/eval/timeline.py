@@ -140,8 +140,13 @@ def render_run(records: Sequence[EvalRecord]) -> str:
         )
     left = [unattributed_ms(record) / record.total_ms for record in traced]
     lines.append("-" * 53)
-    lines.append(f"{'unattributed':<22} {len(traced):>4} {'':>10} {median(left):>12.1%}")
-    lines.append(f"{'total':<22} {len(traced):>4} " f"{median(r.total_ms for r in traced):>10.1f} {1.0:>12.1%}")
+    lines.append(
+        f"{'unattributed':<22} {len(traced):>4} {'':>10} {median(left):>12.1%}"
+    )
+    lines.append(
+        f"{'total':<22} {len(traced):>4} "
+        f"{median(r.total_ms for r in traced):>10.1f} {1.0:>12.1%}"
+    )
     return "\n".join(lines)
 
 
@@ -187,7 +192,9 @@ def replay(
     results = search.search(asked, k=depth, trace=fresh)
     answer = ""
     if generation is not None:
-        answer = generation.answer_from(asked, results[: record.sources_sent], fresh).text
+        answer = generation.answer_from(
+            asked, results[: record.sources_sent], fresh
+        ).text
     return Replay(
         record=record,
         fresh=fresh,
@@ -226,5 +233,4 @@ def render_replay(again: Replay) -> str:
                 lines.append(f"  rank {rank:>2}: {was}  ->  {now}")
     if again.answer:
         lines += ["", "--- answer " + "-" * 67, again.answer]
-    return "
-".join(lines)
+    return "\n".join(lines)
