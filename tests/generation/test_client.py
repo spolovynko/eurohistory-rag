@@ -14,6 +14,7 @@ from openai import APIConnectionError
 
 from eurohistory_rag.generation.client import (
     Completion,
+    EmptyCompletion,
     GenerationUnavailable,
     OpenAIGenerator,
     complete,
@@ -129,6 +130,24 @@ def test_usage_is_asked_for_explicitly() -> None:
 def test_a_stream_with_no_text_in_it_is_a_failure_not_an_empty_answer() -> None:
     with pytest.raises(GenerationUnavailable):
         list(generator([text_chunk(None), text_chunk("")]).stream([]))
+
+
+def test_the_empty_reply_is_still_the_exception_the_answer_path_catches() -> None:
+    """`EmptyCompletion` must stay a `GenerationUnavailable`, and this is why.
+
+    The claim splitter needs to tell "nothing, as instructed" apart from "the
+    model fell over", so the empty case got its own class. Every other caller --
+    `/ask`, the eval runner, the verifier -- catches `GenerationUnavailable` and
+    must keep catching this. If the subclass relationship is ever broken, an
+    empty reply stops being handled and starts being a 500.
+
+    This is also the whole argument that D-089's gate is not owed for that
+    change: the answer path's behaviour is identical, and it is identical by a
+    property a test can hold rather than by inspection. D-102.
+    """
+    assert issubclass(EmptyCompletion, GenerationUnavailable)
+    with pytest.raises(EmptyCompletion):
+        list(generator([text_chunk("")]).stream([]))
 
 
 def test_an_sdk_error_becomes_the_one_exception_callers_know_about() -> None:

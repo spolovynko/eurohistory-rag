@@ -12,12 +12,29 @@ from statistics import mean
 
 from eurohistory_rag.eval.record import EvalRecord
 
-# The exact phrase system_prompt.md tells the model to open a refusal with. Matching on
-# it is crude and it is the only automatic way to ask "did it refuse?" -- and it
-# is coupled to the prompt: the first baseline reported 0% refusals because this
-# constant was guessed rather than read, which is worth remembering before
-# trusting any metric that was never checked against a real answer.
-REFUSAL = "not in the sources"
+# The wordings a refusal opens with, and they are read out of `system_prompt.md`
+# rather than guessed. The prompt gives the model two ways to decline and this
+# constant knew only one of them: rule 3 says begin with exactly "Not in the
+# sources.", and rule 2 says a partial answer should *end* with a sentence
+# beginning "The sources do not cover". An answer that declines the whole
+# question in rule 2's words was scored as an answer -- three times on the
+# record, twice of them live in Phase 26, where two treaty dates stopped being
+# answered and the refusal count did not move.
+#
+# The third entry is not in the prompt. It is what the model actually writes,
+# found by reading all 1,780 answers on disk, and it is here because the list is
+# closed on purpose: a wording nobody has seen is a miss this metric reports as
+# its own error rate, not a hole a wider regex quietly papers over. D-102.
+REFUSAL_OPENERS = (
+    "not in the sources",
+    "the sources do not cover",
+    "the sources do not provide",
+)
+
+# Where a sentence ends. Crude on purpose -- an abbreviation would split early,
+# and the only thing read from the split is whether the *first* sentence
+# declines, which no abbreviation in this corpus can change.
+_SENTENCE_END = re.compile(r"(?<=[.!?])\s")
 
 
 def hit_at(record: EvalRecord, depth: int) -> bool:
@@ -66,8 +83,21 @@ def reciprocal_rank(record: EvalRecord) -> float:
 
 
 def refused(record: EvalRecord) -> bool:
-    """Did the answer decline to answer?"""
-    return REFUSAL in record.answer.lower()
+    """Did the answer decline the question, rather than answer part of it?
+
+    **Position, not wording.** `system_prompt.md` uses the same sentence for two
+    opposite outcomes: a refusal *opens* with "the sources do not cover", and a
+    partial answer -- a real answer, with citations -- *ends* with it. Matching
+    the phrase anywhere cannot tell them apart, and matching one hardcoded phrase
+    could not see the second wording at all.
+
+    So only the first sentence is read. Checked against every answer this
+    repository has ever recorded: of 224 distinct answers containing any decline
+    wording, every one that declines in sentence one is a genuine refusal and
+    every one that declines only later is a genuine answer. D-102.
+    """
+    leading = _SENTENCE_END.split(record.answer.strip(), maxsplit=1)[0].lower()
+    return any(phrase in leading for phrase in REFUSAL_OPENERS)
 
 
 def _flatten(text: str) -> str:

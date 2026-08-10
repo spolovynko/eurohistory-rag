@@ -236,3 +236,30 @@ larger than anything the spans could contribute.
 The argument against a switch is stronger and it is Phase 8's: **a flag that
 can be off is a flag that can be off during the measurement.** An instrument
 nobody can accidentally disable is worth more than a microsecond. D-101.
+
+
+---
+
+## The refusal test is a closed list, and that is the decision
+
+Phase 27 replaced `metrics.REFUSAL` — one string — with `REFUSAL_OPENERS`, three
+phrases read only in the answer's **first sentence**. It is not a setting and it
+does not belong in the table above: it is a definition, and changing it changes
+what every published refusal figure in `decisions.md` means.
+
+**Change it only together with `system_prompt.md`.** The list is the prompt's
+own wording. Rule 3 says a refusal opens "Not in the sources"; rule 2 says a
+partial answer *ends* with "The sources do not cover". The metric reads position
+because the prompt writes position, and editing one without the other silently
+decouples them.
+
+**The list is closed on purpose.** A wider regex would quietly absorb wordings
+nobody has read, and the whole failure this phase fixed was a metric nobody had
+checked against a real answer. Instead, `tests/eval/test_refusal.py` runs a
+deliberately wider hand-written net over every run on disk and fails when it
+finds a first-sentence refusal the list misses. **Adding a phrase is therefore a
+build failure first and an edit second, which is the right order.** D-102.
+
+The knob that does not exist for the same reason: there is no threshold, no
+tolerance and no "probably a refusal" score. A refusal either opens by declining
+or it does not.

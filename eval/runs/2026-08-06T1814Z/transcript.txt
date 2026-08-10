@@ -27,7 +27,7 @@ Under the Treaty of Brest-Litovsk, Russia gave up control of Ukraine, Poland, Be
 
 cited: [1] Treaty of Brest-Litovsk, [2] Treaty of Brest-Litovsk — Terms, [3] Treaty of Brest-Litovsk — Terms, [4] Treaty of Brest-Litovsk
 sent but not cited: [5]
-timing: search 1751 ms, generate 2958 ms, total 4709 ms
+timing: search 1751 ms, first token 4709 ms, generate 2958 ms, total 4709 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Treaty of Brest-Litovsk
@@ -93,7 +93,7 @@ The Enabling Act of 1933 was passed by the Reichstag on 23 March 1933 with a two
 
 cited: [1] Gleichschaltung — Legal basis, [2] Enabling Act of 1933 — Passage, [3] Enabling Act of 1933 — Preparations and negotiations, [4] Enabling Act of 1933
 sent but not cited: [5]
-timing: search 541 ms, generate 3760 ms, total 4301 ms
+timing: search 541 ms, first token 4301 ms, generate 3760 ms, total 4301 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Gleichschaltung — Legal basis
@@ -157,7 +157,7 @@ At the Wannsee Conference on 20 January 1942, senior Nazi government officials a
 
 cited: [1] Wannsee Conference, [3] Wannsee Conference — Interpretation
 sent but not cited: [2, 4, 5]
-timing: search 547 ms, generate 3021 ms, total 3568 ms
+timing: search 547 ms, first token 3568 ms, generate 3021 ms, total 3568 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Wannsee Conference
@@ -217,7 +217,7 @@ Operation Barbarossa began on Sunday, 22 June 1941, just before dawn [1][2]. The
 
 cited: [1] Operation Barbarossa, [2] Eastern Front (World War II) — Conduct of operations
 sent but not cited: [3, 4, 5]
-timing: search 508 ms, generate 1630 ms, total 2138 ms
+timing: search 508 ms, first token 2138 ms, generate 1630 ms, total 2138 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Operation Barbarossa
@@ -274,7 +274,7 @@ The hyperinflation in the Weimar Republic was caused primarily by the significan
 
 cited: [5] Hyperinflation in the Weimar Republic, [2] Hyperinflation in the Weimar Republic — Causes, [3] Hyperinflation in the Weimar Republic — Causes, [4] Great Depression in Germany — Background, [1] Hyperinflation in the Weimar Republic
 sent but not cited: (none)
-timing: search 513 ms, generate 7456 ms, total 7969 ms
+timing: search 513 ms, first token 7969 ms, generate 7456 ms, total 7969 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Hyperinflation in the Weimar Republic
@@ -330,7 +330,7 @@ The Munich Agreement of 1938 gave Germany the annexation of part of the First Cz
 
 cited: [1] Munich Agreement, [4] Munich Agreement — History, [5] Nazi Germany — History
 sent but not cited: [2, 3]
-timing: search 569 ms, generate 3416 ms, total 3985 ms
+timing: search 569 ms, first token 3985 ms, generate 3416 ms, total 3985 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Munich Agreement
@@ -396,7 +396,7 @@ The secret protocol of the Molotov-Ribbentrop Pact divided Poland, Romania, Lith
 
 cited: [2] Molotov–Ribbentrop Pact — Secret protocol, [3] Molotov–Ribbentrop Pact — Secret protocol
 sent but not cited: [1, 4, 5]
-timing: search 958 ms, generate 2499 ms, total 3458 ms
+timing: search 958 ms, first token 3458 ms, generate 2499 ms, total 3458 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Molotov–Ribbentrop Pact
@@ -455,7 +455,7 @@ The Nuremberg Laws of 1935 forbade marriages and extramarital sexual relations b
 
 cited: [1] Nuremberg Laws, [2] Nuremberg Laws — Text of the laws, [3] Nazi Germany — Politics, [4] Racism — State-sponsored racism
 sent but not cited: [5]
-timing: search 455 ms, generate 2209 ms, total 2664 ms
+timing: search 455 ms, first token 2664 ms, generate 2209 ms, total 2664 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Nuremberg Laws
@@ -524,7 +524,7 @@ The Treaty of Versailles, by contrast, imposed similar conditions on Germany, bu
 
 cited: [1] Treaty of Trianon, [5] Treaty of Trianon, [2] Treaty of Trianon — Results and consequences
 sent but not cited: [3, 4]
-timing: search 489 ms, generate 4204 ms, total 4693 ms
+timing: search 489 ms, first token 4693 ms, generate 4204 ms, total 4693 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Treaty of Trianon
@@ -588,7 +588,7 @@ Operation Sea Lion was never launched after the Battle of Britain because Adolf 
 
 cited: [1] Operation Sea Lion, [4] Operation Sea Lion, [5] Operation Sea Lion — Navy, [2] Operation Sea Lion — Navy, [3] Operation Sea Lion — Air power
 sent but not cited: (none)
-timing: search 478 ms, generate 2640 ms, total 3117 ms
+timing: search 478 ms, first token 3117 ms, generate 2640 ms, total 3117 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Operation Sea Lion
@@ -645,7 +645,7 @@ The Young Plan replaced the Dawes Plan by reducing the total reparations amount 
 
 cited: [1] Young Plan, [2] Dawes Plan, [4] Weimar Republic — History, [5] 1929 German Young Plan referendum — Young Plan
 sent but not cited: [3]
-timing: search 503 ms, generate 3154 ms, total 3658 ms
+timing: search 503 ms, first token 3658 ms, generate 3154 ms, total 3658 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Young Plan
@@ -710,7 +710,7 @@ Thus, Mussolini's rise involved a successful, constitutionally framed transfer o
 
 cited: [1] March on Rome — The March, [2] March on Rome, [3] Benito Mussolini — Rise to power, [5] Fascist Italy — Colonial and foreign policy
 sent but not cited: [4]
-timing: search 508 ms, generate 3522 ms, total 4029 ms
+timing: search 508 ms, first token 4029 ms, generate 3522 ms, total 4029 ms
 
 --- what the model was shown -------------------------------------------------
 [1] March on Rome — The March
@@ -772,7 +772,7 @@ Thus, Stalingrad is seen as the initial turning point where the Soviets gained t
 
 cited: [1] Battle of Stalingrad — Significance, [2] Battle of Stalingrad — Significance, [5] Battle of Stalingrad, [3] Battle of Kursk, [4] Battle of Kursk — Results
 sent but not cited: (none)
-timing: search 445 ms, generate 4317 ms, total 4763 ms
+timing: search 445 ms, first token 4763 ms, generate 4317 ms, total 4763 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Battle of Stalingrad — Significance
@@ -836,7 +836,7 @@ In March 1939, Germany used internal Slovak-Czech tensions as a pretext to occup
 
 cited: [2] European theatre of World War II — Background, [5] Adolf Hitler — World War II, [1] Interwar period — Germany, [4] World War II — Pre-war events, [3] Europe — History
 sent but not cited: (none)
-timing: search 444 ms, generate 4844 ms, total 5288 ms
+timing: search 444 ms, first token 5288 ms, generate 4844 ms, total 5288 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Interwar period — Germany
@@ -896,7 +896,7 @@ The campaign against the kulaks involved coercive grain procurement methods, inc
 
 cited: [5] Dekulakization — Background, [4] Ukrainian Soviet Socialist Republic — History, [2] Ukrainian Soviet Socialist Republic — History
 sent but not cited: [1, 3]
-timing: search 572 ms, generate 3698 ms, total 4270 ms
+timing: search 572 ms, first token 4270 ms, generate 3698 ms, total 4270 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Holodomor — History
@@ -959,7 +959,7 @@ Finland fought the Soviet Union twice within five years because the Soviet Union
 
 cited: [5] Winter War, [4] Winter War — Aftermath and casualties, [1] Continuation War, [3] Soviet Armed Forces — History
 sent but not cited: [2]
-timing: search 470 ms, generate 4671 ms, total 5142 ms
+timing: search 470 ms, first token 5142 ms, generate 4671 ms, total 5142 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Continuation War
@@ -1019,7 +1019,7 @@ Many Germans came to believe their army had never actually been beaten in the fi
 
 cited: [3] Armistice of 11 November 1918 — Stab-in-the-back myth, [4] Stab-in-the-back myth — Background, [1] Fourteen Points — Treaty of Versailles
 sent but not cited: [2, 5]
-timing: search 522 ms, generate 3478 ms, total 4001 ms
+timing: search 522 ms, first token 4001 ms, generate 3478 ms, total 4001 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Fourteen Points — Treaty of Versailles
@@ -1074,7 +1074,7 @@ German savings became worthless in the early 1920s due to hyperinflation fueled 
 
 cited: [1] Weimar Republic — History, [2] Great Depression in Germany — Background, [4] Hyperinflation in the Weimar Republic
 sent but not cited: [3, 5]
-timing: search 479 ms, generate 2859 ms, total 3338 ms
+timing: search 479 ms, first token 3338 ms, generate 2859 ms, total 3338 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Weimar Republic — History
@@ -1137,7 +1137,7 @@ The Nazis took apart the working democracy of the Weimar Republic in a matter of
 
 cited: [3] Weimar Republic, [4] Reichstag fire — Prelude, [2] The Holocaust — Rise of Nazi Germany, [1] Nazism — Ideology and programme
 sent but not cited: [5]
-timing: search 515 ms, generate 4796 ms, total 5311 ms
+timing: search 515 ms, first token 5311 ms, generate 4796 ms, total 5311 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Nazism — Ideology and programme
@@ -1199,7 +1199,7 @@ The German advance towards Moscow was delayed and eventually stopped by several 
 
 cited: [1] Battle of Smolensk (1941) — The operation, [3] Battle of Moscow — Wehrmacht advance towards Moscow (1 November – 5 December), [2] Operation Barbarossa — Battle of Moscow, [5] Operation Barbarossa — Aftermath
 sent but not cited: [4]
-timing: search 543 ms, generate 4376 ms, total 4919 ms
+timing: search 543 ms, first token 4919 ms, generate 4376 ms, total 4919 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Battle of Smolensk (1941) — The operation
@@ -1263,7 +1263,7 @@ The French army collapsed in weeks in 1940 partly because of poor military plann
 
 cited: [3] French Third Republic — World War II and downfall, [2] French Third Republic — World War II and downfall, [5] Battle of France — Fall Rot (Case Red), [4] French Third Republic — Historiography, [1] Blitzkrieg — Military operations
 sent but not cited: (none)
-timing: search 500 ms, generate 4784 ms, total 5284 ms
+timing: search 500 ms, first token 5284 ms, generate 4784 ms, total 5284 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Blitzkrieg — Military operations
@@ -1326,7 +1326,7 @@ There is some disagreement among historians about when Hitler issued an explicit
 
 cited: [1] Final Solution, [3] The Holocaust, [4] Nazi Germany — Racial policy and eugenics, [5] The Holocaust — Mass murder, [2] The Holocaust — Mass murder
 sent but not cited: (none)
-timing: search 566 ms, generate 4844 ms, total 5410 ms
+timing: search 566 ms, first token 5410 ms, generate 4844 ms, total 5410 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Final Solution
@@ -1390,7 +1390,7 @@ Regarding affordability, reparations were unpopular and strained the German econ
 
 cited: [1] Treaty of Versailles — Implementation, [2] World War I reparations — Evolution of reparations, [4] Article 231 of the Treaty of Versailles — Impact, [5] Great Depression in Germany — Background
 sent but not cited: [3]
-timing: search 582 ms, generate 7274 ms, total 7856 ms
+timing: search 582 ms, first token 7856 ms, generate 7274 ms, total 7856 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Treaty of Versailles — Implementation
@@ -1444,7 +1444,7 @@ The Bolsheviks held on to power by directing the Red Guard, armed groups of work
 
 cited: [1] Russian Civil War — Warfare, [2] Bolshevism — Support for the Bolsheviks by the people, [3] Bolsheviks, [5] Treaty of Brest-Litovsk — Background, [4] Communism — History
 sent but not cited: (none)
-timing: search 622 ms, generate 5298 ms, total 5920 ms
+timing: search 622 ms, first token 5920 ms, generate 5298 ms, total 5920 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Russian Civil War — Warfare
@@ -1510,7 +1510,7 @@ The explosion directly killed two engineers, and 28 more workers died of acute r
 
 cited: [2] Chernobyl disaster, [1] Chernobyl disaster, [4] Chernobyl disaster — Effects
 sent but not cited: [3, 5]
-timing: search 606 ms, generate 5033 ms, total 5639 ms
+timing: search 606 ms, first token 5639 ms, generate 5033 ms, total 5639 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Chernobyl disaster
@@ -1568,7 +1568,7 @@ The Good Friday Agreement restored self-government to Northern Ireland on the ba
 
 cited: [1] Good Friday Agreement, [5] Good Friday Agreement, [2] Good Friday Agreement — Status of Northern Ireland, [4] Good Friday Agreement — Status of Northern Ireland
 sent but not cited: [3]
-timing: search 608 ms, generate 4179 ms, total 4788 ms
+timing: search 608 ms, first token 4788 ms, generate 4179 ms, total 4788 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Good Friday Agreement
@@ -1636,7 +1636,7 @@ In July 1995, the Army of Republika Srpska (VRS) forces under general Ratko Mlad
 
 cited: [1] Republika Srpska — History, [2] Bosnian War — Course of the war, [3] Bosnia and Herzegovina — History, [4] Operation Deliberate Force — Background, [5] Bosnian War
 sent but not cited: (none)
-timing: search 516 ms, generate 5924 ms, total 6439 ms
+timing: search 516 ms, first token 6439 ms, generate 5924 ms, total 6439 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Republika Srpska — History
@@ -1696,7 +1696,7 @@ A majority of British voters chose to leave the European Union in 2016 mainly be
 
 cited: [2] 2016 United Kingdom European Union membership referendum — Result, [4] Brexit — 2016 EU membership referendum, [5] 2016 United Kingdom European Union membership referendum — Result, [3] Brexit — 2016 EU membership referendum
 sent but not cited: [1]
-timing: search 597 ms, generate 4768 ms, total 5366 ms
+timing: search 597 ms, first token 5366 ms, generate 4768 ms, total 5366 ms
 
 --- what the model was shown -------------------------------------------------
 [1] 2016 United Kingdom European Union membership referendum
@@ -1755,7 +1755,7 @@ Not in the sources. The passages cover British decolonisation, immigration from 
 
 cited: (none)
 sent but not cited: [1, 2, 3, 4, 5]
-timing: search 575 ms, generate 1667 ms, total 2242 ms
+timing: search 575 ms, first token 2242 ms, generate 1667 ms, total 2242 ms
 
 --- what the model was shown -------------------------------------------------
 [1] British Empire — Decolonisation and decline (1945–1997)
@@ -1818,7 +1818,7 @@ Not in the sources. The passages cover general psychology topics such as neurops
 
 cited: (none)
 sent but not cited: [1, 2, 3, 4, 5]
-timing: search 526 ms, generate 1627 ms, total 2153 ms
+timing: search 526 ms, first token 2153 ms, generate 1627 ms, total 2153 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Reconnaissance — Psychology
@@ -1886,7 +1886,7 @@ The Western Allies kept West Berlin supplied during the Soviet blockade of 1948 
 
 cited: [1] Berlin Blockade, [3] Berlin — History, [5] West Berlin — Origins
 sent but not cited: [2, 4]
-timing: search 478 ms, generate 2406 ms, total 2884 ms
+timing: search 478 ms, first token 2884 ms, generate 2406 ms, total 2884 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Berlin Blockade
@@ -1942,7 +1942,7 @@ The Marshall Plan provided aid to eighteen European countries, with the largest 
 
 cited: [1] Marshall Plan, [2] Marshall Plan — Areas excluded, [3] Marshall Plan — Loans and grants, [4] Marshall Plan — Expenditures
 sent but not cited: [5]
-timing: search 501 ms, generate 3404 ms, total 3905 ms
+timing: search 501 ms, first token 3905 ms, generate 3404 ms, total 3905 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Marshall Plan
@@ -2012,7 +2012,7 @@ The Stasi employed a total of 274,000 people between 1950 and 1989. In 1989, it 
 
 cited: [1] Stasi — Operations, [3] Stasi — Operations, [2] East Germany — Government and politics
 sent but not cited: [4, 5]
-timing: search 522 ms, generate 2882 ms, total 3404 ms
+timing: search 522 ms, first token 3404 ms, generate 2882 ms, total 3404 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Stasi — Operations
@@ -2077,7 +2077,7 @@ The Maastricht Treaty established the European Union (EU) on the foundation of t
 
 cited: [5] Maastricht Treaty — Overview, [1] Maastricht Treaty
 sent but not cited: [2, 3, 4]
-timing: search 492 ms, generate 2240 ms, total 2732 ms
+timing: search 492 ms, first token 2732 ms, generate 2240 ms, total 2732 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Maastricht Treaty
@@ -2133,7 +2133,7 @@ The countries that took part in the invasion of Czechoslovakia in August 1968 we
 
 cited: [1] Warsaw Pact invasion of Czechoslovakia — Invasion and intervention, [2] Warsaw Pact invasion of Czechoslovakia, [3] Eastern Bloc — Revolts, [4] Alexander Dubček — "Fraternal Intervention"
 sent but not cited: [5]
-timing: search 496 ms, generate 3112 ms, total 3608 ms
+timing: search 496 ms, first token 3608 ms, generate 3112 ms, total 3608 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Warsaw Pact invasion of Czechoslovakia — Invasion and intervention
@@ -2192,7 +2192,7 @@ On 26 April 1986, reactor 4 of the Chernobyl Nuclear Power Plant exploded during
 
 cited: [1] Chernobyl disaster, [3] Chernobyl disaster — Accident sequence
 sent but not cited: [2, 4, 5]
-timing: search 503 ms, generate 2681 ms, total 3184 ms
+timing: search 503 ms, first token 3184 ms, generate 2681 ms, total 3184 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Chernobyl disaster
@@ -2260,7 +2260,7 @@ In July 1956, Nasser nationalised the Suez Canal Company as a means to fund the 
 
 cited: [3] Republic of Egypt (1953–1958) — History, [4] Gamal Abdel Nasser — Nationalization of the Suez Canal Company, [2] Republic of Egypt (1953–1958) — History
 sent but not cited: [1, 5]
-timing: search 447 ms, generate 2033 ms, total 2481 ms
+timing: search 447 ms, first token 2481 ms, generate 2033 ms, total 2481 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Suez Crisis — Nationalisation of the Suez Canal
@@ -2325,7 +2325,7 @@ The Beveridge Report of 1942 recommended that all people of working age should p
 
 cited: [1] Welfare state — By country, [2] Beveridge Report, [3] William Beveridge — Wartime work, [4] 1945 United Kingdom general election — Outcome
 sent but not cited: [5]
-timing: search 486 ms, generate 2987 ms, total 3474 ms
+timing: search 486 ms, first token 3474 ms, generate 2987 ms, total 3474 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Welfare state — By country
@@ -2382,7 +2382,7 @@ Comecon was an economic organization under Soviet control from 1949 to 1991 that
 
 cited: [3] Soviet Union — Government and politics, [5] Comecon, [1] Marshall Plan — Areas excluded, [2] Eastern Bloc — Organizations, [4] Eastern Bloc — Economies
 sent but not cited: (none)
-timing: search 438 ms, generate 3704 ms, total 4142 ms
+timing: search 438 ms, first token 4142 ms, generate 3704 ms, total 4142 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Marshall Plan — Areas excluded
@@ -2444,7 +2444,7 @@ The invasion of Czechoslovakia in August 1968 by Eastern Bloc armies from the So
 
 cited: [1] Leonid Brezhnev — Leader of the Soviet Union (1964–1982), [2] Brezhnev Doctrine, [3] Eastern Bloc — Revolts, [4] Brezhnev Doctrine, [5] Prague Spring — Soviet invasion
 sent but not cited: (none)
-timing: search 487 ms, generate 3923 ms, total 4410 ms
+timing: search 487 ms, first token 4410 ms, generate 3923 ms, total 4410 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Leonid Brezhnev — Leader of the Soviet Union (1964–1982)
@@ -2506,7 +2506,7 @@ Thus, Poland's end of communist rule was marked by negotiated elections and a gr
 
 cited: [3] Cold War (1985–1991) — Revolt spreads through Communist Europe, [5] Revolutions of 1989 — History, [2] Czechoslovakia, [1] Velvet Revolution
 sent but not cited: [4]
-timing: search 524 ms, generate 5266 ms, total 5790 ms
+timing: search 524 ms, first token 5790 ms, generate 5266 ms, total 5790 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Velvet Revolution
@@ -2568,7 +2568,7 @@ The Berlin Wall was built to stop the flow of East Germans escaping to West Berl
 
 cited: [2] Inner German border, [4] Inner German border, [1] Berlin Wall — Erection of the inner German border, [3] Berlin Wall — Erection of the inner German border, [5] Berlin Wall — Structure and adjacent areas
 sent but not cited: (none)
-timing: search 668 ms, generate 3836 ms, total 4504 ms
+timing: search 668 ms, first token 4504 ms, generate 3836 ms, total 4504 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Berlin Wall — Erection of the inner German border
@@ -2632,7 +2632,7 @@ By 1959, during the Algerian War, it was clear in France that the status quo in 
 
 cited: [4] Battle of Dien Bien Phu — Aftermath, [5] Battle of Dien Bien Phu — Aftermath, [1] Algerian War — War chronology
 sent but not cited: [2, 3]
-timing: search 498 ms, generate 3282 ms, total 3780 ms
+timing: search 498 ms, first token 3780 ms, generate 3282 ms, total 3780 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Algerian War — War chronology
@@ -2694,7 +2694,7 @@ The Maastricht Treaty made economic and monetary union an objective by first com
 
 cited: [2] European single market — Four freedoms, [3] Maastricht Treaty — Economic and monetary union
 sent but not cited: [1, 4, 5]
-timing: search 485 ms, generate 2506 ms, total 2991 ms
+timing: search 485 ms, first token 2991 ms, generate 2506 ms, total 2991 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Maastricht Treaty
@@ -2766,7 +2766,7 @@ The fighting that began in Slovenia and Croatia in 1991 spread into Bosnia as th
 
 cited: [1] Bosnian War — Background, [3] Bosnian War — Prelude, [2] Croats of Bosnia and Herzegovina — History
 sent but not cited: [4, 5]
-timing: search 504 ms, generate 2612 ms, total 3116 ms
+timing: search 504 ms, first token 3116 ms, generate 2612 ms, total 3116 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Bosnian War — Background
@@ -2825,7 +2825,7 @@ Gorbachev's reforms, including perestroika (economic restructuring) and glasnost
 
 cited: [2] Cold War (1985–1991), [3] Cold War — Final years (1985–1991), [4] Perestroika — Economic reforms, [1] Perestroika — Political reforms, [5] Mikhail Gorbachev
 sent but not cited: (none)
-timing: search 512 ms, generate 3301 ms, total 3813 ms
+timing: search 512 ms, first token 3813 ms, generate 3301 ms, total 3813 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Perestroika — Political reforms
@@ -2885,7 +2885,7 @@ Ordinary families in Western Europe could suddenly afford cars, holidays, and wa
 
 cited: [1] Italian economic miracle — Society and culture, [3] West Germany — Economy, [4] Wirtschaftswunder — West Germany, [5] Trente Glorieuses — Dynamics
 sent but not cited: [2]
-timing: search 524 ms, generate 4829 ms, total 5353 ms
+timing: search 524 ms, first token 5353 ms, generate 4829 ms, total 5353 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Italian economic miracle — Society and culture
@@ -2950,7 +2950,7 @@ Stalin stopped the countries under his control from taking American money for re
 
 cited: [1] Iron Curtain — During the Cold War, [2] Marshall Plan — Rejection by Stalin, [5] Joseph Stalin — Post-war era
 sent but not cited: [3, 4]
-timing: search 586 ms, generate 2648 ms, total 3234 ms
+timing: search 586 ms, first token 3234 ms, generate 2648 ms, total 3234 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Iron Curtain — During the Cold War
@@ -3010,7 +3010,7 @@ Additionally, Schengen Area countries have abolished the need to show travel doc
 
 cited: [1] Schengen Agreement, [3] Schengen Agreement — History, [2] European single market — Four freedoms
 sent but not cited: [4, 5]
-timing: search 444 ms, generate 2895 ms, total 3339 ms
+timing: search 444 ms, first token 3339 ms, generate 2895 ms, total 3339 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Schengen Agreement
@@ -3069,7 +3069,7 @@ European powers gave up their overseas possessions in the two decades after 1945
 
 cited: [2] Decolonisation of Africa — Modern colonialism, [1] British Empire — Decolonisation and decline (1945–1997), [5] British Empire — Decolonisation and decline (1945–1997)
 sent but not cited: [3, 4]
-timing: search 428 ms, generate 2994 ms, total 3423 ms
+timing: search 428 ms, first token 3423 ms, generate 2994 ms, total 3423 ms
 
 --- what the model was shown -------------------------------------------------
 [1] British Empire — Decolonisation and decline (1945–1997)
@@ -3137,7 +3137,7 @@ Most refugees first entered the EU by crossing the Aegean Sea from Turkey to Gre
 
 cited: [4] 2015 European migrant crisis — Statistics, [2] 2015 European migrant crisis — Means of entry into Europe, [3] 2015 European migrant crisis — Means of entry into Europe, [5] Immigration to Europe — Illegal border crossing crisis
 sent but not cited: [1]
-timing: search 477 ms, generate 3388 ms, total 3866 ms
+timing: search 477 ms, first token 3866 ms, generate 3388 ms, total 3866 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Inner German border — East Germany's sea border
@@ -3217,7 +3217,7 @@ The major transformation came after the Labour victory in 1945, when the governm
 
 cited: [2] Liberal welfare reforms — Liberal reforms 1906–1914, [4] Liberal welfare reforms — Liberal reforms 1906–1914, [3] Welfare state — By country, [5] Clement Attlee — Prime Minister, [1] Clement Attlee — Prime Minister
 sent but not cited: (none)
-timing: search 459 ms, generate 4231 ms, total 4690 ms
+timing: search 459 ms, first token 4690 ms, generate 4231 ms, total 4690 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Clement Attlee — Prime Minister
@@ -3281,7 +3281,7 @@ The long run of rising prosperity in Western Europe came apart in the 1970s due 
 
 cited: [2] Post–World War II economic expansion — Decline, [3] 1973–1975 recession, [4] 1973–1975 recession — Spain, [5] Post–World War II economic expansion — Specific countries
 sent but not cited: [1]
-timing: search 450 ms, generate 2533 ms, total 2983 ms
+timing: search 450 ms, first token 2983 ms, generate 2533 ms, total 2983 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Comecon — History
@@ -3343,7 +3343,7 @@ The Socialist Federal Republic of Yugoslavia broke apart in the early 1990s afte
 
 cited: [3] Breakup of Yugoslavia, [4] Yugoslavia — Breakup, [2] Yugoslavia — Breakup
 sent but not cited: [1, 5]
-timing: search 462 ms, generate 3484 ms, total 3946 ms
+timing: search 462 ms, first token 3946 ms, generate 3484 ms, total 3946 ms
 
 --- what the model was shown -------------------------------------------------
 [1] World War II — Aftermath
@@ -3404,7 +3404,7 @@ Not in the sources. The passages cover the May 1968 protests in France, includin
 
 cited: (none)
 sent but not cited: [1, 2, 3, 4, 5]
-timing: search 474 ms, generate 1290 ms, total 1764 ms
+timing: search 474 ms, first token 1764 ms, generate 1290 ms, total 1764 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Protests of 1968 — Protests
@@ -3466,7 +3466,7 @@ Not in the sources. The passages cover the history, design, and production of th
 
 cited: (none)
 sent but not cited: [1, 2, 3, 4, 5]
-timing: search 488 ms, generate 1231 ms, total 1719 ms
+timing: search 488 ms, first token 1719 ms, generate 1231 ms, total 1719 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Volkswagen Beetle — History
@@ -3528,7 +3528,7 @@ Not in the sources. The passages cover various topics related to Belgium, includ
 
 cited: (none)
 sent but not cited: [1, 2, 3, 4, 5]
-timing: search 492 ms, generate 2649 ms, total 3142 ms
+timing: search 492 ms, first token 3142 ms, generate 2649 ms, total 3142 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Romanian revolution — Revolution spreads
@@ -3585,7 +3585,7 @@ The Treaty was signed on 17 March 1948 by the following plenipotentiaries:
 
 
 ==============================================================================
-[seveso-1976] (unanswerable)  ANSWERED (expected refusal)
+[seveso-1976] (unanswerable)  REFUSED
 What happened at the Seveso chemical plant in Italy, and how were the people living nearby affected?
 
 expected: (nothing)
@@ -3607,7 +3607,7 @@ The sources do not cover what happened at the Seveso chemical plant in Italy or 
 
 cited: [1] Italian economic miracle — Society and culture
 sent but not cited: [2, 3, 4, 5]
-timing: search 488 ms, generate 2281 ms, total 2770 ms
+timing: search 488 ms, first token 2770 ms, generate 2281 ms, total 2770 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Italian economic miracle — Society and culture
@@ -3663,7 +3663,7 @@ Not in the sources. The passages mention Nokia's success fueling Finland's econo
 
 cited: (none)
 sent but not cited: [1, 2, 3, 4, 5]
-timing: search 458 ms, generate 2754 ms, total 3213 ms
+timing: search 458 ms, first token 3213 ms, generate 2754 ms, total 3213 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Finland — History
@@ -3731,7 +3731,7 @@ Not in the sources. The passages cover the history of sugar production and slave
 
 cited: (none)
 sent but not cited: [1, 2, 3, 4, 5]
-timing: search 442 ms, generate 1036 ms, total 1478 ms
+timing: search 442 ms, first token 1478 ms, generate 1036 ms, total 1478 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Common Agricultural Policy — Origins and history
@@ -3767,4 +3767,5 @@ In the early 17th century, the majority of the labour in Barbados was provided b
 Slavery — History
 
 Following the Treaty of Ryswick of 1697, Hispaniola was divided between France and Spain. France received the western third and subsequently named it Saint-Domingue. To develop it into sugarcane plantations, the French imported thousands of slaves from Africa. Sugar was a lucrative commodity crop throughout the 18th century. By 1789, approximately 40,000 white colonists lived in Saint-Domingue. The whites were vastly outnumbered by the tens of thousands of African slaves they had imported to work on their plantations, which were primarily devoted to the production of sugarcane. In the north of the island, slaves were able to retain many ties to African cultures, religion and language; these ties were continually being renewed by newly imported Africans. Blacks outnumbered whites by about ten to one.
+
 

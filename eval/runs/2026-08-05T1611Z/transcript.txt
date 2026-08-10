@@ -26,7 +26,7 @@ Under the Treaty of Brest-Litovsk, Russia gave up control of Ukraine, Poland, Be
 
 cited: [1] Treaty of Brest-Litovsk, [2] Treaty of Brest-Litovsk — Terms, [3] Treaty of Brest-Litovsk — Terms, [4] Treaty of Brest-Litovsk, [5] Lebensraum — First World War nationalist premise
 sent but not cited: (none)
-timing: search 860 ms, generate 4484 ms, total 5344 ms
+timing: search 860 ms, first token 5344 ms, generate 4484 ms, total 5344 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Treaty of Brest-Litovsk
@@ -92,7 +92,7 @@ The Enabling Act of 1933 was passed by the Reichstag on 23 March 1933 with a vot
 
 cited: [1] Nazi Germany — History, [2] Gleichschaltung — Legal basis, [3] Enabling Act of 1933 — Passage, [4] Enabling Act of 1933 — Preparations and negotiations, [5] Reichstag Fire Decree — Role in the Nazi seizure of power
 sent but not cited: (none)
-timing: search 474 ms, generate 3916 ms, total 4390 ms
+timing: search 474 ms, first token 4390 ms, generate 3916 ms, total 4390 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Nazi Germany — History
@@ -157,7 +157,7 @@ At the Wannsee Conference on 20 January 1942, senior Nazi government officials a
 
 cited: [1] Wannsee Conference, [3] Wannsee Conference — Interpretation
 sent but not cited: [2, 4, 5]
-timing: search 495 ms, generate 2549 ms, total 3044 ms
+timing: search 495 ms, first token 3044 ms, generate 2549 ms, total 3044 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Wannsee Conference
@@ -217,7 +217,7 @@ Operation Barbarossa began on Sunday, 22 June 1941, just before dawn [1][2]. The
 
 cited: [1] Operation Barbarossa, [2] Eastern Front (World War II) — Conduct of operations
 sent but not cited: [3, 4, 5]
-timing: search 465 ms, generate 2432 ms, total 2897 ms
+timing: search 465 ms, first token 2897 ms, generate 2432 ms, total 2897 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Operation Barbarossa
@@ -276,7 +276,7 @@ The hyperinflation in the Weimar Republic was caused primarily by the government
 
 cited: [1] Hyperinflation in the Weimar Republic, [2] Hyperinflation in the Weimar Republic — Causes, [3] Hyperinflation in the Weimar Republic — Causes, [4] Great Depression in Germany — Background, [5] Hyperinflation in the Weimar Republic
 sent but not cited: (none)
-timing: search 482 ms, generate 4175 ms, total 4658 ms
+timing: search 482 ms, first token 4658 ms, generate 4175 ms, total 4658 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Hyperinflation in the Weimar Republic
@@ -332,7 +332,7 @@ The Munich Agreement of 1938 gave Germany the annexation of part of the First Cz
 
 cited: [1] Munich Agreement, [4] Munich Agreement — History, [5] French Third Republic — World War II and downfall
 sent but not cited: [2, 3]
-timing: search 471 ms, generate 2364 ms, total 2835 ms
+timing: search 471 ms, first token 2835 ms, generate 2364 ms, total 2835 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Munich Agreement
@@ -394,7 +394,7 @@ The secret protocol of the Molotov-Ribbentrop Pact divided Poland, Romania, Lith
 
 cited: [2] Molotov–Ribbentrop Pact — Secret protocol, [4] Molotov–Ribbentrop Pact — Secret protocol
 sent but not cited: [1, 3, 5]
-timing: search 533 ms, generate 3034 ms, total 3567 ms
+timing: search 533 ms, first token 3567 ms, generate 3034 ms, total 3567 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Molotov–Ribbentrop Pact
@@ -459,7 +459,7 @@ The Nuremberg Laws of 1935 forbade marriages and sexual relations between Jews a
 
 cited: [1] Nuremberg Laws, [2] Nuremberg Laws — Text of the laws, [3] Heinrich Himmler — Rise in the SS, [4] Nazi Germany — Politics, [5] Racism — State-sponsored racism
 sent but not cited: (none)
-timing: search 499 ms, generate 4029 ms, total 4528 ms
+timing: search 499 ms, first token 4528 ms, generate 4029 ms, total 4528 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Nuremberg Laws
@@ -526,7 +526,7 @@ The Treaty of Trianon imposed territorial changes on Hungary and recognized its 
 
 cited: [1] Treaty of Trianon, [2] Treaty of Trianon — Results and consequences
 sent but not cited: [3, 4, 5]
-timing: search 503 ms, generate 4340 ms, total 4843 ms
+timing: search 503 ms, first token 4843 ms, generate 4340 ms, total 4843 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Treaty of Trianon
@@ -592,7 +592,7 @@ Operation Sea Lion was never launched after the Battle of Britain because Adolf 
 
 cited: [4] Operation Sea Lion, [2] Operation Sea Lion — Navy, [3] Operation Sea Lion — Air power, [5] Operation Sea Lion — Navy
 sent but not cited: [1]
-timing: search 517 ms, generate 3260 ms, total 3777 ms
+timing: search 517 ms, first token 3777 ms, generate 3260 ms, total 3777 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Operation Sea Lion
@@ -649,7 +649,7 @@ The Young Plan replaced the Dawes Plan by reducing the total reparations amount 
 
 cited: [1] Young Plan, [4] Weimar Republic — History, [5] 1929 German Young Plan referendum — Young Plan, [2] Dawes Plan, [3] Young Plan — Origins
 sent but not cited: (none)
-timing: search 501 ms, generate 4227 ms, total 4728 ms
+timing: search 501 ms, first token 4728 ms, generate 4227 ms, total 4728 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Young Plan
@@ -714,7 +714,7 @@ Thus, Mussolini's rise was through a legal constitutional process backed by inti
 
 cited: [1] March on Rome — The March, [2] March on Rome, [3] Benito Mussolini — Rise to power, [5] Fascist Italy — Colonial and foreign policy
 sent but not cited: [4]
-timing: search 549 ms, generate 4608 ms, total 5157 ms
+timing: search 549 ms, first token 5157 ms, generate 4608 ms, total 5157 ms
 
 --- what the model was shown -------------------------------------------------
 [1] March on Rome — The March
@@ -776,7 +776,7 @@ Thus, Stalingrad is seen as the initial turning point where the Soviets seized t
 
 cited: [1] Battle of Stalingrad — Significance, [2] Battle of Stalingrad — Significance, [5] Battle of Stalingrad, [3] Battle of Kursk, [4] Battle of Kursk — Results
 sent but not cited: (none)
-timing: search 471 ms, generate 5789 ms, total 6260 ms
+timing: search 471 ms, first token 6260 ms, generate 5789 ms, total 6260 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Battle of Stalingrad — Significance
@@ -838,7 +838,7 @@ In September 1938, at the Munich Conference, Germany, Italy, Britain, and France
 
 cited: [4] Adolf Hitler — World War II, [5] Allies of World War II — Origins, [1] Interwar period — Germany, [2] Anschluss — Legacy, [3] World War II — Pre-war events
 sent but not cited: (none)
-timing: search 580 ms, generate 4695 ms, total 5275 ms
+timing: search 580 ms, first token 5275 ms, generate 4695 ms, total 5275 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Interwar period — Germany
@@ -900,7 +900,7 @@ The campaign against the kulaks was part of a broader Soviet policy of forced co
 
 cited: [2] Dekulakization, [3] Dekulakization — Liquidation, [1] Holodomor — History, [4] Holodomor — History
 sent but not cited: [5]
-timing: search 599 ms, generate 4708 ms, total 5307 ms
+timing: search 599 ms, first token 5307 ms, generate 4708 ms, total 5307 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Holodomor — History
@@ -964,7 +964,7 @@ Finland fought the Soviet Union twice within five years due to the Winter War an
 
 cited: [4] Allies of World War II — Associated powers and other states fighting Axis, [1] Continuation War, [5] Continuation War — Background
 sent but not cited: [2, 3]
-timing: search 559 ms, generate 3485 ms, total 4045 ms
+timing: search 559 ms, first token 4045 ms, generate 3485 ms, total 4045 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Continuation War
@@ -1023,7 +1023,7 @@ Many Germans came to believe their army had never actually been beaten in the fi
 
 cited: [1] Stab-in-the-back myth — Assessments of Germany's situation in late 1918, [3] Armistice of 11 November 1918 — Stab-in-the-back myth, [5] Stab-in-the-back myth — Background
 sent but not cited: [2, 4]
-timing: search 562 ms, generate 4095 ms, total 4657 ms
+timing: search 562 ms, first token 4657 ms, generate 4095 ms, total 4657 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Stab-in-the-back myth — Assessments of Germany's situation in late 1918
@@ -1078,7 +1078,7 @@ German savings became worthless in the early 1920s due to hyperinflation fueled 
 
 cited: [1] Weimar Republic — History, [2] Great Depression in Germany — Background, [3] Weimar Republic — History, [5] Hyperinflation in the Weimar Republic
 sent but not cited: [4]
-timing: search 508 ms, generate 3340 ms, total 3848 ms
+timing: search 508 ms, first token 3848 ms, generate 3340 ms, total 3848 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Weimar Republic — History
@@ -1146,7 +1146,7 @@ The Nazis took apart the Weimar democracy rapidly after Hitler's appointment as 
 
 cited: [2] The Holocaust — Rise of Nazi Germany, [3] Weimar Republic, [4] Weimar Republic — History, [5] Adolf Hitler — Rise to power
 sent but not cited: [1]
-timing: search 489 ms, generate 3238 ms, total 3727 ms
+timing: search 489 ms, first token 3727 ms, generate 3238 ms, total 3727 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Nazism — Ideology and programme
@@ -1210,7 +1210,7 @@ The German advance towards Moscow in the winter of 1941 was stopped by several f
 
 cited: [2] Operation Barbarossa — Battle of Moscow, [3] Battle of Moscow — Wehrmacht advance towards Moscow (1 November – 5 December), [5] Operation Barbarossa — Aftermath, [1] Battle of Smolensk (1941) — The operation
 sent but not cited: [4]
-timing: search 516 ms, generate 3496 ms, total 4012 ms
+timing: search 516 ms, first token 4012 ms, generate 3496 ms, total 4012 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Battle of Smolensk (1941) — The operation
@@ -1274,7 +1274,7 @@ The French army collapsed in weeks in 1940 due to several factors. First, the Fr
 
 cited: [4] French Third Republic — World War II and downfall, [3] French Third Republic — World War II and downfall, [2] Phoney War — German invasion of Poland, [5] Battle of France — Fall Rot (Case Red)
 sent but not cited: [1]
-timing: search 547 ms, generate 3728 ms, total 4275 ms
+timing: search 547 ms, first token 4275 ms, generate 3728 ms, total 4275 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Blitzkrieg — Military operations
@@ -1334,7 +1334,7 @@ Murdering Europe's Jews became coordinated state policy by early 1942, following
 
 cited: [3] The Holocaust, [4] The Holocaust — Mass murder, [1] Final Solution, [2] The Holocaust — Mass murder
 sent but not cited: [5]
-timing: search 518 ms, generate 3188 ms, total 3706 ms
+timing: search 518 ms, first token 3706 ms, generate 3188 ms, total 3706 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Final Solution
@@ -1395,7 +1395,7 @@ After 1918, Germany was made to pay reparations for the devastation caused by Wo
 
 cited: [1] Georges Clemenceau — President of 1919 Paris Peace Conference, [2] World War I reparations — Evolution of reparations, [3] Treaty of Versailles — Implementation, [4] Young Plan — Subsequent events, [5] World War I reparations — German reaction
 sent but not cited: (none)
-timing: search 530 ms, generate 4148 ms, total 4678 ms
+timing: search 530 ms, first token 4678 ms, generate 4148 ms, total 4678 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Georges Clemenceau — President of 1919 Paris Peace Conference
@@ -1453,7 +1453,7 @@ The Bolsheviks held on to power by centralizing authority and suppressing opposi
 
 cited: [2] Bolshevism — Support for the Bolsheviks by the people, [1] Marxism–Leninism — History, [3] Bolsheviks, [5] Treaty of Brest-Litovsk — Background
 sent but not cited: [4]
-timing: search 499 ms, generate 3554 ms, total 4053 ms
+timing: search 499 ms, first token 4053 ms, generate 3554 ms, total 4053 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Marxism–Leninism — History
@@ -1514,7 +1514,7 @@ Not in the sources. The passages mention the Chernobyl disaster in 1986 as the f
 
 cited: (none)
 sent but not cited: [1, 2, 3, 4, 5]
-timing: search 539 ms, generate 1895 ms, total 2434 ms
+timing: search 539 ms, first token 2434 ms, generate 1895 ms, total 2434 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Soviet Union — Geography
@@ -1581,7 +1581,7 @@ Not in the sources. The passages discuss the partition of Ireland, the establish
 
 cited: (none)
 sent but not cited: [1, 2, 3, 4, 5]
-timing: search 538 ms, generate 1868 ms, total 2406 ms
+timing: search 538 ms, first token 2406 ms, generate 1868 ms, total 2406 ms
 
 --- what the model was shown -------------------------------------------------
 [1] United Kingdom of Great Britain and Ireland
@@ -1629,7 +1629,7 @@ For many years, Labour held to a policy of not allowing residents of Northern Ir
 
 
 ==============================================================================
-[srebrenica-1995] (unanswerable)  ANSWERED (expected refusal)
+[srebrenica-1995] (unanswerable)  REFUSED
 What happened at Srebrenica in July 1995?
 
 expected: (nothing)
@@ -1651,7 +1651,7 @@ The sources do not cover what happened at Srebrenica in July 1995. They mention 
 
 cited: (none)
 sent but not cited: [1, 2, 3, 4, 5]
-timing: search 548 ms, generate 2038 ms, total 2587 ms
+timing: search 548 ms, first token 2587 ms, generate 2038 ms, total 2587 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Vichy France — Collaboration with Nazi Germany
@@ -1712,7 +1712,7 @@ A majority of British voters chose to leave the European Union in 2016 partly du
 
 cited: [1] Great Recession — Effects, [3] British Empire — Legacy
 sent but not cited: [2, 4, 5]
-timing: search 487 ms, generate 2301 ms, total 2788 ms
+timing: search 487 ms, first token 2788 ms, generate 2301 ms, total 2788 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Great Recession — Effects
@@ -1774,7 +1774,7 @@ Not in the sources. The passages discuss British decolonisation, migration withi
 
 cited: (none)
 sent but not cited: [1, 2, 3, 4, 5]
-timing: search 510 ms, generate 1486 ms, total 1996 ms
+timing: search 510 ms, first token 1996 ms, generate 1486 ms, total 1996 ms
 
 --- what the model was shown -------------------------------------------------
 [1] British Empire — Decolonisation and decline (1945–1997)
@@ -1838,7 +1838,7 @@ Not in the sources. The passages cover neuropsychology, cognitive psychology, an
 
 cited: (none)
 sent but not cited: [1, 2, 3, 4, 5]
-timing: search 575 ms, generate 1748 ms, total 2323 ms
+timing: search 575 ms, first token 2323 ms, generate 1748 ms, total 2323 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Psychology — Major schools of thought
@@ -1880,4 +1880,5 @@ Psychology — Research methods
 
 Direct brain observation/manipulation
 A classic and popular tool for relating mental and neural activity is the electroencephalogram (EEG). This technique uses electrodes with amplifiers on a person's scalp to measure voltage changes across different parts of the brain. Hans Berger, the first researcher to use EEG on an unopened skull, quickly found that brains exhibit signature "brain waves": electric oscillations which correspond to different states of consciousness. Researchers subsequently refined statistical methods for synthesizing the electrode data, and identified unique brain wave patterns such as the delta wave observed during non-REM sleep.
+
 

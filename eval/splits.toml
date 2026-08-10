@@ -1,0 +1,189 @@
+# The claim splitter's ground truth, written by hand before the splitter was run.
+#
+# `judge-probe` tests the second half of the faithfulness judge -- given a claim
+# and its sources, is the claim supported. It cannot see the first half, because
+# probes hand it a claim directly. So a splitter that mangles a sentence produces
+# a fragment the verdict judge then correctly fails, and the answer is reported
+# unfaithful when the system did nothing wrong. `stasi-scale` has been flagged in
+# all three D-088 runs that way and is a false positive.
+#
+# Every `answer` below is copied verbatim out of eval/runs/. Ten probes for the
+# ten rules CLAIM_INSTRUCTIONS states -- the number is coverage of the rules, not
+# a round figure.
+#
+# Scoring is not string equality, because the splitter's wording varies run to
+# run. Each probe says instead:
+#   require   any claim matching `when` must also match `then`
+#   forbid    no claim may match this
+#   min_claims / expect_none  how many lines should come back at all
+
+[[probe]]
+id = "stasi-including-list"
+rule = "keep every qualifier -- a subset is not a total"
+answer = """
+Between 1950 and 1989, the Stasi employed a total of 274,000 people. In 1989, it \
+employed 91,015 full-time employees, including 2,000 fully employed unofficial \
+collaborators, 13,073 soldiers, and 2,232 officers of the GDR army, along with \
+173,081 unofficial informants inside the GDR and 1,553 informants in West Germany \
+[1][3].
+"""
+require = [
+  { when = "2,?000", then = "including|of whom|among them|91,015|full-time" },
+  { when = "13,073", then = "including|of whom|among them|91,015|full-time" },
+]
+why = """
+The recorded defect. The splitter produced "In 1989, the Stasi employed 2,000 \
+fully employed unofficial collaborators", dropping "91,015 people full-time, \
+including". The verdict judge then failed it -- correctly, because the source \
+attaches 2,000 to a subset of the 91,015, not to the Stasi's employment. The \
+instrument manufactured the defect it reported.
+"""
+
+[[probe]]
+id = "schengen-date"
+rule = "keep dates"
+answer = """
+It became possible to drive across half a dozen European countries without \
+stopping to show a document through the Schengen Agreement, signed on 14 June \
+1985 by five European Economic Community member states.
+"""
+require = [{ when = "signed", then = "1985" }]
+why = """
+A claim that says the agreement was signed, without saying when, cannot be \
+checked against a source whose only distinguishing fact is the date.
+"""
+
+[[probe]]
+id = "schengen-who-signed"
+rule = "keep the actors -- who did what"
+answer = """
+The Schengen Agreement was signed on 14 June 1985 by five European Economic \
+Community member states. The Schengen Area now consists of 29 European countries \
+operating like a single state for international travel purposes [1][3].
+"""
+require = [{ when = "five", then = "European Economic Community|EEC|member states" }]
+forbid = ["^Five countries signed it\\.$"]
+why = """
+"Five states signed it" and "five EEC member states signed it" are different \
+claims, and only the second is what the source says. The same class as D-088's \
+`travel-without-showing-papers`, which dropped "(of which Ireland is not \
+included)" and turned a qualified statement into a false one.
+"""
+
+[[probe]]
+id = "chernobyl-contested-estimate"
+rule = "keep attribution and uncertainty"
+answer = """
+Long-term death estimates range from up to 4,000 in Ukraine, Belarus, and Russia \
+to as many as 16,000 across Europe, but these are projections and remain \
+contested [1][4].
+"""
+require = [
+  { when = "4,?000|16,?000", then = "estimate|projection|contested|range|as many as|up to" },
+]
+why = """
+The worst possible drop. "16,000 people died across Europe" and "projections, \
+contested, of as many as 16,000" are a fact and a disputed model, and the \
+splitter turning one into the other would be reported as the system asserting it.
+"""
+
+[[probe]]
+id = "mussolini-hedge"
+rule = "keep hedges -- 'fewer than' is part of the number"
+answer = """
+Mussolini's March on Rome in October 1922 was an organized mass demonstration of \
+fewer than 30,000 men, the Blackshirts, which led to King Victor Emmanuel III \
+handing power to Mussolini without armed conflict.
+"""
+require = [{ when = "30,?000", then = "fewer than|less than|under|about|around" }]
+why = """
+VERDICT_INSTRUCTIONS test 2 fails a claim that upgrades the source's verb; a \
+dropped "fewer than" is the same upgrade applied to a number, and the judge would \
+be right to fail it.
+"""
+
+[[probe]]
+id = "marshall-two-claims"
+rule = "split a sentence that makes two claims"
+answer = """
+The Marshall Plan provided aid to eighteen European countries, with the largest \
+recipient being the United Kingdom, which received about 26% of the total aid.
+"""
+min_claims = 2
+require = [{ when = "26", then = "about|approximately|roughly|around" }]
+why = """
+Two facts -- eighteen countries, and the UK's share -- and a judge asked about \
+both at once can only answer about one. The hedge on 26% must survive the split \
+as well, which is why this probe carries both checks.
+"""
+
+[[probe]]
+id = "gfa-pronoun"
+rule = "each claim stands alone -- resolve 'it' to the name"
+answer = """
+The Good Friday Agreement restored self-government to Northern Ireland on the \
+basis of "power sharing" among political parties [1]. It created a devolved \
+system of government for Northern Ireland, which is the basis of its present \
+governance [1][5].
+"""
+forbid = ["^(It|They|This|These|That|He|She)\\b"]
+why = """
+A claim opening "It created a devolved system" is unjudgeable on its own: the \
+judge is given one claim and the sources, never the answer it came from, so \
+there is nothing for "it" to refer to.
+"""
+
+[[probe]]
+id = "chernobyl-cause-chain"
+rule = "copy the answer's wording -- do not improve the causal chain"
+answer = """
+Upon shutting down the reactor in such conditions, pervasive design flaws led to \
+a power surge. The reactor components ruptured and lost coolant, and the \
+resulting steam explosions and meltdown destroyed the reactor building [2].
+"""
+require = [{ when = "power surge", then = "design flaw|shutting down|shutdown" }]
+why = """
+"A power surge destroyed the reactor" drops what the source attaches the surge \
+to. GROUNDING in system_prompt.md forbids the model supplying a missing join; \
+the splitter must not supply one either, and nothing probes that today.
+"""
+
+[[probe]]
+id = "seveso-refusal-asserts-nothing"
+rule = "ignore refusals and statements about what the sources cover"
+answer = """
+The sources do not cover what happened at the Seveso chemical plant in Italy or \
+how the people living nearby were affected. However, no specific details about \
+the event or its impact on local residents are provided.
+"""
+expect_none = true
+why = """
+A refusal makes no claim about the world, so it must yield no claims. If it \
+yields any, `judge_record` would score the system's correct refusal for \
+faithfulness -- and `refused()` skipping refusals is the only thing standing \
+between that and a wrong number. Both halves of that guard are now tested.
+"""
+
+[[probe]]
+id = "marshall-markers-stripped"
+rule = "citation markers are not part of the claim"
+answer = """
+France received 18%, and West Germany received 11%. The total American grants and \
+loans to the world from 1945 to 1953 amounted to $44.3 billion, but this includes \
+aid outside the Marshall Plan as well [1][2][3][4].
+"""
+forbid = ["\\[\\d+\\]", "44\\.3.*Marshall Plan (aid|total|provided)"]
+why = """
+"[2]" is a fact about our prompt, not about Europe, and leaving it in invites the \
+judge to grade the citation rather than the sentence. `parse_claims` strips them \
+after the fact; this checks the whole path.
+
+**This probe was written wrong and is corrected here, which is recorded rather \
+than quietly fixed.** It first required every claim mentioning $44.3 billion to \
+carry "but this includes aid outside the Marshall Plan as well", and failed a \
+split that was correct: the claim reads "American grants and loans to the \
+world", which already carries the scope, and the clause was preserved on its own \
+line. The probe was asserting a rule the splitter had no reason to follow. What \
+it should have tested -- and now does -- is the misattachment that would actually \
+be wrong: $44.3 billion presented as the Marshall Plan's own total.
+"""

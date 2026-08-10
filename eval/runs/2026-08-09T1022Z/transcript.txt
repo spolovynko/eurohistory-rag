@@ -3574,7 +3574,7 @@ In the 1990s, Belgium saw several large scandals notably surrounding Marc Dutrou
 
 
 ==============================================================================
-[seveso-1976] (unanswerable)  ANSWERED (expected refusal)
+[seveso-1976] (unanswerable)  REFUSED
 What happened at the Seveso chemical plant in Italy, and how were the people living nearby affected?
 
 expected: (nothing)
@@ -4731,7 +4731,7 @@ Regardless of the reason for the declining value of the German currency, the dec
 
 
 ==============================================================================
-[t-nato-vilnius-2023] (unanswerable)  ANSWERED (expected refusal)
+[t-nato-vilnius-2023] (unanswerable)  REFUSED
 What did NATO agree at its 2023 summit in Vilnius?
 
 expected: (nothing)
@@ -5786,4 +5786,5 @@ Fighting ceased between 28 October and 4 November, as many Hungarians believed t
 Hungarian Revolution of 1956
 
 The Hungarian Revolution of 1956 (23 October – 4 November 1956; ), also known as the Hungarian Uprising, was an attempted countrywide revolution against the government of the Hungarian People's Republic (1949–1989) and the policies caused by the government's subordination to the Union of Soviet Socialist Republics (USSR). The uprising lasted 15 days before being crushed by Soviet tanks and troops on 7 November 1956 (outside of Budapest, firefights lasted until at least 12 November 1956). Thousands were killed or wounded, and nearly a quarter of a million Hungarians fled the country.
+
 

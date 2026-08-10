@@ -35,6 +35,19 @@ class GenerationUnavailable(RuntimeError):
     """The model could not be reached, or returned nothing usable."""
 
 
+class EmptyCompletion(GenerationUnavailable):
+    """The model replied with nothing, and the caller may or may not mind.
+
+    An empty answer to a reader's question is a failure, so this stays a
+    `GenerationUnavailable` and every existing handler keeps catching it. But
+    `CLAIM_INSTRUCTIONS` ends "if the answer makes no factual claim, reply with
+    nothing", and a refusal split into claims should produce exactly that -- so
+    the one caller that asks for nothing needs to tell "nothing, as instructed"
+    apart from "the model fell over". Found the moment the splitter was fixed
+    and started obeying that rule. D-102.
+    """
+
+
 @dataclass(frozen=True, slots=True)
 class Completion:
     """What the model sent back: the answer, and what it cost.
@@ -161,7 +174,7 @@ class OpenAIGenerator:
 
         text = "".join(pieces).rstrip()
         if not text:
-            raise GenerationUnavailable("The model returned an empty answer.")
+            raise EmptyCompletion("The model returned an empty answer.")
 
         yield Completion(
             text=text,

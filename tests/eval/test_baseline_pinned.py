@@ -3,9 +3,10 @@
 Every table in `decisions.md` from Phase 15 onward quotes these figures, and
 until now nothing in the repository connected them to the records they were
 computed from. A metric edited in good faith would move all of them silently --
-which nearly happened: `metrics.REFUSAL` matches only one of the two phrases the
-prompt uses to decline, and fixing it would change a number published across six
-runs. This is the check that turns that from a discovery into a failing build.
+which is exactly what happened: `metrics.REFUSAL` matched only one of the two
+phrases the prompt uses to decline, and fixing it in Phase 27 changed a number
+published across many runs. This file is why that was a deliberate re-pin with
+both values written down rather than a silent drift. D-102.
 
 It is also the only part of the eval that can run in CI. Producing a run needs
 Qdrant, 54,903 points and a paid key; **re-scoring** one needs a text file that
@@ -28,10 +29,18 @@ BASELINE = Path(__file__).parents[2] / "eval" / "runs" / "2026-08-06T1703Z"
 # recall@5, recall@20, coverage@5, MRR, top-1 score -- to three decimals, which
 # is the precision the tables print. The fourth decimal of top-1 is embedding
 # API noise and pinning it would fail a build on nothing.
+#
+# **The refusal column was re-pinned in Phase 27 and the old values are kept
+# here.** It read `golden 2, extended 5, all 7` under the one-phrase rule, and
+# reads `2, 6, 8` now. The one answer that moved is `seveso-1976`, in the
+# extended suite: it declines the whole question in the wording the old rule
+# could not see. Every other figure in this table is byte-identical before and
+# after, which is the evidence that the fix touched the refusal test and nothing
+# else. D-102.
 PUBLISHED = {
     "golden": (30, 0.750, 1.000, 0.479, 0.536, 0.655, 2),
-    "extended": (30, 0.625, 0.917, 0.389, 0.453, 0.592, 5),
-    "all": (60, 0.688, 0.958, 0.434, 0.494, 0.624, 7),
+    "extended": (30, 0.625, 0.917, 0.389, 0.453, 0.592, 6),
+    "all": (60, 0.688, 0.958, 0.434, 0.494, 0.624, 8),
 }
 
 

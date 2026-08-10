@@ -3579,7 +3579,7 @@ The Treaty was signed on 17 March 1948 by the following plenipotentiaries:
 
 
 ==============================================================================
-[seveso-1976] (unanswerable)  ANSWERED (expected refusal)
+[seveso-1976] (unanswerable)  REFUSED
 What happened at the Seveso chemical plant in Italy, and how were the people living nearby affected?
 
 expected: (nothing)
@@ -3761,4 +3761,5 @@ In the early 17th century, the majority of the labour in Barbados was provided b
 Slavery — History
 
 Following the Treaty of Ryswick of 1697, Hispaniola was divided between France and Spain. France received the western third and subsequently named it Saint-Domingue. To develop it into sugarcane plantations, the French imported thousands of slaves from Africa. Sugar was a lucrative commodity crop throughout the 18th century. By 1789, approximately 40,000 white colonists lived in Saint-Domingue. The whites were vastly outnumbered by the tens of thousands of African slaves they had imported to work on their plantations, which were primarily devoted to the production of sugarcane. In the north of the island, slaves were able to retain many ties to African cultures, religion and language; these ties were continually being renewed by newly imported Africans. Blacks outnumbered whites by about ten to one.
+
 

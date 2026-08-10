@@ -29,7 +29,7 @@ Recent events, specifically the Russian invasion, have affected Kharkiv signific
 
 cited: [1] Kharkiv — Culture, [3] Kharkiv — Culture, [2] Kharkiv
 sent but not cited: [4, 5]
-timing: search 998 ms, generate 19684 ms, total 20682 ms
+timing: search 998 ms, first token 20682 ms, generate 19684 ms, total 20682 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Kharkiv — Culture
@@ -114,7 +114,7 @@ At the 1937 Leipzig Trade Fair, Joachim von Ribbentrop declared that German econ
 
 cited: [1] Joachim von Ribbentrop — Ambassador to the United Kingdom
 sent but not cited: [2, 3, 4, 5]
-timing: search 1158 ms, generate 6485 ms, total 7643 ms
+timing: search 1158 ms, first token 7643 ms, generate 6485 ms, total 7643 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Joachim von Ribbentrop — Ambassador to the United Kingdom
@@ -168,7 +168,7 @@ The Austro-Hungarian Empire under Franz Joseph I included various ethnic groups 
 
 cited: [1] Anschluss — Historical background, [2] Austria — History
 sent but not cited: [3, 4, 5]
-timing: search 612 ms, generate 6090 ms, total 6702 ms
+timing: search 612 ms, first token 6702 ms, generate 6090 ms, total 6702 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Anschluss — Historical background
@@ -223,7 +223,7 @@ The 1920 Constitution of the First Czechoslovak Republic established the country
 
 cited: [1] First Czechoslovak Republic — Politics
 sent but not cited: [2, 3, 4, 5]
-timing: search 642 ms, generate 11592 ms, total 12234 ms
+timing: search 642 ms, first token 12234 ms, generate 11592 ms, total 12234 ms
 
 --- what the model was shown -------------------------------------------------
 [1] First Czechoslovak Republic — Politics
@@ -292,7 +292,7 @@ Magda Goebbels was born in 1901 in Berlin, Germany, to an unwed couple, Auguste 
 
 cited: [1] Magda Goebbels — Early life, [2] Magda Goebbels — Early life
 sent but not cited: [3, 4, 5]
-timing: search 882 ms, generate 16039 ms, total 16921 ms
+timing: search 882 ms, first token 16921 ms, generate 16039 ms, total 16921 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Magda Goebbels — Early life
@@ -354,7 +354,7 @@ During the establishment of the Siege of Leningrad, the German forces included t
 
 cited: [5] Operation Barbarossa — Further German advances, [1] Siege of Leningrad — Establishment
 sent but not cited: [2, 3, 4]
-timing: search 589 ms, generate 12983 ms, total 13573 ms
+timing: search 589 ms, first token 13573 ms, generate 12983 ms, total 13573 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Siege of Leningrad — Establishment
@@ -420,7 +420,7 @@ Between the 3rd and 11th centuries during the Early Middle Ages, the Bessarabia 
 
 cited: [1] Bessarabia — History, [2] Bessarabia — History
 sent but not cited: [3, 4, 5]
-timing: search 693 ms, generate 8947 ms, total 9641 ms
+timing: search 693 ms, first token 9641 ms, generate 8947 ms, total 9641 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Bessarabia — History
@@ -489,7 +489,7 @@ Nikolai Vatutin took command of the Soviet forces near Novgorod on the Northwest
 
 cited: [1] Nikolai Vatutin — The battles in the Northwest
 sent but not cited: [2, 3, 4, 5]
-timing: search 559 ms, generate 11295 ms, total 11854 ms
+timing: search 559 ms, first token 11854 ms, generate 11295 ms, total 11854 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Nikolai Vatutin — The battles in the Northwest
@@ -545,7 +545,7 @@ The rulers of the Habsburg monarchy from 1508 to 1918 belonged to two houses: th
 
 cited: [1] Habsburg monarchy — Rulers, 1508–1918
 sent but not cited: [2, 3, 4, 5]
-timing: search 626 ms, generate 13702 ms, total 14328 ms
+timing: search 626 ms, first token 14328 ms, generate 13702 ms, total 14328 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Habsburg monarchy — Rulers, 1508–1918
@@ -625,7 +625,7 @@ The treaty's punishment of Germany contributed to the rise of Nazi Germany and t
 
 cited: [1] Western Front (World War I) — Aftermath, [2] Aftermath of World War I — Paris Peace Conference, [3] Treaty of Versailles, [5] World War I, [4] European theatre of World War I — Aftermath
 sent but not cited: (none)
-timing: search 591 ms, generate 16106 ms, total 16697 ms
+timing: search 591 ms, first token 16697 ms, generate 16106 ms, total 16697 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Western Front (World War I) — Aftermath
@@ -679,7 +679,7 @@ During the 1934 revolt in Asturias following the inclusion of three CEDA ministe
 
 cited: [1] Second Spanish Republic — History, [3] Spanish Civil War — Background, [4] Second Spanish Republic
 sent but not cited: [2, 5]
-timing: search 528 ms, generate 12006 ms, total 12534 ms
+timing: search 528 ms, first token 12534 ms, generate 12006 ms, total 12534 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Second Spanish Republic — History
@@ -741,7 +741,7 @@ The purpose of the Hunger Plan in Nazi Germany's strategy during the invasion of
 
 cited: [1] Hunger Plan, [2] Operation Barbarossa — Background, [4] Wannsee Conference — Background, [5] Hunger Plan
 sent but not cited: [3]
-timing: search 566 ms, generate 7268 ms, total 7834 ms
+timing: search 566 ms, first token 7834 ms, generate 7268 ms, total 7834 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Hunger Plan
@@ -797,7 +797,7 @@ H. H. Asquith's role in the Parnell Commission of Enquiry in 1889 significantly 
 
 cited: [1] H. H. Asquith — Member of Parliament: 1886–1908, [2] H. H. Asquith — Member of Parliament: 1886–1908
 sent but not cited: [3, 4, 5]
-timing: search 596 ms, generate 10087 ms, total 10683 ms
+timing: search 596 ms, first token 10683 ms, generate 10087 ms, total 10683 ms
 
 --- what the model was shown -------------------------------------------------
 [1] H. H. Asquith — Member of Parliament: 1886–1908
@@ -861,7 +861,7 @@ The 1928 Summer Olympics were hosted by Amsterdam, Netherlands. Notably, Amsterd
 
 cited: [1] 1928 Summer Olympics, [2] 1928 Summer Olympics — Bidding process
 sent but not cited: [3, 4, 5]
-timing: search 586 ms, generate 6363 ms, total 6950 ms
+timing: search 586 ms, first token 6950 ms, generate 6363 ms, total 6950 ms
 
 --- what the model was shown -------------------------------------------------
 [1] 1928 Summer Olympics
@@ -934,7 +934,7 @@ By the mid-19th century, the great expansion of the bourgeoisie social class cau
 
 cited: [1] Bourgeoisie — History
 sent but not cited: [2, 3, 4, 5]
-timing: search 555 ms, generate 6834 ms, total 7389 ms
+timing: search 555 ms, first token 7389 ms, generate 6834 ms, total 7389 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Bourgeoisie — History
@@ -992,7 +992,7 @@ Alan Bullock's 1977 Bullock Report recommended workers' control in large compani
 
 cited: [1] Alan Bullock — Other works
 sent but not cited: [2, 3, 4, 5]
-timing: search 558 ms, generate 3080 ms, total 3638 ms
+timing: search 558 ms, first token 3638 ms, generate 3080 ms, total 3638 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Alan Bullock — Other works
@@ -1052,7 +1052,7 @@ During Tony Blair's government following the 1997 election victory, the UK Labou
 
 cited: [1] Labour Party (UK) — History
 sent but not cited: [2, 3, 4, 5]
-timing: search 502 ms, generate 7558 ms, total 8060 ms
+timing: search 502 ms, first token 8060 ms, generate 7558 ms, total 8060 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Labour Party (UK) — History
@@ -1115,7 +1115,7 @@ Adolf Hitler envisioned Britain's role in the Greater Germanic Reich after the i
 
 cited: [1] Greater Germanic Reich — Role of Britain, [2] Greater Germanic Reich — Role of Britain, [3] Greater Germanic Reich
 sent but not cited: [4, 5]
-timing: search 538 ms, generate 14666 ms, total 15204 ms
+timing: search 538 ms, first token 15204 ms, generate 14666 ms, total 15204 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Greater Germanic Reich — Role of Britain
@@ -1170,7 +1170,7 @@ Josef Mengele avoided immediate identification and capture as a major war crimin
 
 cited: [1] Josef Mengele — After Auschwitz, [3] Josef Mengele — After Auschwitz
 sent but not cited: [2, 4, 5]
-timing: search 580 ms, generate 11034 ms, total 11614 ms
+timing: search 580 ms, first token 11614 ms, generate 11034 ms, total 11614 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Josef Mengele — After Auschwitz
@@ -1229,7 +1229,7 @@ Regarding navigation improvements, Frederick the Great initiated a major modific
 
 cited: [1] Oder — History, [2] Oder — History, [3] Oder — Navigation
 sent but not cited: [4, 5]
-timing: search 580 ms, generate 14441 ms, total 15021 ms
+timing: search 580 ms, first token 15021 ms, generate 14441 ms, total 15021 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Oder — History
@@ -1299,7 +1299,7 @@ Wilhelm Solf, the first governor of German Samoa starting in 1900, implemented p
 
 cited: [1] German Samoa — History, [3] German Samoa — History, [2] German colonial empire — The empire under Kaiser Wilhelm II (1890–1914)
 sent but not cited: [4, 5]
-timing: search 610 ms, generate 10082 ms, total 10692 ms
+timing: search 610 ms, first token 10692 ms, generate 10082 ms, total 10692 ms
 
 --- what the model was shown -------------------------------------------------
 [1] German Samoa — History
@@ -1370,7 +1370,7 @@ The Oscarsborg Fortress played a crucial role during the German invasion of Norw
 
 cited: [1] Operation Weserübung — Invasion of Norway, [4] Norwegian campaign — German invasion
 sent but not cited: [2, 3, 5]
-timing: search 1209 ms, generate 11986 ms, total 13195 ms
+timing: search 1209 ms, first token 13195 ms, generate 11986 ms, total 13195 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Operation Weserübung — Invasion of Norway
@@ -1434,7 +1434,7 @@ The capitalist mode of production is distinguished by private ownership and cont
 
 cited: [1] Means of production — Marxism and Marxist theory of class, [2] Means of production — Related terms, [3] Capitalism — Characteristics, [5] Capitalism — Characteristics, [4] Communism — Theory
 sent but not cited: (none)
-timing: search 557 ms, generate 11557 ms, total 12113 ms
+timing: search 557 ms, first token 12113 ms, generate 11557 ms, total 12113 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Means of production — Marxism and Marxist theory of class
@@ -1501,7 +1501,7 @@ In 1914, Ottoman interior minister Talaat Pasha ordered the deportation and rese
 
 cited: [1] Sayfo — Ethnic cleansing of Hakkari, [4] Sayfo — Ethnic cleansing of Hakkari
 sent but not cited: [2, 3, 5]
-timing: search 582 ms, generate 7625 ms, total 8207 ms
+timing: search 582 ms, first token 8207 ms, generate 7625 ms, total 8207 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Sayfo — Ethnic cleansing of Hakkari
@@ -1562,7 +1562,7 @@ Karl Dönitz preferred the production of large numbers of small submarines rathe
 
 cited: [1] Karl Dönitz — Interwar period
 sent but not cited: [2, 3, 4, 5]
-timing: search 611 ms, generate 6558 ms, total 7169 ms
+timing: search 611 ms, first token 7169 ms, generate 6558 ms, total 7169 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Karl Dönitz — Interwar period
@@ -1620,7 +1620,7 @@ Orpen's painting depicts the signature of the Treaty of Versailles by representa
 
 cited: [1] The Signing of Peace in the Hall of Mirrors — Background, [5] The Signing of Peace in the Hall of Mirrors, [3] William Orpen — Biography
 sent but not cited: [2, 4]
-timing: search 600 ms, generate 7322 ms, total 7922 ms
+timing: search 600 ms, first token 7922 ms, generate 7322 ms, total 7922 ms
 
 --- what the model was shown -------------------------------------------------
 [1] The Signing of Peace in the Hall of Mirrors — Background
@@ -1679,7 +1679,7 @@ The Australian War Memorial (AWM) was initially intended to commemorate only tho
 
 cited: [1] Australian War Memorial, [2] Australian War Memorial — History
 sent but not cited: [3, 4, 5]
-timing: search 551 ms, generate 11501 ms, total 12053 ms
+timing: search 551 ms, first token 12053 ms, generate 11501 ms, total 12053 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Australian War Memorial
@@ -1743,7 +1743,7 @@ German leaders knew the risks of a general war in supporting an Austro-Hungarian
 
 cited: [2] July Crisis — Austria-Hungary considers an ultimatum (7–23 July), [5] July Crisis — The German "Blank Cheque" (1–6 July), [1] July Crisis
 sent but not cited: [3, 4]
-timing: search 565 ms, generate 9377 ms, total 9942 ms
+timing: search 565 ms, first token 9942 ms, generate 9377 ms, total 9942 ms
 
 --- what the model was shown -------------------------------------------------
 [1] July Crisis
@@ -1806,7 +1806,7 @@ In the May 1924 German federal election, the moderate centre parties that had be
 
 cited: [1] May 1924 German federal election — Results, [4] May 1924 German federal election
 sent but not cited: [2, 3, 5]
-timing: search 588 ms, generate 10378 ms, total 10965 ms
+timing: search 588 ms, first token 10965 ms, generate 10378 ms, total 10965 ms
 
 --- what the model was shown -------------------------------------------------
 [1] May 1924 German federal election — Results
@@ -1870,7 +1870,7 @@ The main challenge to this economic growth was the labor problem. Plantation agr
 
 cited: [1] German East Africa — Economic development, [3] German colonial empire — The empire under Kaiser Wilhelm II (1890–1914), [2] German East Africa — Economic development
 sent but not cited: [4, 5]
-timing: search 595 ms, generate 11109 ms, total 11704 ms
+timing: search 595 ms, first token 11704 ms, generate 11109 ms, total 11704 ms
 
 --- what the model was shown -------------------------------------------------
 [1] German East Africa — Economic development
@@ -1930,7 +1930,7 @@ The Madagascar Plan was a proposal by the Nazi German government in 1940 to forc
 
 cited: [1] Madagascar Plan, [2] Madagascar Plan, [4] Madagascar Plan — In Nazi Germany, [5] Madagascar Plan — In Nazi Germany
 sent but not cited: [3]
-timing: search 539 ms, generate 12956 ms, total 13495 ms
+timing: search 539 ms, first token 13495 ms, generate 12956 ms, total 13495 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Madagascar Plan
@@ -1988,7 +1988,7 @@ Ramsay MacDonald was born at Gregory Place, Lossiemouth, Moray, Scotland, as the
 
 cited: [1] Ramsay MacDonald — Early life
 sent but not cited: [2, 3, 4, 5]
-timing: search 553 ms, generate 9312 ms, total 9865 ms
+timing: search 553 ms, first token 9865 ms, generate 9312 ms, total 9865 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Ramsay MacDonald — Early life
@@ -2041,7 +2041,7 @@ In the early 1920s, Wellington Koo served successively as Foreign Minister and F
 
 cited: [1] Wellington Koo — Political career, [2] Wellington Koo — Political career, [4] Wellington Koo
 sent but not cited: [3, 5]
-timing: search 532 ms, generate 12809 ms, total 13341 ms
+timing: search 532 ms, first token 13341 ms, generate 12809 ms, total 13341 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Wellington Koo — Political career
@@ -2105,7 +2105,7 @@ Maximilian von Weichs commanded the XIII Corps in the invasion of Poland at the 
 
 cited: [1] Maximilian von Weichs, [2] Maximilian von Weichs — World War II, [3] Maximilian von Weichs — World War II
 sent but not cited: [4, 5]
-timing: search 597 ms, generate 17952 ms, total 18549 ms
+timing: search 597 ms, first token 18549 ms, generate 17952 ms, total 18549 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Maximilian von Weichs
@@ -2171,7 +2171,7 @@ The territory of Transylvania was controlled by the Agathyrsi, part of the Dacia
 
 cited: [2] Transylvania, [3] Transylvania — History, [1] Transylvania — History
 sent but not cited: [4, 5]
-timing: search 604 ms, generate 5892 ms, total 6497 ms
+timing: search 604 ms, first token 6497 ms, generate 5892 ms, total 6497 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Transylvania — History
@@ -2235,7 +2235,7 @@ The Golden Twenties in Weimar Germany influenced the integration of art, craft, 
 
 cited: [2] Golden Twenties — Culture of Weimar Germany, [1] Golden Twenties — Culture of Weimar Germany
 sent but not cited: [3, 4, 5]
-timing: search 565 ms, generate 6881 ms, total 7446 ms
+timing: search 565 ms, first token 7446 ms, generate 6881 ms, total 7446 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Golden Twenties — Culture of Weimar Germany
@@ -2301,7 +2301,7 @@ In early May 1940, several events and warnings indicated the impending German in
 
 cited: [3] German invasion of Luxembourg — Background, [1] German invasion of Luxembourg — Prelude, [4] German invasion of Luxembourg — Prelude
 sent but not cited: [2, 5]
-timing: search 521 ms, generate 15610 ms, total 16131 ms
+timing: search 521 ms, first token 16131 ms, generate 15610 ms, total 16131 ms
 
 --- what the model was shown -------------------------------------------------
 [1] German invasion of Luxembourg — Prelude
@@ -2361,7 +2361,7 @@ The United States' strategic bombing campaign on Japan, especially from late 194
 
 cited: [1] Strategic bombing during World War II — Asia, [2] Strategic bombing during World War II — Asia, [3] Strategic bombing during World War II, [4] Empire of Japan — History
 sent but not cited: [5]
-timing: search 613 ms, generate 18804 ms, total 19417 ms
+timing: search 613 ms, first token 19417 ms, generate 18804 ms, total 19417 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Strategic bombing during World War II — Asia
@@ -2416,7 +2416,7 @@ Warren G. Harding lost the 1910 Ohio gubernatorial election because the Republic
 
 cited: [1] Warren G. Harding — Early life and career, [3] Warren G. Harding — Early life and career
 sent but not cited: [2, 4]
-timing: search 624 ms, generate 11417 ms, total 12041 ms
+timing: search 624 ms, first token 12041 ms, generate 11417 ms, total 12041 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Warren G. Harding — Early life and career
@@ -2472,7 +2472,7 @@ The Siege of Paris began on 19 September 1870 after France declared war on the N
 
 cited: [2] Siege of Paris (1870–1871), [3] Siege of Paris (1870–1871), [1] Siege of Paris (1870–1871) — Siege, [4] Siege of Paris (1870–1871) — Siege
 sent but not cited: [5]
-timing: search 618 ms, generate 14154 ms, total 14772 ms
+timing: search 618 ms, first token 14772 ms, generate 14154 ms, total 14772 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Siege of Paris (1870–1871) — Siege
@@ -2530,7 +2530,7 @@ The Allies imposed several conditions on Admiral Alexander Kolchak in exchange f
 
 cited: [1] Fourteen Points — Implementation, [3] Alexander Kolchak — Biography
 sent but not cited: [2, 4, 5]
-timing: search 545 ms, generate 9440 ms, total 9985 ms
+timing: search 545 ms, first token 9985 ms, generate 9440 ms, total 9985 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Fourteen Points — Implementation
@@ -2585,7 +2585,7 @@ Japan declared war on Germany on 23 August 1914 and participated in a joint oper
 
 cited: [1] South Seas Mandate — Origin, [2] World War I — Progress of the war, [3] Asian and Pacific theatre of World War I — German naval actions, [4] Empire of Japan — History, [5] Aftermath of World War I — Political upheavals
 sent but not cited: (none)
-timing: search 557 ms, generate 11116 ms, total 11672 ms
+timing: search 557 ms, first token 11672 ms, generate 11116 ms, total 11672 ms
 
 --- what the model was shown -------------------------------------------------
 [1] South Seas Mandate — Origin
@@ -2650,7 +2650,7 @@ The Inquiry recommended support for Finnish independence and expressed a desire,
 
 cited: [1] The Inquiry — Recommendations, [2] The Inquiry — Recommendations
 sent but not cited: [3, 4, 5]
-timing: search 527 ms, generate 9810 ms, total 10336 ms
+timing: search 527 ms, first token 10336 ms, generate 9810 ms, total 10336 ms
 
 --- what the model was shown -------------------------------------------------
 [1] The Inquiry — Recommendations
@@ -2721,7 +2721,7 @@ After Hitler's death in 1945, Lutz Graf Schwerin von Krosigk was selected by Hit
 
 cited: [1] Lutz Graf Schwerin von Krosigk, [2] Lutz Graf Schwerin von Krosigk — Nazi years
 sent but not cited: [3, 4, 5]
-timing: search 598 ms, generate 7108 ms, total 7707 ms
+timing: search 598 ms, first token 7707 ms, generate 7108 ms, total 7707 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Lutz Graf Schwerin von Krosigk
@@ -2782,7 +2782,7 @@ In response to the Soviet Vistula–Oder offensive beginning on 12 January 1945,
 
 cited: [2] Operation Spring Awakening — German plan, [3] Operation Spring Awakening — Background, [1] Heinrich Himmler — Command of army group
 sent but not cited: [4, 5]
-timing: search 539 ms, generate 10224 ms, total 10764 ms
+timing: search 539 ms, first token 10764 ms, generate 10224 ms, total 10764 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Heinrich Himmler — Command of army group
@@ -2847,7 +2847,7 @@ After the unification of Germany in 1871, Alfred von Tirpitz was placed in charg
 
 cited: [1] Alfred von Tirpitz — Naval career, [2] Alfred von Tirpitz — Naval career
 sent but not cited: [3, 4, 5]
-timing: search 564 ms, generate 8392 ms, total 8956 ms
+timing: search 564 ms, first token 8956 ms, generate 8392 ms, total 8956 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Alfred von Tirpitz — Naval career
@@ -2903,7 +2903,7 @@ The Social Democratic Party of Germany (SPD) mainly consists of two ideological 
 
 cited: [1] Social Democratic Party of Germany — Ideology and platform, [3] Social Democratic Party of Germany — Electorate
 sent but not cited: [2, 4, 5]
-timing: search 568 ms, generate 10996 ms, total 11563 ms
+timing: search 568 ms, first token 11563 ms, generate 10996 ms, total 11563 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Social Democratic Party of Germany — Ideology and platform
@@ -2976,7 +2976,7 @@ Billy Hughes had a severe hearing loss that began when he was relatively young a
 
 cited: [1] Billy Hughes — Personal life
 sent but not cited: [2, 3, 4, 5]
-timing: search 626 ms, generate 11365 ms, total 11992 ms
+timing: search 626 ms, first token 11992 ms, generate 11365 ms, total 11992 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Billy Hughes — Personal life
@@ -3031,7 +3031,7 @@ Adolf Hitler began planning to change the rules of succession for the German pre
 
 cited: [1] Law Concerning the Head of State of the German Reich — Background
 sent but not cited: [2, 3, 4, 5]
-timing: search 684 ms, generate 6165 ms, total 6849 ms
+timing: search 684 ms, first token 6849 ms, generate 6165 ms, total 6849 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Law Concerning the Head of State of the German Reich — Background
@@ -3094,7 +3094,7 @@ Gregory Stanton has criticized the use of the term "ethnic cleansing" because it
 
 cited: [1] Ethnic cleansing — Definitions
 sent but not cited: [2, 3, 4, 5]
-timing: search 541 ms, generate 3585 ms, total 4126 ms
+timing: search 541 ms, first token 4126 ms, generate 3585 ms, total 4126 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Ethnic cleansing — Definitions
@@ -3151,7 +3151,7 @@ Leon Trotsky's theory of permanent revolution argued that in "backward" countrie
 
 cited: [1] Leon Trotsky — Political ideology and contributions to Marxism, [2] Leon Trotsky — Political ideology and contributions to Marxism
 sent but not cited: [3, 4, 5]
-timing: search 492 ms, generate 8273 ms, total 8765 ms
+timing: search 492 ms, first token 8765 ms, generate 8273 ms, total 8765 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Leon Trotsky — Political ideology and contributions to Marxism
@@ -3226,7 +3226,7 @@ Despite this military success, Free France faced challenges in increasing its fo
 
 cited: [1] Free France — Struggle for control of the French colonies, [2] Free France — Struggle for control of the French colonies, [4] Vichy France — Colonial struggle with Free France, [3] Vichy France — Colonial struggle with Free France, [5] Charles de Gaulle — 1944–1946: Provisional Government of the French Republic
 sent but not cited: (none)
-timing: search 607 ms, generate 17858 ms, total 18466 ms
+timing: search 607 ms, first token 18466 ms, generate 17858 ms, total 18466 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Free France — Struggle for control of the French colonies
@@ -3290,7 +3290,7 @@ France experienced relatively low levels of emigration to the Americas because i
 
 cited: [1] French colonial empire — Demographics, [2] French colonial empire — First French colonial empire (16th century to 1814)
 sent but not cited: [3, 4, 5]
-timing: search 522 ms, generate 11089 ms, total 11611 ms
+timing: search 522 ms, first token 11611 ms, generate 11089 ms, total 11611 ms
 
 --- what the model was shown -------------------------------------------------
 [1] French colonial empire — Demographics
@@ -3354,7 +3354,7 @@ Hungary's Jewish population within its current borders decreased from nearly hal
 
 cited: [1] History of the Jews in Hungary — From the 1990s, [2] History of the Jews in Hungary — Revolution, [5] History of the Jews in Hungary — Interwar period (1918–1939), [4] History of the Jews in Hungary — Interwar period (1918–1939), [3] History of the Jews in Hungary — From the 1990s
 sent but not cited: (none)
-timing: search 555 ms, generate 12058 ms, total 12613 ms
+timing: search 555 ms, first token 12613 ms, generate 12058 ms, total 12613 ms
 
 --- what the model was shown -------------------------------------------------
 [1] History of the Jews in Hungary — From the 1990s
@@ -3423,7 +3423,7 @@ When Finland declared independence in 1917, the Karelian Isthmus (except for the
 
 cited: [1] Karelian Isthmus — History, [2] Karelian Isthmus
 sent but not cited: [3, 4, 5]
-timing: search 595 ms, generate 9635 ms, total 10230 ms
+timing: search 595 ms, first token 10230 ms, generate 9635 ms, total 10230 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Karelian Isthmus — History
@@ -3480,7 +3480,7 @@ Wilhelm Ritter von Leeb was convicted of transmitting the Barbarossa Decree and 
 
 cited: [1] Wilhelm Ritter von Leeb, [2] Wilhelm Ritter von Leeb — Trial and conviction, [3] Wilhelm Ritter von Leeb — Trial and conviction
 sent but not cited: [4, 5]
-timing: search 554 ms, generate 6766 ms, total 7320 ms
+timing: search 554 ms, first token 7320 ms, generate 6766 ms, total 7320 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Wilhelm Ritter von Leeb
@@ -3537,7 +3537,7 @@ The national bird of Estonia is the barn swallow, and the national flower is the
 
 cited: [1] Estonia — Geography
 sent but not cited: [2, 3, 4, 5]
-timing: search 557 ms, generate 3464 ms, total 4021 ms
+timing: search 557 ms, first token 4021 ms, generate 3464 ms, total 4021 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Estonia — Geography
@@ -3601,7 +3601,7 @@ The Nazi leadership prioritized removing all traces of the killings at Majdanek 
 
 cited: [1] Operation Harvest Festival — Coverup, [2] Extermination camp — Dismantling and attempted concealment
 sent but not cited: [3, 4, 5]
-timing: search 471 ms, generate 14980 ms, total 15451 ms
+timing: search 471 ms, first token 15451 ms, generate 14980 ms, total 15451 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Operation Harvest Festival — Coverup
@@ -3661,7 +3661,7 @@ According to the Austrian consul in Samsun, Kwiatkowski, Ottoman official Rafet 
 
 cited: [1] Greek genocide — Events, [2] Greco-Turkish War (1919–1922) — Atrocities and ethnic cleansing by both sides
 sent but not cited: [3, 4, 5]
-timing: search 541 ms, generate 5014 ms, total 5554 ms
+timing: search 541 ms, first token 5554 ms, generate 5014 ms, total 5554 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Greek genocide — Events
@@ -3723,7 +3723,7 @@ The United States government recognizes Native American tribes as "domestic depe
 
 cited: [1] Self-determination — Notable cases, [2] United States — Government and politics
 sent but not cited: [3, 4, 5]
-timing: search 561 ms, generate 7317 ms, total 7878 ms
+timing: search 561 ms, first token 7878 ms, generate 7317 ms, total 7878 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Self-determination — Notable cases
@@ -3800,7 +3800,7 @@ Starting in 1941, gas chambers were used at extermination camps in Poland for ma
 
 cited: [1] Gas chamber — History, [2] Gas chamber — Nazi Germany, [3] Gas van — History, [5] Gas van, [4] Gas chamber — Nazi Germany
 sent but not cited: (none)
-timing: search 623 ms, generate 21116 ms, total 21739 ms
+timing: search 623 ms, first token 21739 ms, generate 21116 ms, total 21739 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Gas chamber — History
@@ -3873,7 +3873,7 @@ Nikolai Yudenich's Northwestern Army generally believed in a united multinationa
 
 cited: [1] Nikolai Yudenich — White Army, [2] Nikolai Yudenich — White Army
 sent but not cited: [3, 4, 5]
-timing: search 498 ms, generate 9334 ms, total 9832 ms
+timing: search 498 ms, first token 9832 ms, generate 9334 ms, total 9832 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Nikolai Yudenich — White Army
@@ -3933,7 +3933,7 @@ The Penguin Specials series, inaugurated in November 1937, aimed to offer in-dep
 
 cited: [1] Penguin Books — Imprints and series
 sent but not cited: [2, 3, 4, 5]
-timing: search 643 ms, generate 7892 ms, total 8535 ms
+timing: search 643 ms, first token 8535 ms, generate 7892 ms, total 8535 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Penguin Books — Imprints and series
@@ -3992,7 +3992,7 @@ The main ethnic groups in Zhytomyr according to the 2001 census are not detailed
 
 cited: [1] Zhytomyr — Population
 sent but not cited: [2, 3, 4, 5]
-timing: search 629 ms, generate 5097 ms, total 5727 ms
+timing: search 629 ms, first token 5727 ms, generate 5097 ms, total 5727 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Zhytomyr — Population
@@ -4071,7 +4071,7 @@ Congressional investigations are conducted to gather information on the need for
 
 cited: [1] United States Congress — Role, [2] United States Congress — Role, [4] United States — Government and politics, [3] United States Congress — Procedures, [5] United States Congress — Procedures
 sent but not cited: (none)
-timing: search 517 ms, generate 11349 ms, total 11866 ms
+timing: search 517 ms, first token 11866 ms, generate 11349 ms, total 11866 ms
 
 --- what the model was shown -------------------------------------------------
 [1] United States Congress — Role
@@ -4135,7 +4135,7 @@ The archaeogenetic study by Lazaridis et al. (2017) found that Minoans and Mycen
 
 cited: [1] Greeks — Genetics
 sent but not cited: [2, 3, 4, 5]
-timing: search 566 ms, generate 9858 ms, total 10424 ms
+timing: search 566 ms, first token 10424 ms, generate 9858 ms, total 10424 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Greeks — Genetics
@@ -4194,7 +4194,7 @@ The Nazi concept of Volksgemeinschaft justified the one-party state as all that 
 
 cited: [1] Volksgemeinschaft — Nazi Volksgemeinschaft
 sent but not cited: [2, 3, 4, 5]
-timing: search 617 ms, generate 6439 ms, total 7056 ms
+timing: search 617 ms, first token 7056 ms, generate 6439 ms, total 7056 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Volksgemeinschaft — Nazi Volksgemeinschaft
@@ -4256,7 +4256,7 @@ Nazi Germany, particularly under Himmler, perceived homosexuality as a disease o
 
 cited: [1] Persecution of homosexuals in Nazi Germany — Nazi views of homosexuality, [2] Persecution of homosexuals in Nazi Germany — Nazi views of homosexuality, [3] Persecution of homosexuals in Nazi Germany — History, [4] Persecution of homosexuals in Nazi Germany — Methods, [5] Persecution of homosexuals in Nazi Germany — History
 sent but not cited: (none)
-timing: search 538 ms, generate 11511 ms, total 12049 ms
+timing: search 538 ms, first token 12049 ms, generate 11511 ms, total 12049 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Persecution of homosexuals in Nazi Germany — Nazi views of homosexuality
@@ -4313,7 +4313,7 @@ The Emancipation Reform of 1861 freed all 23 million serfs in the Russian Empire
 
 cited: [1] Russian Empire — History, [2] Russian Empire, [4] Russian Empire, [5] Russian Empire — Society, [3] Russian Empire — Society
 sent but not cited: (none)
-timing: search 518 ms, generate 17168 ms, total 17687 ms
+timing: search 518 ms, first token 17687 ms, generate 17168 ms, total 17687 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Russian Empire — History
@@ -4369,7 +4369,7 @@ In August 1922, during a socialist general strike, Benito Mussolini declared tha
 
 cited: [1] March on Rome — Background, [5] Benito Mussolini — Rise to power
 sent but not cited: [2, 3, 4]
-timing: search 523 ms, generate 10488 ms, total 11011 ms
+timing: search 523 ms, first token 11011 ms, generate 10488 ms, total 11011 ms
 
 --- what the model was shown -------------------------------------------------
 [1] March on Rome — Background
@@ -4427,7 +4427,7 @@ During World War II under Prime Minister Bogdan Filov, Bulgaria succeeded in rec
 
 cited: [1] Kingdom of Bulgaria — History, [2] Tripartite Pact — Later signatories
 sent but not cited: [3, 4, 5]
-timing: search 530 ms, generate 5668 ms, total 6199 ms
+timing: search 530 ms, first token 6199 ms, generate 5668 ms, total 6199 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Kingdom of Bulgaria — History
@@ -4486,7 +4486,7 @@ International socialists and Marxists such as Karl Kautsky, Rosa Luxemburg, and 
 
 cited: [1] Vladimir Lenin — Lenin's government, [2] Marxism–Leninism — Criticism, [3] Marxism–Leninism — Criticism
 sent but not cited: [4, 5]
-timing: search 615 ms, generate 9106 ms, total 9721 ms
+timing: search 615 ms, first token 9721 ms, generate 9106 ms, total 9721 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Vladimir Lenin — Lenin's government
@@ -4545,7 +4545,7 @@ Nationalist forces committed mass murders of Basques, with some 22,000 Basques r
 
 cited: [1] Spanish Civil War — Atrocities, [3] Francisco Franco — From the Spanish Civil War to World War II
 sent but not cited: [2, 4, 5]
-timing: search 511 ms, generate 7756 ms, total 8266 ms
+timing: search 511 ms, first token 8266 ms, generate 7756 ms, total 8266 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Spanish Civil War — Atrocities
@@ -4611,7 +4611,7 @@ The German Army used infiltration tactics in their infantry attacks to achieve p
 
 cited: [1] German Army (1935–1945) — Tactics
 sent but not cited: [2, 3, 4, 5]
-timing: search 522 ms, generate 7382 ms, total 7904 ms
+timing: search 522 ms, first token 7904 ms, generate 7382 ms, total 7904 ms
 
 --- what the model was shown -------------------------------------------------
 [1] German Army (1935–1945) — Tactics
@@ -4667,7 +4667,7 @@ One-party states use elections strategically to maintain power and gather inform
 
 cited: [1] One-party state, [2] One-party state
 sent but not cited: [3, 4, 5]
-timing: search 585 ms, generate 8344 ms, total 8929 ms
+timing: search 585 ms, first token 8929 ms, generate 8344 ms, total 8929 ms
 
 --- what the model was shown -------------------------------------------------
 [1] One-party state
@@ -4726,7 +4726,7 @@ The Union of South Africa's constitution made "native affairs" a matter for the 
 
 cited: [1] Union of South Africa — Constitution, [2] Union of South Africa — Constitution
 sent but not cited: [3, 4, 5]
-timing: search 576 ms, generate 3668 ms, total 4244 ms
+timing: search 576 ms, first token 4244 ms, generate 3668 ms, total 4244 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Union of South Africa — Constitution
@@ -4789,7 +4789,7 @@ Controversies around war memorials commemorating Aboriginal resistance to coloni
 
 cited: [2] War memorial — Controversy, [1] War memorial — Controversy
 sent but not cited: [3, 4, 5]
-timing: search 470 ms, generate 7438 ms, total 7908 ms
+timing: search 470 ms, first token 7908 ms, generate 7438 ms, total 7908 ms
 
 --- what the model was shown -------------------------------------------------
 [1] War memorial — Controversy
@@ -4860,7 +4860,7 @@ The Potsdam Agreement allowed confiscation of "German external assets" in Austri
 
 cited: [1] Allied-occupied Austria — 1945–1946: First year of occupation
 sent but not cited: [2, 3, 4, 5]
-timing: search 540 ms, generate 5071 ms, total 5612 ms
+timing: search 540 ms, first token 5612 ms, generate 5071 ms, total 5612 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Allied-occupied Austria — 1945–1946: First year of occupation
@@ -4920,7 +4920,7 @@ Adolf Hitler contributed to the German Workers' Party's efforts to attract worki
 
 cited: [1] German Workers' Party — History, [2] German Workers' Party — History, [5] Adolf Hitler — Entry into politics
 sent but not cited: [3, 4]
-timing: search 600 ms, generate 7736 ms, total 8336 ms
+timing: search 600 ms, first token 8336 ms, generate 7736 ms, total 8336 ms
 
 --- what the model was shown -------------------------------------------------
 [1] German Workers' Party — History
@@ -4980,7 +4980,7 @@ The German Case Blue offensive began on 28 June 1942 with the Fourth Panzer Army
 
 cited: [4] Case Blue — The offensive, [2] Franz Halder — World War II, [3] Case Blue — Planning, [5] Case Blue — Planning, [1] Case Blue
 sent but not cited: (none)
-timing: search 578 ms, generate 14802 ms, total 15380 ms
+timing: search 578 ms, first token 15380 ms, generate 14802 ms, total 15380 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Case Blue
@@ -5039,7 +5039,7 @@ Victor Emmanuel III hesitated to dismiss Mussolini despite pressure from the Ita
 
 cited: [1] Victor Emmanuel III — Reign
 sent but not cited: [2, 3, 4, 5]
-timing: search 521 ms, generate 6874 ms, total 7396 ms
+timing: search 521 ms, first token 7396 ms, generate 6874 ms, total 7396 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Victor Emmanuel III — Reign
@@ -5093,7 +5093,7 @@ During the Japanese invasion of Thailand on 8 December 1941, the Japanese ambass
 
 cited: [1] Tripartite Pact — Potential signatories
 sent but not cited: [2, 3, 4, 5]
-timing: search 537 ms, generate 7639 ms, total 8177 ms
+timing: search 537 ms, first token 8177 ms, generate 7639 ms, total 8177 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Tripartite Pact — Potential signatories
@@ -5164,7 +5164,7 @@ By the time of the American Revolution, small Jewish communities in New York, Ne
 
 cited: [1] Jews — History, [2] Jews — History
 sent but not cited: [3, 4, 5]
-timing: search 556 ms, generate 13568 ms, total 14124 ms
+timing: search 556 ms, first token 14124 ms, generate 13568 ms, total 14124 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Jews — History
@@ -5230,7 +5230,7 @@ Odilo Globocnik joined the SS on 1 September 1934 and was quickly promoted in th
 
 cited: [1] Odilo Globocnik — Nazi Party and SS career, [2] Odilo Globocnik — Nazi Party and SS career
 sent but not cited: [3, 4, 5]
-timing: search 574 ms, generate 14088 ms, total 14662 ms
+timing: search 574 ms, first token 14662 ms, generate 14088 ms, total 14662 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Odilo Globocnik — Nazi Party and SS career
@@ -5318,7 +5318,7 @@ By 1944, the SS-Totenkopfverbände (SS-TV) had been organized into three divisio
 
 cited: [1] Schutzstaffel — War in the east
 sent but not cited: [2, 3, 4, 5]
-timing: search 596 ms, generate 7288 ms, total 7885 ms
+timing: search 596 ms, first token 7885 ms, generate 7288 ms, total 7885 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Schutzstaffel — War in the east
@@ -5376,7 +5376,7 @@ Political scientist Karen Stenner explains that conservatives will embrace diver
 
 cited: [1] Conservatism — Psychology
 sent but not cited: [2, 3, 4, 5]
-timing: search 1106 ms, generate 3721 ms, total 4826 ms
+timing: search 1106 ms, first token 4826 ms, generate 3721 ms, total 4826 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Conservatism — Psychology
@@ -5441,7 +5441,7 @@ Operation Uranus resulted in the encirclement of Axis forces near Stalingrad, in
 
 cited: [1] Operation Uranus, [2] Battle of Stalingrad, [3] Operation Uranus — Soviet offensive, [5] Operation Uranus
 sent but not cited: [4]
-timing: search 486 ms, generate 9604 ms, total 10090 ms
+timing: search 486 ms, first token 10090 ms, generate 9604 ms, total 10090 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Operation Uranus
@@ -5501,7 +5501,7 @@ William Donovan served as a deputy prosecutor at the International Military Trib
 
 cited: [1] Franz Halder — Post-war
 sent but not cited: [2, 3, 4, 5]
-timing: search 504 ms, generate 4966 ms, total 5470 ms
+timing: search 504 ms, first token 5470 ms, generate 4966 ms, total 5470 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Franz Halder — Post-war
@@ -5560,7 +5560,7 @@ Orlando dramatically left the conference on April 24, 1919, in protest but retur
 
 cited: [1] Vittorio Emanuele Orlando — Paris Peace Conference, [2] Vittorio Emanuele Orlando, [3] Big Four (World War I) — Vittorio Emanuele Orlando, [4] Vittorio Emanuele Orlando — Paris Peace Conference
 sent but not cited: [5]
-timing: search 526 ms, generate 16375 ms, total 16902 ms
+timing: search 526 ms, first token 16902 ms, generate 16375 ms, total 16902 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Vittorio Emanuele Orlando — Paris Peace Conference
@@ -5630,7 +5630,7 @@ Criticisms of Foch include historians' less favorable views of his talents as a 
 
 cited: [1] Ferdinand Foch — World War I, [2] Ferdinand Foch, [3] Ferdinand Foch, [4] Ferdinand Foch — World War I, [5] Ferdinand Foch — Assessments
 sent but not cited: (none)
-timing: search 1302 ms, generate 15402 ms, total 16705 ms
+timing: search 1302 ms, first token 16705 ms, generate 15402 ms, total 16705 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Ferdinand Foch — World War I
@@ -5688,7 +5688,7 @@ The archaeological site of Triport has been identified with ancient Thronion or 
 
 cited: [1] Vlorë — History, [2] Vlorë, [3] Vlorë — History
 sent but not cited: [4, 5]
-timing: search 694 ms, generate 9660 ms, total 10354 ms
+timing: search 694 ms, first token 10354 ms, generate 9660 ms, total 10354 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Vlorë — History
@@ -5745,7 +5745,7 @@ Boris Godunov made it a priority to heavily fortify Smolensk in order to repel f
 
 cited: [1] Smolensk — History
 sent but not cited: [2, 3, 4, 5]
-timing: search 689 ms, generate 7110 ms, total 7798 ms
+timing: search 689 ms, first token 7798 ms, generate 7110 ms, total 7798 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Smolensk — History
@@ -5810,7 +5810,7 @@ The Schwarze Reichswehr (Black Reichswehr) was an extra-legal paramilitary forma
 
 cited: [1] Weimar political parties — Other Organizations, [2] Weimar paramilitary groups — Groups affiliated with political parties or movements, [4] Weimar Republic — Armed forces
 sent but not cited: [3, 5]
-timing: search 704 ms, generate 14924 ms, total 15628 ms
+timing: search 704 ms, first token 15628 ms, generate 14924 ms, total 15628 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Weimar political parties — Other Organizations
@@ -5876,7 +5876,7 @@ The modern successor to the Socialist Unity Party (SED), The Left (Die Linke), a
 
 cited: [1] Thuringia — Politics, [2] Thuringia — Politics
 sent but not cited: [3, 4, 5]
-timing: search 812 ms, generate 3984 ms, total 4796 ms
+timing: search 812 ms, first token 4796 ms, generate 3984 ms, total 4796 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Thuringia — Politics
@@ -5943,7 +5943,7 @@ By 1860, the National Society influenced dominant liberal circles in Italy and w
 
 cited: [1] Italian nationalism — History, [4] Italian nationalism — History, [2] Kingdom of Italy — History, [5] Kingdom of Italy — History
 sent but not cited: [3]
-timing: search 474 ms, generate 9945 ms, total 10419 ms
+timing: search 474 ms, first token 10419 ms, generate 9945 ms, total 10419 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Italian nationalism — History
@@ -6015,7 +6015,7 @@ In the 1948 film Rope by Alfred Hitchcock, one of the central characters, Brando
 
 cited: [1] Master race — Cultural influences
 sent but not cited: [2, 3, 4, 5]
-timing: search 790 ms, generate 6607 ms, total 7398 ms
+timing: search 790 ms, first token 7398 ms, generate 6607 ms, total 7398 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Master race — Cultural influences
@@ -6078,7 +6078,7 @@ Erich Ludendorff's concept of the war of annihilation expanded on the idea of To
 
 cited: [1] War of annihilation — Development, [2] War of annihilation — Development, [4] Erich Ludendorff
 sent but not cited: [3, 5]
-timing: search 557 ms, generate 9023 ms, total 9579 ms
+timing: search 557 ms, first token 9579 ms, generate 9023 ms, total 9579 ms
 
 --- what the model was shown -------------------------------------------------
 [1] War of annihilation — Development
@@ -6140,7 +6140,7 @@ Salazar's Estado Novo regime in Portugal was based on a platform of stability, i
 
 cited: [1] Estado Novo (Portugal) — Prelude, [2] Estado Novo (Portugal) — Regime, [3] Estado Novo (Portugal) — Prelude, [5] Estado Novo (Portugal) — Economy, [4] Estado Novo (Portugal)
 sent but not cited: (none)
-timing: search 618 ms, generate 10260 ms, total 10878 ms
+timing: search 618 ms, first token 10878 ms, generate 10260 ms, total 10878 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Estado Novo (Portugal) — Prelude
@@ -6198,7 +6198,7 @@ At the 1919 Paris Peace Conference, Japan was granted all of Germany's pre-war r
 
 cited: [1] Aftermath of World War I — Political upheavals, [3] Paris Peace Conference (1919–1920) — Japanese approach, [4] Treaty of Versailles — Reactions, [2] Interwar period — Empire of Japan
 sent but not cited: [5]
-timing: search 767 ms, generate 10739 ms, total 11506 ms
+timing: search 767 ms, first token 11506 ms, generate 10739 ms, total 11506 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Aftermath of World War I — Political upheavals
@@ -6255,7 +6255,7 @@ The Soviet Operation Bagration, launched on 22 June 1944 against the German Army
 
 cited: [1] Army Group Centre — Destruction of Army Group Centre, [2] Operation Bagration, [3] Operation Bagration, [4] Operation Bagration — Soviet plans, [5] Operation Bagration — Background
 sent but not cited: (none)
-timing: search 695 ms, generate 13449 ms, total 14144 ms
+timing: search 695 ms, first token 14144 ms, generate 13449 ms, total 14144 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Army Group Centre — Destruction of Army Group Centre
@@ -6323,7 +6323,7 @@ Under Ottoman rule from 1552 to 1716, the Banat region was incorporated as an Ot
 
 cited: [1] Banat — History
 sent but not cited: [2, 3, 4, 5]
-timing: search 605 ms, generate 7470 ms, total 8075 ms
+timing: search 605 ms, first token 8075 ms, generate 7470 ms, total 8075 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Banat — History
@@ -6391,7 +6391,7 @@ Some of the historic monuments and religious buildings in the city center of Ant
 
 cited: [1] Antalya — Geography
 sent but not cited: [2, 3, 4, 5]
-timing: search 573 ms, generate 9668 ms, total 10242 ms
+timing: search 573 ms, first token 10242 ms, generate 9668 ms, total 10242 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Antalya — Geography
@@ -6466,7 +6466,7 @@ The Chicago Distribution Center (CDC) provides customer service, warehousing, an
 
 cited: [1] University of Chicago Press — Current status, [2] University of Chicago Press — Current status
 sent but not cited: [3, 4, 5]
-timing: search 737 ms, generate 8348 ms, total 9085 ms
+timing: search 737 ms, first token 9085 ms, generate 8348 ms, total 9085 ms
 
 --- what the model was shown -------------------------------------------------
 [1] University of Chicago Press — Current status
@@ -6532,7 +6532,7 @@ The main components of the war reparations made by Japan under the San Francisco
 
 cited: [1] War reparations — History
 sent but not cited: [2, 3, 4, 5]
-timing: search 1091 ms, generate 5166 ms, total 6257 ms
+timing: search 1091 ms, first token 6257 ms, generate 5166 ms, total 6257 ms
 
 --- what the model was shown -------------------------------------------------
 [1] War reparations — History
@@ -6598,7 +6598,7 @@ The Czechoslovak government-in-exile faced significant challenges in gaining ful
 
 cited: [1] Czechoslovak government-in-exile — From committee to government
 sent but not cited: [2, 3, 4, 5]
-timing: search 691 ms, generate 7695 ms, total 8386 ms
+timing: search 691 ms, first token 8386 ms, generate 7695 ms, total 8386 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Czechoslovak government-in-exile — From committee to government
@@ -6668,7 +6668,7 @@ Thus, the treatment of Ukrainians in Galicia and the Eastern Borderlands was mar
 
 cited: [1] Second Polish Republic — Status of ethnic minorities, [2] Territories of Poland annexed by the Soviet Union — Soviet annexation of eastern Poland, 1939–1941, [3] Kingdom of Galicia and Lodomeria — History
 sent but not cited: [4, 5]
-timing: search 670 ms, generate 16049 ms, total 16719 ms
+timing: search 670 ms, first token 16719 ms, generate 16049 ms, total 16719 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Second Polish Republic — Status of ethnic minorities
@@ -6734,7 +6734,7 @@ Artillery support was extensive, with the Canadian Corps receiving three times t
 
 cited: [1] Battle of Vimy Ridge — Prelude, [2] Battle of Vimy Ridge — Prelude
 sent but not cited: [3, 4, 5]
-timing: search 534 ms, generate 10775 ms, total 11310 ms
+timing: search 534 ms, first token 11310 ms, generate 10775 ms, total 11310 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Battle of Vimy Ridge — Prelude
@@ -6797,7 +6797,7 @@ The president of Iran is the head of government and the second-highest-ranking a
 
 cited: [1] Iran — Government and politics, [2] Iran — Government and politics
 sent but not cited: [3, 4, 5]
-timing: search 594 ms, generate 12665 ms, total 13259 ms
+timing: search 594 ms, first token 13259 ms, generate 12665 ms, total 13259 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Iran — Government and politics
@@ -6857,7 +6857,7 @@ The League of Nations Council had the right and obligation to raise complaints o
 
 cited: [1] Minority Treaties — System, [2] Minority Treaties — Importance, [5] Minority Treaties — Importance
 sent but not cited: [3, 4]
-timing: search 465 ms, generate 8266 ms, total 8731 ms
+timing: search 465 ms, first token 8731 ms, generate 8266 ms, total 8731 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Minority Treaties — System
@@ -6913,7 +6913,7 @@ Early American authors during the Revolutionary Period, such as Benjamin Frankli
 
 cited: [1] United States — Culture and society, [2] United States — Culture and society
 sent but not cited: [3, 4, 5]
-timing: search 928 ms, generate 11029 ms, total 11957 ms
+timing: search 928 ms, first token 11957 ms, generate 11029 ms, total 11957 ms
 
 --- what the model was shown -------------------------------------------------
 [1] United States — Culture and society
@@ -6973,7 +6973,7 @@ The U.S.–German Peace Treaty of 1921 laid the foundations for American-German 
 
 cited: [1] U.S.–German Peace Treaty (1921) — Aftermath
 sent but not cited: [2, 3, 4, 5]
-timing: search 816 ms, generate 6292 ms, total 7108 ms
+timing: search 816 ms, first token 7108 ms, generate 6292 ms, total 7108 ms
 
 --- what the model was shown -------------------------------------------------
 [1] U.S.–German Peace Treaty (1921) — Aftermath
@@ -7033,7 +7033,7 @@ Under Parthian rule, Adiabene was an Assyrian successor state where the temple o
 
 cited: [1] Assyrians — History, [2] Assyrians — History, [3] Assyrians — Culture
 sent but not cited: [4, 5]
-timing: search 754 ms, generate 15981 ms, total 16735 ms
+timing: search 754 ms, first token 16735 ms, generate 15981 ms, total 16735 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Assyrians — History
@@ -7101,7 +7101,7 @@ During the 19th century in Europe, monarchies moved away from autocracy as legis
 
 cited: [2] Autocracy — History, [1] Autocracy — History
 sent but not cited: [3, 4, 5]
-timing: search 516 ms, generate 7593 ms, total 8109 ms
+timing: search 516 ms, first token 8109 ms, generate 7593 ms, total 8109 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Autocracy — History
@@ -7165,7 +7165,7 @@ The Barbarossa Decree, signed on 13 May 1941, instructed German troops to defend
 
 cited: [1] Barbarossa decree — Decree, [3] Barbarossa decree — Contents, [5] Barbarossa decree — Contents, [2] Barbarossa decree — Reception by the Wehrmacht
 sent but not cited: [4]
-timing: search 707 ms, generate 14860 ms, total 15568 ms
+timing: search 707 ms, first token 15568 ms, generate 14860 ms, total 15568 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Barbarossa decree — Decree
@@ -7229,7 +7229,7 @@ About 12 million forced labourers, mostly Eastern Europeans, were employed in th
 
 cited: [1] Forced labour under German rule during World War II — Forced workers, [2] Forced labour under German rule during World War II, [5] Lebensraum, [3] Forced labour under German rule during World War II — Extermination through labour, [4] Forced labour under German rule during World War II — Forced workers
 sent but not cited: (none)
-timing: search 560 ms, generate 17037 ms, total 17597 ms
+timing: search 560 ms, first token 17597 ms, generate 17037 ms, total 17597 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Forced labour under German rule during World War II — Forced workers
@@ -7293,7 +7293,7 @@ Josephine Baker declined Coretta Scott King's request to lead the Civil Rights M
 
 cited: [1] Josephine Baker — Civil rights activism, [2] Josephine Baker
 sent but not cited: [3, 4, 5]
-timing: search 542 ms, generate 3613 ms, total 4155 ms
+timing: search 542 ms, first token 4155 ms, generate 3613 ms, total 4155 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Josephine Baker — Civil rights activism
@@ -7355,7 +7355,7 @@ The high death rates among Soviet prisoners of war in German camps during the fa
 
 cited: [2] German atrocities committed against Soviet prisoners of war — Prisoner-of-war camps, [3] Hunger Plan — Effects of the plan, [4] German atrocities committed against Soviet prisoners of war — Prisoner-of-war camps, [1] German atrocities committed against Soviet prisoners of war — Death toll, [5] World War II — Impact
 sent but not cited: (none)
-timing: search 535 ms, generate 14432 ms, total 14967 ms
+timing: search 535 ms, first token 14967 ms, generate 14432 ms, total 14967 ms
 
 --- what the model was shown -------------------------------------------------
 [1] German atrocities committed against Soviet prisoners of war — Death toll
@@ -7414,7 +7414,7 @@ The Treaty of Versailles transferred German concessions in Jiaozhou Bay, China, 
 
 cited: [1] Paris Peace Conference (1919–1920) — Japanese approach, [3] Aftermath of World War I — Political upheavals, [2] Paris Peace Conference (1919–1920) — Japanese approach, [5] Treaty of Versailles — Reactions
 sent but not cited: [4]
-timing: search 499 ms, generate 10694 ms, total 11193 ms
+timing: search 499 ms, first token 11193 ms, generate 10694 ms, total 11193 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Paris Peace Conference (1919–1920) — Japanese approach
@@ -7476,7 +7476,7 @@ Germany resumed unrestricted submarine warfare in early 1917 because its governm
 
 cited: [1] Western Front (World War I) — 1917, [2] Unrestricted submarine warfare — History, [3] World War I — Progress of the war, [4] Erich Ludendorff — World War I, [5] Paul von Hindenburg — World War I
 sent but not cited: (none)
-timing: search 559 ms, generate 12595 ms, total 13154 ms
+timing: search 559 ms, first token 13154 ms, generate 12595 ms, total 13154 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Western Front (World War I) — 1917
@@ -7539,7 +7539,7 @@ Heinz Guderian portrayed himself in his post-war autobiography Panzer Leader as 
 
 cited: [1] Heinz Guderian — Writings and mythology, [3] Heinz Guderian, [4] Heinz Guderian — Interwar period
 sent but not cited: [2, 5]
-timing: search 569 ms, generate 7181 ms, total 7750 ms
+timing: search 569 ms, first token 7750 ms, generate 7181 ms, total 7750 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Heinz Guderian — Writings and mythology
@@ -7599,7 +7599,7 @@ The largest communities north of the Arctic Circle in Russia are Murmansk with a
 
 cited: [1] Arctic Circle — Human habitation
 sent but not cited: [2, 3, 4, 5]
-timing: search 565 ms, generate 6502 ms, total 7067 ms
+timing: search 565 ms, first token 7067 ms, generate 6502 ms, total 7067 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Arctic Circle — Human habitation
@@ -7685,7 +7685,7 @@ The first political figure to be referred to as Führer was the pan-German Austr
 
 cited: [1] Führer — History, [3] Nazism — Origins, [4] Nazism — Origins
 sent but not cited: [2, 5]
-timing: search 561 ms, generate 8741 ms, total 9302 ms
+timing: search 561 ms, first token 9302 ms, generate 8741 ms, total 9302 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Führer — History
@@ -7749,7 +7749,7 @@ The German occupation of Hungary in March 1944 led to the start of large-scale d
 
 cited: [1] The Holocaust — Second half of the war, [2] The Holocaust — Mass murder, [3] Hungary in World War II — Oppression at home, [4] Miklós Horthy — World War II and the Holocaust, [5] Hungary in World War II — Military campaigns
 sent but not cited: (none)
-timing: search 591 ms, generate 12257 ms, total 12848 ms
+timing: search 591 ms, first token 12848 ms, generate 12257 ms, total 12848 ms
 
 --- what the model was shown -------------------------------------------------
 [1] The Holocaust — Second half of the war
@@ -7814,7 +7814,7 @@ The SS officers responsible for the Aktion T4 programme, including Christian Wir
 
 cited: [1] Operation Reinhard — Background, [2] Aktion T4 — Technology and personnel transfer to death camps, [3] Operation Reinhard — Death camps
 sent but not cited: [4, 5]
-timing: search 614 ms, generate 8051 ms, total 8665 ms
+timing: search 614 ms, first token 8665 ms, generate 8051 ms, total 8665 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Operation Reinhard — Background
@@ -7850,4 +7850,5 @@ Aktion T4 — Killing of adults
 The killings were administered by Viktor Brack and his staff from Tiergartenstraße 4, disguised as the "Charitable Foundation for Cure and Institutional Care" offices which served as the front and was supervised by Bouhler and Brandt. The officials in charge included Herbert Linden, who had been involved in the child killing programme; Ernst-Robert Grawitz, chief physician of the SS and August Becker, an SS chemist. The officials selected the doctors who were to carry out the operational part of the programme; based on political reliability as long-term Nazis, professional reputation and sympathy for radical eugenics.
 
 The list included physicians who had proved their worth in the child-killing programme, such as Unger, Heinze and Hermann Pfannmüller. The recruits were mostly psychiatrists, notably Professor Carl Schneider of Heidelberg, Professor Max de Crinis of Berlin and Professor Paul Nitsche from the Sonnenstein state institution. Heyde became the operational leader of the programme, succeeded later by Nitsche.
+
 

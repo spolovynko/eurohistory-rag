@@ -15,6 +15,7 @@ from eurohistory_rag.eval import gate as gate_module
 from eurohistory_rag.eval import judge as judge_module
 from eurohistory_rag.eval import probes as probes_module
 from eurohistory_rag.eval import report as report_module
+from eurohistory_rag.eval import split_probes as split_probes_module
 from eurohistory_rag.eval import sweep as sweep_module
 from eurohistory_rag.eval import synthetic as synthetic_module
 from eurohistory_rag.eval import timeline as timeline_module
@@ -377,6 +378,30 @@ def judge_probe(
     )
     typer.echo(f"judge: {settings.judge_model}\n")
     typer.echo(probes_module.render(results))
+    if not all(result.passed for result in results):
+        raise typer.Exit(code=1)
+
+
+@app.command("split-probe")
+def split_probe(
+    path: Annotated[
+        Path, typer.Option("--probes", help="Split probe file to run.")
+    ] = split_probes_module.SPLITS_PATH,
+) -> None:
+    """Put the claim splitter against answers whose correct split is written down.
+
+    A few cents, and the other half of `judge-probe`. That command tests whether
+    the judge reads a claim correctly; this one tests whether the claim it was
+    given was ever the answer's claim. `stasi-scale` was reported unfaithful in
+    three runs because it was not. D-102.
+    """
+    settings = get_settings()
+    results = split_probes_module.run_split_probes(
+        split_probes_module.load_split_probes(path),
+        _generator(settings, settings.judge_model),
+    )
+    typer.echo(f"splitter: {settings.judge_model}\n")
+    typer.echo(split_probes_module.render(results))
     if not all(result.passed for result in results):
         raise typer.Exit(code=1)
 

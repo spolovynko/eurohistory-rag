@@ -3572,7 +3572,7 @@ In the 1990s, Belgium saw several large scandals notably surrounding Marc Dutrou
 
 
 ==============================================================================
-[seveso-1976] (unanswerable)  ANSWERED (expected refusal)
+[seveso-1976] (unanswerable)  REFUSED
 What happened at the Seveso chemical plant in Italy, and how were the people living nearby affected?
 
 expected: (nothing)
@@ -4729,7 +4729,7 @@ Regardless of the reason for the declining value of the German currency, the dec
 
 
 ==============================================================================
-[t-nato-vilnius-2023] (unanswerable)  ANSWERED (expected refusal)
+[t-nato-vilnius-2023] (unanswerable)  REFUSED
 What did NATO agree at its 2023 summit in Vilnius?
 
 expected: (nothing)
@@ -6765,4 +6765,5 @@ Volkswagen Beetle — Tenure
 When their request was denied, the VW saver initiative ensued, spanning several years.
 
 During the war, the factory predominantly built the Kübelwagen (Type 82), the Schwimmwagen (Type 166) and numerous other light utility vehicles. These vehicles were derived mechanically from the Type 1 and used by the Wehrmacht. These vehicles, including several hundred Kommandeurswagen (Type 87), featured a Type 1 Beetle body mounted on the robust chassis of the four-wheel-drive Type 86 Kübelwagen prototype. The Kommandeurswagen included a portal axle, a Schwimmwagen drivetrain, wider fenders, and oversized Kronprinz all-terrain tyres, reminiscent of the later Baja Bugs. The production of the Kommandeurswagen persisted until 1944 when the production at the plant halted due to the extensive damage inflicted by the Allied air raids. Due to gasoline shortages late in the war, a few "Holzbrenner" (wood-burner) Beetles were built fueled with wood logs.
+
 

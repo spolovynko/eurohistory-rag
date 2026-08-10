@@ -43,6 +43,7 @@ from pathlib import Path
 from eurohistory_rag.eval.metrics import refused
 from eurohistory_rag.eval.record import EvalRecord
 from eurohistory_rag.generation.client import (
+    EmptyCompletion,
     GenerationUnavailable,
     Generator,
     complete,
@@ -74,10 +75,48 @@ Rules:
 name the answer used earlier.
 - Keep every qualifier the answer gave -- dates, countries, "partly", \
 "according to", who did what. A qualifier dropped here cannot be checked later.
-- Split sentences that make two claims into two lines.
-- Ignore sentences that assert nothing about the world: hedges, refusals, and \
-statements about what the sources do or do not cover.
 - Copy the answer's wording. Do not correct it, soften it or improve it.
+
+SPLITTING IS NOT FREE. Splitting comes last, after every rule above, and a \
+qualifier is never split away from what it qualifies. Before you break a \
+sentence in two, read each half on its own: if either half has lost a date, a \
+figure's scope, an attribution, or the whole it is a part of, do not split it.
+
+- A figure introduced by "including", "of whom", "of these", "among them" or \
+"along with" is PART OF a larger figure. Carry the larger figure into the same \
+line, or leave the sentence whole. "91,015 full-time, including 2,000 \
+collaborators" must never become "employed 2,000 collaborators".
+- A date, a place or a "but this includes..." clause belongs on the same line as \
+the fact it limits.
+
+IGNORE ANYTHING THAT IS NOT A CLAIM ABOUT THE WORLD. Hedges, refusals, and \
+statements about what the sources do or do not cover. If the answer opens by \
+saying the sources do not cover the question, reply with nothing at all, however \
+many sentences follow -- an answer describing what the sources contain is making \
+claims about the sources, not about history.
+
+WORKED EXAMPLES
+
+Answer: "The treaty was signed on 14 June 1985 by five member states."
+Right: The treaty was signed on 14 June 1985 by five member states.
+Wrong: two lines, because "signed by five member states" has lost the date and \
+"signed on 14 June 1985" has lost who signed it.
+
+Answer: "In 1989 it employed 91,015 people full-time, including 2,000 \
+collaborators and 13,073 soldiers."
+Right: In 1989 it employed 91,015 people full-time, including 2,000 \
+collaborators and 13,073 soldiers.
+Wrong: "In 1989 it employed 2,000 collaborators" -- that is a part reported as \
+a whole.
+
+Answer: "The sources do not cover what happened at Seveso. They mention it as \
+an ecological disaster [1]."
+Right: nothing at all.
+
+Answer: "Poland's production grew 10% a year between 1971 and 1975, and living \
+standards rose."
+Right: two lines -- Poland's production grew 10% a year between 1971 and 1975. \
+/ Poland's living standards rose between 1971 and 1975.
 
 Reply with the claims and nothing else. If the answer makes no factual claim, \
 reply with nothing.\
@@ -215,12 +254,20 @@ def parse_verdict(text: str) -> tuple[bool | None, str]:
 
 
 def extract_claims(answer: str, generator: Generator) -> list[str]:
-    """Split an answer into the claims it makes."""
+    """Split an answer into the claims it makes, or none if it makes none.
+
+    An empty reply is the instructed answer here, not a failure: a refusal
+    asserts nothing about the world and must yield no claims. Every other way
+    the model can fail still raises. D-102.
+    """
     messages: list[Message] = [
         {"role": "system", "content": CLAIM_INSTRUCTIONS},
         {"role": "user", "content": answer},
     ]
-    return parse_claims(complete(generator, messages).text)
+    try:
+        return parse_claims(complete(generator, messages).text)
+    except EmptyCompletion:
+        return []
 
 
 def judge_claim(claim: str, sources: str, generator: Generator) -> Claim:

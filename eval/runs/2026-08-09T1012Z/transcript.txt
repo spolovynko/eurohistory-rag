@@ -3575,7 +3575,7 @@ In the 1990s, Belgium saw several large scandals notably surrounding Marc Dutrou
 
 
 ==============================================================================
-[seveso-1976] (unanswerable)  ANSWERED (expected refusal)
+[seveso-1976] (unanswerable)  REFUSED
 What happened at the Seveso chemical plant in Italy, and how were the people living nearby affected?
 
 expected: (nothing)
@@ -4732,7 +4732,7 @@ Regardless of the reason for the declining value of the German currency, the dec
 
 
 ==============================================================================
-[t-nato-vilnius-2023] (unanswerable)  ANSWERED (expected refusal)
+[t-nato-vilnius-2023] (unanswerable)  REFUSED
 What did NATO agree at its 2023 summit in Vilnius?
 
 expected: (nothing)

@@ -3607,7 +3607,7 @@ In the 1990s, Belgium saw several large scandals notably surrounding Marc Dutrou
 
 
 ==============================================================================
-[seveso-1976] (unanswerable)  ANSWERED (expected refusal)
+[seveso-1976] (unanswerable)  REFUSED
 What happened at the Seveso chemical plant in Italy, and how were the people living nearby affected?
 
 expected: (nothing)
@@ -4771,7 +4771,7 @@ Regardless of the reason for the declining value of the German currency, the dec
 
 
 ==============================================================================
-[t-nato-vilnius-2023] (unanswerable)  ANSWERED (expected refusal)
+[t-nato-vilnius-2023] (unanswerable)  REFUSED
 What did NATO agree at its 2023 summit in Vilnius?
 
 expected: (nothing)
@@ -6740,4 +6740,5 @@ Karl Dönitz — Nuremberg war crimes trials
 Among the war-crimes charges, Dönitz was accused of waging unrestricted submarine warfare for issuing War Order No. 154 in 1939, and another similar order after the Laconia incident in 1942, not to rescue survivors from ships attacked by submarines. By issuing these two orders, he was found guilty of causing Germany to be in breach of the Second London Naval Treaty of 1936. However, as evidence of similar conduct by the Allies was presented at his trial, his sentence was not assessed on the grounds of this breach of international law.
 
 On the specific war crimes charge of ordering unrestricted submarine warfare, Dönitz was found "[not] guilty for his conduct of submarine warfare against British armed merchant ships", because they were often armed and equipped with radios, which they used to notify the admiralty of attack. As stated by the judges:
+
 

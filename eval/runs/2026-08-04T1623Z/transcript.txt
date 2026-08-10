@@ -1,5 +1,7 @@
 # eval run 2026-08-04T1623Z
 bc6e399  gpt-4.1-mini  k=5  collection=chunks (30,362 points)
+reranker: none
+retrieval: dense only
 note: baseline: phase 7 first run, k=5, no changes to retrieval or prompt
 
 ==============================================================================
@@ -25,7 +27,7 @@ Under the Treaty of Brest-Litovsk, Russia gave up control of Ukraine, Poland, Be
 
 cited: [1] Treaty of Brest-Litovsk, [2] Treaty of Brest-Litovsk — Terms, [4] Treaty of Brest-Litovsk — Terms
 sent but not cited: [3, 5]
-timing: search 4029 ms, generate 4120 ms, total 8149 ms
+timing: search 4029 ms, first token 8149 ms, generate 4120 ms, total 8149 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Treaty of Brest-Litovsk
@@ -89,7 +91,7 @@ The Enabling Act of 1933 was passed by the Reichstag through a combination of co
 
 cited: [1] Enabling Act of 1933 — Preparations and negotiations, [2] Enabling Act of 1933 — Passage, [5] Enabling Act of 1933 — Passage
 sent but not cited: [3, 4]
-timing: search 244 ms, generate 4059 ms, total 4302 ms
+timing: search 244 ms, first token 4302 ms, generate 4059 ms, total 4302 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Enabling Act of 1933 — Preparations and negotiations
@@ -163,7 +165,7 @@ At the Wannsee Conference on 20 January 1942, senior Nazi government officials a
 
 cited: [1] Wannsee Conference, [2] Wannsee Conference — Planning the conference, [3] Wannsee Conference — Proceedings, [4] Wannsee Conference — Interpretation, [5] Wannsee Conference — Interpretation
 sent but not cited: (none)
-timing: search 222 ms, generate 4734 ms, total 4957 ms
+timing: search 222 ms, first token 4957 ms, generate 4734 ms, total 4957 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Wannsee Conference
@@ -223,7 +225,7 @@ The objectives of Operation Barbarossa were to eradicate communism and conquer t
 
 cited: [4] Operation Barbarossa — Invasion, [1] Operation Barbarossa — Background, [2] Operation Barbarossa
 sent but not cited: [3, 5]
-timing: search 597 ms, generate 4500 ms, total 5097 ms
+timing: search 597 ms, first token 5097 ms, generate 4500 ms, total 5097 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Operation Barbarossa — Background
@@ -278,7 +280,7 @@ The hyperinflation in the Weimar Republic was caused by several factors. One was
 
 cited: [1] Hyperinflation in the Weimar Republic — Causes, [3] Hyperinflation in the Weimar Republic — Causes, [4] Hyperinflation in the Weimar Republic, [5] Hyperinflation in the Weimar Republic — Background, [2] Hyperinflation in the Weimar Republic
 sent but not cited: (none)
-timing: search 184 ms, generate 5075 ms, total 5259 ms
+timing: search 184 ms, first token 5259 ms, generate 5075 ms, total 5259 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Hyperinflation in the Weimar Republic — Causes
@@ -337,7 +339,7 @@ The Munich Agreement of 1938 gave Germany the annexation of the Sudetenland, a p
 
 cited: [1] Munich Agreement, [2] Munich Agreement, [3] Munich Agreement — History, [4] Munich Agreement — History
 sent but not cited: [5]
-timing: search 246 ms, generate 2510 ms, total 2756 ms
+timing: search 246 ms, first token 2756 ms, generate 2510 ms, total 2756 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Munich Agreement
@@ -401,7 +403,7 @@ The secret protocol of the Molotov-Ribbentrop Pact divided Poland, Romania, Lith
 
 cited: [4] Molotov–Ribbentrop Pact — Secret protocol
 sent but not cited: [1, 2, 3, 5]
-timing: search 177 ms, generate 3283 ms, total 3461 ms
+timing: search 177 ms, first token 3461 ms, generate 3283 ms, total 3461 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Molotov–Ribbentrop Pact — Secret protocol
@@ -457,7 +459,7 @@ The Nuremberg Laws of 1935 forbade marriages and sexual relations between Jews a
 
 cited: [1] Nuremberg Laws, [3] Nuremberg Laws — Text of the laws, [4] Nuremberg Laws — Nazi Germany
 sent but not cited: [2, 5]
-timing: search 191 ms, generate 3345 ms, total 3536 ms
+timing: search 191 ms, first token 3536 ms, generate 3345 ms, total 3536 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Nuremberg Laws
@@ -522,7 +524,7 @@ The Treaty of Trianon imposed territorial losses on Hungary, similar to the Trea
 
 cited: [1] Treaty of Trianon — Results and consequences, [4] Treaty of Trianon
 sent but not cited: [2, 3, 5]
-timing: search 173 ms, generate 3728 ms, total 3902 ms
+timing: search 173 ms, first token 3902 ms, generate 3728 ms, total 3902 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Treaty of Trianon — Results and consequences
@@ -585,7 +587,7 @@ Operation Sea Lion was never launched after the Battle of Britain because the Ge
 
 cited: [3] Operation Sea Lion, [1] Operation Sea Lion — Navy, [5] Operation Sea Lion — Background, [2] Operation Sea Lion — Navy, [4] Operation Sea Lion — Air power
 sent but not cited: (none)
-timing: search 176 ms, generate 4311 ms, total 4487 ms
+timing: search 176 ms, first token 4487 ms, generate 4311 ms, total 4487 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Operation Sea Lion — Navy
@@ -642,7 +644,7 @@ The Young Plan replaced the Dawes Plan by reducing the total German reparations 
 
 cited: [1] Young Plan, [2] 1929 German Young Plan referendum — Young Plan, [3] Dawes Plan
 sent but not cited: [4, 5]
-timing: search 170 ms, generate 3371 ms, total 3542 ms
+timing: search 170 ms, first token 3542 ms, generate 3371 ms, total 3542 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Young Plan
@@ -710,7 +712,7 @@ Thus, Mussolini's rise involved a partly militarized but constitutionally sancti
 
 cited: [1] March on Rome — The March, [5] Benito Mussolini — Rise to power, [4] Fascist Italy — Colonial and foreign policy
 sent but not cited: [2, 3]
-timing: search 194 ms, generate 7896 ms, total 8090 ms
+timing: search 194 ms, first token 8090 ms, generate 7896 ms, total 8090 ms
 
 --- what the model was shown -------------------------------------------------
 [1] March on Rome — The March
@@ -773,7 +775,7 @@ Thus, Stalingrad is seen as the fundamental turning point where the strategic in
 
 cited: [2] Battle of Stalingrad, [3] Battle of Stalingrad — Significance, [5] Battle of Stalingrad, [1] Battle of Stalingrad — Significance, [4] Battle of Kursk — Results
 sent but not cited: (none)
-timing: search 245 ms, generate 5823 ms, total 6068 ms
+timing: search 245 ms, first token 6068 ms, generate 5823 ms, total 6068 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Battle of Stalingrad — Significance
@@ -833,7 +835,7 @@ Germany took control of Austria on 13 March 1938 through the Anschluss, which wa
 
 cited: [1] European theatre of World War II — Background, [4] Europe — History, [2] Interwar period — Germany, [3] Czechoslovakia — History, [5] Protectorate of Bohemia and Moravia — Background
 sent but not cited: (none)
-timing: search 250 ms, generate 5181 ms, total 5432 ms
+timing: search 250 ms, first token 5432 ms, generate 5181 ms, total 5432 ms
 
 --- what the model was shown -------------------------------------------------
 [1] European theatre of World War II — Background
@@ -903,7 +905,7 @@ The campaign against the kulaks was connected to the famine in Ukraine through t
 
 cited: [3] Dekulakization — Background, [5] Dekulakization — Background, [2] Holodomor — History, [1] Holodomor — History
 sent but not cited: [4]
-timing: search 240 ms, generate 4910 ms, total 5150 ms
+timing: search 240 ms, first token 5150 ms, generate 4910 ms, total 5150 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Holodomor — History
@@ -971,7 +973,7 @@ The second conflict, the Continuation War, followed the Winter War and the Inter
 
 cited: [3] Winter War — Background, [5] Winter War, [1] Finland — History, [4] Continuation War — Aftermath and casualties
 sent but not cited: [2]
-timing: search 203 ms, generate 5701 ms, total 5904 ms
+timing: search 203 ms, first token 5904 ms, generate 5701 ms, total 5904 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Finland — History
@@ -1036,7 +1038,7 @@ Many Germans came to believe their army had never actually been beaten in the fi
 
 cited: [1] Stab-in-the-back myth — Development of the myth, [3] Stab-in-the-back myth — Development of the myth, [4] Armistice of 11 November 1918 — Stab-in-the-back myth, [5] Stab-in-the-back myth — Psychology of belief
 sent but not cited: [2]
-timing: search 228 ms, generate 4029 ms, total 4257 ms
+timing: search 228 ms, first token 4257 ms, generate 4029 ms, total 4257 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Stab-in-the-back myth — Development of the myth
@@ -1092,7 +1094,7 @@ German savings became worthless in the early 1920s due to the unprecedented hype
 
 cited: [1] Great Depression in Germany — Background, [2] Weimar Republic — History, [3] Great Depression in Germany — Background
 sent but not cited: [4, 5]
-timing: search 162 ms, generate 2511 ms, total 2673 ms
+timing: search 162 ms, first token 2673 ms, generate 2511 ms, total 2673 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Great Depression in Germany — Background
@@ -1153,7 +1155,7 @@ The Nazis took apart the working democracy of the Weimar Republic in a matter of
 
 cited: [4] Adolf Hitler — Rise to power, [1] Weimar Republic, [2] The Holocaust — Rise of Nazi Germany, [3] Nazi Germany — History, [5] Nazism — Ideology and programme
 sent but not cited: (none)
-timing: search 169 ms, generate 4846 ms, total 5015 ms
+timing: search 169 ms, first token 5015 ms, generate 4846 ms, total 5015 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Weimar Republic
@@ -1214,7 +1216,7 @@ The German advance towards Moscow in the winter of 1941 was stopped by a combina
 
 cited: [1] Operation Barbarossa — Aftermath, [3] Eastern Front (World War II) — Conduct of operations, [4] Operation Barbarossa — Battle of Moscow, [5] Battle of Moscow — Wehrmacht advance towards Moscow (1 November – 5 December)
 sent but not cited: [2]
-timing: search 168 ms, generate 3870 ms, total 4038 ms
+timing: search 168 ms, first token 4038 ms, generate 3870 ms, total 4038 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Operation Barbarossa — Aftermath
@@ -1275,7 +1277,7 @@ The French army collapsed in weeks in 1940 due to a combination of poor military
 
 cited: [1] French Third Republic — World War II and downfall, [2] French Third Republic — World War II and downfall, [5] Battle of France — Prelude, [4] Battle of France — Fall Rot (Case Red), [3] Blitzkrieg — Military operations
 sent but not cited: (none)
-timing: search 161 ms, generate 4240 ms, total 4401 ms
+timing: search 161 ms, first token 4401 ms, generate 4240 ms, total 4401 ms
 
 --- what the model was shown -------------------------------------------------
 [1] French Third Republic — World War II and downfall
@@ -1335,7 +1337,7 @@ Murdering Europe's Jews became coordinated state policy by the time of the Wanns
 
 cited: [1] The Holocaust — Mass murder, [2] Final Solution, [3] The Holocaust — Mass murder, [5] Final Solution — Phase one: death squads of Operation Barbarossa
 sent but not cited: [4]
-timing: search 226 ms, generate 3213 ms, total 3440 ms
+timing: search 226 ms, first token 3440 ms, generate 3213 ms, total 3440 ms
 
 --- what the model was shown -------------------------------------------------
 [1] The Holocaust — Mass murder
@@ -1402,7 +1404,7 @@ Thus, financially, Germany could afford the reparations, but political and socia
 
 cited: [1] Aftermath of World War I — Political upheavals, [3] World War I — Economic effects, [4] World War I reparations, [5] World War I reparations — Evolution of reparations, [2] World War I reparations — Analysis
 sent but not cited: (none)
-timing: search 183 ms, generate 5866 ms, total 6049 ms
+timing: search 183 ms, first token 6049 ms, generate 5866 ms, total 6049 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Aftermath of World War I — Political upheavals
@@ -1463,7 +1465,7 @@ The Bolsheviks held on to power by increasingly centralizing authority and suppr
 
 cited: [2] Bolshevism — Support for the Bolsheviks by the people, [1] Bolsheviks, [5] Russian Civil War — Background, [4] Communist Party of the Soviet Union — History
 sent but not cited: [3]
-timing: search 272 ms, generate 9786 ms, total 10059 ms
+timing: search 272 ms, first token 10059 ms, generate 9786 ms, total 10059 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Bolsheviks
@@ -1503,7 +1505,7 @@ The Bolsheviks soon lost the support of other far-left allies, such as the Left 
 
 
 ==============================================================================
-[chernobyl-cause] (unanswerable)  ANSWERED (expected refusal)
+[chernobyl-cause] (unanswerable)  REFUSED
 What caused the reactor explosion at Chernobyl in 1986, and how many people died as a result?
 
 expected: (nothing)
@@ -1525,7 +1527,7 @@ Not in the sources. The passages mention the Chernobyl disaster in 1986 as the f
 
 cited: [1] Soviet Union — Geography
 sent but not cited: [2, 3, 4, 5]
-timing: search 242 ms, generate 2096 ms, total 2338 ms
+timing: search 242 ms, first token 2338 ms, generate 2096 ms, total 2338 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Soviet Union — Geography
@@ -1563,7 +1565,7 @@ The huge death toll was attributed to several factors, including brutal mistreat
 
 
 ==============================================================================
-[good-friday-agreement] (unanswerable)  ANSWERED (expected refusal)
+[good-friday-agreement] (unanswerable)  REFUSED
 What did the Good Friday Agreement change about how Northern Ireland is governed?
 
 expected: (nothing)
@@ -1585,7 +1587,7 @@ Not in the sources. The passages cover the Government of Ireland Act 1914, the I
 
 cited: (none)
 sent but not cited: [1, 2, 3, 4, 5]
-timing: search 178 ms, generate 1614 ms, total 1792 ms
+timing: search 178 ms, first token 1792 ms, generate 1614 ms, total 1792 ms
 
 --- what the model was shown -------------------------------------------------
 [1] United Kingdom of Great Britain and Ireland — Ireland
@@ -1629,7 +1631,7 @@ The border between Northern Ireland and the Irish Free State was based on the bo
 
 
 ==============================================================================
-[srebrenica-1995] (unanswerable)  ANSWERED (expected refusal)
+[srebrenica-1995] (unanswerable)  REFUSED
 What happened at Srebrenica in July 1995?
 
 expected: (nothing)
@@ -1651,7 +1653,7 @@ Not in the sources. The passages cover World War II atrocities in Yugoslavia, th
 
 cited: (none)
 sent but not cited: [1, 2, 3, 4, 5]
-timing: search 164 ms, generate 2206 ms, total 2370 ms
+timing: search 164 ms, first token 2370 ms, generate 2206 ms, total 2370 ms
 
 --- what the model was shown -------------------------------------------------
 [1] World War II in Yugoslavia — War crimes and atrocities
@@ -1690,7 +1692,7 @@ Having judged the eastern Bosnian operation complete, German commanders turned t
 
 
 ==============================================================================
-[brexit-why] (unanswerable)  ANSWERED (expected refusal)
+[brexit-why] (unanswerable)  REFUSED
 Why did a majority of British voters choose to leave the European Union in 2016?
 
 expected: (nothing)
@@ -1712,7 +1714,7 @@ The sources do not cover the reasons why a majority of British voters chose to l
 
 cited: [1] Europe — History, [2] Labour Party (UK) — History
 sent but not cited: [3, 4, 5]
-timing: search 189 ms, generate 1898 ms, total 2087 ms
+timing: search 189 ms, first token 2087 ms, generate 1898 ms, total 2087 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Europe — History
@@ -1755,7 +1757,7 @@ As a result of the successful constitutional referendum held in 2003, every muni
 
 
 ==============================================================================
-[windrush-generation] (unanswerable)  ANSWERED (expected refusal)
+[windrush-generation] (unanswerable)  REFUSED
 Who were the Windrush generation and why did they come to Britain?
 
 expected: (nothing)
@@ -1777,7 +1779,7 @@ Not in the sources. The passages discuss immigration to Britain from former Brit
 
 cited: (none)
 sent but not cited: [1, 2, 3, 4, 5]
-timing: search 159 ms, generate 1451 ms, total 1610 ms
+timing: search 159 ms, first token 1610 ms, generate 1451 ms, total 1610 ms
 
 --- what the model was shown -------------------------------------------------
 [1] British Empire — Legacy
@@ -1818,7 +1820,7 @@ Macmillan gave a speech in Cape Town, South Africa in February 1960 where he spo
 
 
 ==============================================================================
-[transformer-attention] (unanswerable)  ANSWERED (expected refusal)
+[transformer-attention] (unanswerable)  REFUSED
 How does a transformer neural network decide which words to pay attention to?
 
 expected: (nothing)
@@ -1840,7 +1842,7 @@ Not in the sources. The passages cover neuropsychology, brain imaging, EEG, subc
 
 cited: (none)
 sent but not cited: [1, 2, 3, 4, 5]
-timing: search 819 ms, generate 1555 ms, total 2375 ms
+timing: search 819 ms, first token 2375 ms, generate 1555 ms, total 2375 ms
 
 --- what the model was shown -------------------------------------------------
 [1] Psychology — Major schools of thought
@@ -1877,4 +1879,5 @@ Pierre Janet advanced the idea of a subconscious mind, which could contain auton
 The concept of unconscious processes has remained important in psychology. Cognitive psychologists have used a "filter" model of attention. According to the model, much information processing occurs below the threshold of consciousness, and only certain stimuli, limited in number and nature, make their way through the filter. Research has shown that subconscious priming of certain ideas can covertly influence thoughts and behavior. Because of the unreliability of self-reporting, a major hurdle in this type of research involves demonstrating that a subject's conscious mind has not perceived a target stimulus. For this reason, some psychologists prefer to distinguish between implicit and explicit memory. In another approach, one can also describe a subliminal stimulus as meeting an objective but not a subjective threshold.
 
 Some experimental data suggest that the brain begins to consider taking actions before the mind becomes aware of them. The influence of unconscious forces on people's choices bears on the philosophical question of free will. John Bargh, Daniel Wegner, and Ellen Langer describe free will as an illusion.
+
 

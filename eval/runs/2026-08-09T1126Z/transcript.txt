@@ -3574,7 +3574,7 @@ In the 1990s, Belgium saw several large scandals notably surrounding Marc Dutrou
 
 
 ==============================================================================
-[seveso-1976] (unanswerable)  ANSWERED (expected refusal)
+[seveso-1976] (unanswerable)  REFUSED
 What happened at the Seveso chemical plant in Italy, and how were the people living nearby affected?
 
 expected: (nothing)
@@ -4733,7 +4733,7 @@ Regardless of the reason for the declining value of the German currency, the dec
 
 
 ==============================================================================
-[t-nato-vilnius-2023] (unanswerable)  ANSWERED (expected refusal)
+[t-nato-vilnius-2023] (unanswerable)  REFUSED
 What did NATO agree at its 2023 summit in Vilnius?
 
 expected: (nothing)
@@ -6738,4 +6738,5 @@ Nuremberg trials — Subsequent Nuremberg trials
 Initially, it was planned to hold a second international tribunal for German industrialists, but this was never held because of differences between the Allies. Twelve military trials were convened solely by the United States in the same courtroom that had hosted the International Military Tribunal. Pursuant to Law No. 10 adopted by the Allied Control Council, United States forces arrested almost 100,000 Germans as war criminals. The Office of Chief Counsel for War Crimes identified 2,500 major war criminals, of whom 177 were tried. Many of the worst offenders were not prosecuted, for logistical or financial reasons.
 
 One set of trials focused on the actions of German professionals: the Doctors' Trial focused on human experimentation and euthanasia murders, the Judges' Trial on the role of the judiciary in Nazi crimes, and the Ministries Trial on the culpability of bureaucrats of German government ministries, especially the Foreign Office. Also on trial were industrialists—in the Flick trial, the IG Farben trial, and the Krupp trial—for using forced labor, looting property from Nazi victims, and funding SS atrocities.
+
 

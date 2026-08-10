@@ -3583,7 +3583,7 @@ The Treaty was signed on 17 March 1948 by the following plenipotentiaries:
 
 
 ==============================================================================
-[seveso-1976] (unanswerable)  ANSWERED (expected refusal)
+[seveso-1976] (unanswerable)  REFUSED
 What happened at the Seveso chemical plant in Italy, and how were the people living nearby affected?
 
 expected: (nothing)
@@ -4739,7 +4739,7 @@ Regardless of the reason for the declining value of the German currency, the dec
 
 
 ==============================================================================
-[t-nato-vilnius-2023] (unanswerable)  ANSWERED (expected refusal)
+[t-nato-vilnius-2023] (unanswerable)  REFUSED
 What did NATO agree at its 2023 summit in Vilnius?
 
 expected: (nothing)
@@ -4868,4 +4868,5 @@ After the economic crisis caused by the COVID-19 pandemic the EU leaders agreed 
 On 24 February 2022, after massing near the borders of Ukraine, the Russian Armed Forces undertook a full-scale invasion of Ukraine.
 
 The European Union imposed heavy sanctions on Russia and agreed on a pooled military aid package to Ukraine for lethal weapons funded via the European Peace Facility off-budget instrument. Likewise, neighbouring EU member countries received a mass influx of Ukrainian refugees fleeing the conflict over the course of the first weeks of the war. The conflict exposed the EU energy dependency on Russia, deemed as a supplier "explicitly" threatening the EU. This development injected a sense of urgency in the switch towards alternative energy suppliers and further development of clean energy sources.
+
 
