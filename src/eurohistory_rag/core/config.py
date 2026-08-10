@@ -99,6 +99,17 @@ class Settings(BaseSettings):
     # quietly contaminate the comparison. Phase 9, D-074.
     hybrid_enabled: bool = False
 
+    # At most this many chunks from any one article in a result list, or None
+    # for no limit. None by default for the same reason as the flags around it:
+    # with it unset the system behaves exactly as run 2026-08-09T1341Z did, so
+    # that run is a valid "before" and a forgotten setting cannot contaminate
+    # the comparison.
+    #
+    # It is a number rather than a boolean because the question was never "cap
+    # or not" -- D-082 swept 3, 2 and 1 and they behave differently enough that
+    # a boolean would hide the finding. Phase 26, D-100.
+    max_per_article: int | None = None
+
     # Temporal retrieval: a third arm restricted to chunks whose years overlap
     # the period the question names. Off by default for the same reason as the
     # two above, and for one more -- Phase 22 measured the failure it is meant

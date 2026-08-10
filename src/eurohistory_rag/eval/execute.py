@@ -69,6 +69,11 @@ class RunConfig:
     # builds this object field by field, and a field with a default is a field
     # a caller can silently forget to pass. D-096's fourth addendum.
     conversation: bool
+    # At most this many chunks from one article, or None for no cap. No default
+    # for the same reason as the two above -- and this one has the sharpest
+    # version of that hazard, because a run made with the cap on and recorded as
+    # off would be the Phase 8 dead switch exactly. D-100.
+    max_per_article: int | None
 
     @classmethod
     def from_settings(cls, settings: Settings) -> "RunConfig":
@@ -80,6 +85,7 @@ class RunConfig:
             hybrid=settings.hybrid_enabled,
             temporal=settings.temporal_enabled,
             conversation=settings.conversation_enabled,
+            max_per_article=settings.max_per_article,
         )
 
 
@@ -111,6 +117,7 @@ def build_stack(
         reranker=LocalReranker(config.reranker) if config.reranker else None,
         hybrid=config.hybrid,
         temporal=config.temporal,
+        max_per_article=config.max_per_article,
     )
     generator = OpenAIGenerator(
         api_key=settings.openai_api_key.get_secret_value(), model=config.model
@@ -190,6 +197,9 @@ def execute(
         temporal="year-overlap+rrf" if config.temporal else "",
         conversation=settings.rewrite_model if config.conversation else "",
         verifier=settings.verify_model if settings.verify_enabled else "",
+        max_per_article=(
+            "" if config.max_per_article is None else str(config.max_per_article)
+        ),
         note=note,
     )
 

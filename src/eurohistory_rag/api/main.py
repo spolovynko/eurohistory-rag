@@ -5,6 +5,7 @@ import logging
 import time
 from collections.abc import AsyncIterator, Iterator
 from contextlib import asynccontextmanager
+from dataclasses import asdict
 from importlib.resources import files
 from pathlib import Path
 from typing import Annotated
@@ -29,6 +30,7 @@ from eurohistory_rag.api.experiment import (
 )
 from eurohistory_rag.api.jobs import EvalJob, JobStatus, get_job
 from eurohistory_rag.core.config import CORPUS_LICENSE, Settings, get_settings
+from eurohistory_rag.core.trace import Trace
 from eurohistory_rag.eval.browse import RunListing, RunView, list_runs, load_run
 from eurohistory_rag.eval.cost import estimate
 from eurohistory_rag.eval.execute import RunConfig
@@ -308,6 +310,7 @@ def _answer_events(
     standalone: str,
     results: list[SearchResult],
     used: Configuration,
+    trace: Trace,
 ) -> Iterator[str]:
     """The answer as a stream of events: sources, then text, then the rest.
 
@@ -315,6 +318,12 @@ def _answer_events(
     before this generator was ever iterated -- and they are the thing a reader
     can start on while the model writes. The citations cannot go with them: a
     marker only becomes a citation once the sentence holding it exists.
+
+    The trace goes **last**, after `done`, because the generation spans do not
+    exist until generation has finished. It is the only place the live /ask path
+    reports its own timings: a JSON request gets no trace, deliberately, because
+    the two readers that exist are this page and the eval runner, and the runner
+    records spans on the `EvalRecord` instead. D-101.
 
     A failure here arrives *after* the 200 was sent, so it cannot become a
     status code. It becomes an `error` event instead, and the page is
@@ -325,7 +334,7 @@ def _answer_events(
         [SearchHit.from_result(result).model_dump() for result in results],
     )
     try:
-        for piece in service.stream_from(standalone, results):
+        for piece in service.stream_from(standalone, results, trace=trace):
             if isinstance(piece, str):
                 yield _sse("token", piece)
             else:
@@ -347,6 +356,9 @@ def _answer_events(
     except (VectorStoreUnavailable, GenerationUnavailable) as error:
         logger.warning("stream failed after the response began: %s", error)
         yield _sse("error", "Answering is temporarily unavailable.")
+    # Outside the `try`, so a failed answer still reports which stage it got to
+    # before it failed -- which is the case a trace is most worth having for.
+    yield _sse("trace", [asdict(span) for span in trace.spans])
 
 
 def _overridden(request: AskRequest) -> bool:
@@ -589,6 +601,11 @@ def create_app() -> FastAPI:
             )
 
         streaming = SSE_TYPE in http.headers.get("accept", "")
+        # One per request. The streaming branch hands it to the response
+        # generator, which is still writing spans into it long after this
+        # function has returned -- which is fine, and is why it is created here
+        # rather than inside either branch.
+        trace = Trace()
         try:
             # Retrieval runs here in both shapes, and that is the point: it is
             # the half that can fail before a single byte has left, so a dead
@@ -601,12 +618,13 @@ def create_app() -> FastAPI:
             standalone = service.standalone(
                 request.question,
                 [Turn(user=t.user, assistant=t.assistant) for t in request.history],
+                trace=trace,
             )
-            results = service.search(standalone, k=request.k)
+            results = service.search(standalone, k=request.k, trace=trace)
             if streaming:
                 return StreamingResponse(
                     _answer_events(
-                        service, request.question, standalone, results, used
+                        service, request.question, standalone, results, used, trace
                     ),
                     media_type=SSE_TYPE,
                     # Buffering proxies are the one thing that can undo this
@@ -614,7 +632,7 @@ def create_app() -> FastAPI:
                     # is complete restores exactly the blank screen we removed.
                     headers={"Cache-Control": "no-store", "X-Accel-Buffering": "no"},
                 )
-            answer = service.answer_from(standalone, results)
+            answer = service.answer_from(standalone, results, trace=trace)
         except (VectorStoreUnavailable, GenerationUnavailable) as error:
             # Two different failures, one message: the caller can do nothing
             # differently about a dead Qdrant than about a dead OpenAI.
@@ -772,6 +790,11 @@ def create_app() -> FastAPI:
             # found this call site the moment the field lost its default.
             temporal=settings.temporal_enabled,
             conversation=settings.conversation_enabled,
+            # Not switchable from the page either, and D-100 is the reason: the
+            # verdict measured this cap twice and argued against turning it on,
+            # so a control offering it would hand someone a configuration the
+            # evidence rejects. It follows the setting, like `temporal`.
+            max_per_article=settings.max_per_article,
         )
 
         run_id = new_run_id()

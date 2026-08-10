@@ -55,6 +55,13 @@
   <h2 id="sources-heading" hidden>Sources</h2>
   <ul id="sources"></ul>
   <footer id="footer" hidden></footer>
+  <!-- The server's own view of the same query. The footer above is measured in
+       this browser; this is measured inside the process, stage by stage, and
+       having both on screen is what would show a gap between them. D-101. -->
+  <details id="trace" hidden>
+    <summary>Where the time went</summary>
+    <ol id="trace-stages"></ol>
+  </details>
 </section>
 
 <section class="view" id="view-eval" hidden>

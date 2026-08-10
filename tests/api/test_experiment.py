@@ -400,6 +400,7 @@ def test_the_changed_knobs_are_derived_from_the_baseline(tmp_path: Path) -> None
         hybrid=False,
         temporal=False,
         conversation=False,
+        max_per_article=None,
     )
 
     assert experiment_module.changed_fields(baseline, same) == frozenset()
@@ -412,6 +413,7 @@ def test_the_changed_knobs_are_derived_from_the_baseline(tmp_path: Path) -> None
             hybrid=True,
             temporal=False,
             conversation=False,
+            max_per_article=None,
         ),
     ) == frozenset({"k", "generation_model", "reranker", "hybrid"})
 
@@ -427,6 +429,7 @@ def test_a_missing_baseline_declares_nothing_rather_than_raising(
         hybrid=False,
         temporal=False,
         conversation=False,
+        max_per_article=None,
     )
 
     assert experiment_module.changed_fields(tmp_path / "nope", config) == frozenset()

@@ -9,6 +9,7 @@ import logging
 from collections.abc import Sequence
 from dataclasses import dataclass, replace
 
+from eurohistory_rag.core.trace import Trace
 from eurohistory_rag.retrieval.embedding import Embedder
 from eurohistory_rag.retrieval.rerank import Reranker, RerankUnavailable
 from eurohistory_rag.retrieval.sparse import query_vector
@@ -24,6 +25,13 @@ DEFAULT_K = 5
 # At most this many chunks from any one section. Chunks overlap, so neighbours
 # score almost identically and would otherwise fill the list with one page.
 MAX_PER_DOCUMENT = 2
+
+# At most this many chunks from any one article, or None for no limit. None is
+# the default because the cap has now been measured twice -- D-082 on three
+# themes and D-100 on nine -- and coverage@5 fell at every value both times.
+# It is a setting rather than a constant so the arm can be run again without a
+# code change, which is the only reason D-100 could re-run D-082 for nothing.
+MAX_PER_ARTICLE: int | None = None
 
 # Ask the store for this many times k, then thin down. Qdrant is no slower
 # returning 20 than 5, and thinning needs spares to draw from.
@@ -226,6 +234,7 @@ class SearchService:
         store: VectorStore,
         k: int = DEFAULT_K,
         max_per_document: int = MAX_PER_DOCUMENT,
+        max_per_article: int | None = MAX_PER_ARTICLE,
         overfetch: int = OVERFETCH,
         reranker: Reranker | None = None,
         rerank_top_n: int = RERANK_TOP_N,
@@ -237,6 +246,7 @@ class SearchService:
         self._store = store
         self._k = k
         self._max_per_document = max_per_document
+        self._max_per_article = max_per_article
         self._overfetch = overfetch
         self._reranker = reranker
         self._rerank_top_n = rerank_top_n
@@ -249,6 +259,7 @@ class SearchService:
         question: str,
         k: int | None = None,
         min_score: float | None = None,
+        trace: Trace | None = None,
     ) -> list[SearchResult]:
         """The best chunks for this question, best first.
 
@@ -257,61 +268,103 @@ class SearchService:
         about 0.58 on one question and 0.42 on another. Phase 7 produces thirty
         questions with real scores, and that is when a number can be picked from
         evidence. Until then Phase 6's prompt does the refusing.
+
+        `trace` is where the stages write down what they cost. A caller that
+        passes none gets a throwaway, so there is no second code path and no
+        `if trace is not None` anywhere below. A span is opened only for a stage
+        that actually runs -- the fusion span is absent on a dense-only
+        configuration, exactly as the fusion *call* is -- which is what makes
+        "these two questions ran different stages" a fact worth checking rather
+        than a constant. D-101.
         """
         question = question.strip()
         if not question:
             return []
 
+        if trace is None:
+            trace = Trace()
+
         limit = k if k is not None else self._k
         pool = limit * self._overfetch
-        vector = self._embedder.embed([question])[0]
-        results = [to_result(hit) for hit in self._store.search(vector, limit=pool)]
+        with trace.span("search") as whole:
+            with trace.span("embed") as span:
+                vector = self._embedder.embed([question])[0]
+                span.note = f"{len(vector)} dims"
+            with trace.span("dense") as span:
+                results = [
+                    to_result(hit) for hit in self._store.search(vector, limit=pool)
+                ]
+                span.note = f"{len(results)} of {pool} asked for"
 
-        # Applied before fusion, while it still means what it says. After
-        # fusion half the list may carry `score = 0.0` because the dense search
-        # never saw it, and a cosine cut-off would silently delete exactly the
-        # chunks hybrid search exists to find.
-        if min_score is not None:
-            results = [result for result in results if result.score >= min_score]
+            # Applied before fusion, while it still means what it says. After
+            # fusion half the list may carry `score = 0.0` because the dense
+            # search never saw it, and a cosine cut-off would silently delete
+            # exactly the chunks hybrid search exists to find.
+            if min_score is not None:
+                results = [result for result in results if result.score >= min_score]
 
-        keyword: list[SearchResult] = []
-        dated: list[SearchResult] = []
-        period = parse_period(question) if self._temporal else None
+            keyword: list[SearchResult] = []
+            dated: list[SearchResult] = []
+            period = parse_period(question) if self._temporal else None
 
-        if period is not None:
-            found = [
-                to_result(hit)
-                for hit in self._store.search_within(
-                    vector, limit=pool, start=period.start, end=period.end
+            if period is not None:
+                with trace.span("temporal") as span:
+                    found = [
+                        to_result(hit)
+                        for hit in self._store.search_within(
+                            vector, limit=pool, start=period.start, end=period.end
+                        )
+                    ]
+                    # Reordered by how closely each span agrees with the
+                    # question's period, cosine breaking ties. Qdrant's range
+                    # filter can only say whether two ranges touch, and a
+                    # one-year touch arriving at rank 1 of this list earns the
+                    # same fusion bonus as an exact match -- which is how the
+                    # first build made the temporal suite worse. The list is
+                    # only reordered, never shortened. See the D-096 addendum.
+                    dated = sorted(
+                        found,
+                        key=lambda r: (
+                            period.agreement(r.year_start, r.year_end),
+                            r.score,
+                        ),
+                        reverse=True,
+                    )
+                    span.note = f"{len(dated)} within {period}"
+
+            if self._hybrid:
+                with trace.span("sparse") as span:
+                    keyword = [
+                        to_result(hit)
+                        for hit in self._store.search_sparse(
+                            query_vector(question), limit=pool
+                        )
+                    ]
+                    span.note = f"{len(keyword)} candidates"
+
+            # Fusion is skipped entirely when neither extra arm ran, so a
+            # question naming no period on a dense-only configuration takes
+            # exactly the code path it took before this phase -- same list,
+            # same order, provably.
+            if keyword or dated:
+                with trace.span("fuse") as span:
+                    results = fuse(results, keyword, self._rrf_k, period=dated)
+                    span.note = f"{len(results)} merged"
+
+            if self._reranker is not None:
+                with trace.span("rerank") as span:
+                    scored = min(self._rerank_top_n, len(results))
+                    results = self._rerank(question, results)
+                    span.note = f"{scored} of {len(results)} scored"
+
+            with trace.span("thin") as span:
+                thinned = thin(
+                    results, limit, self._max_per_document, self._max_per_article
                 )
-            ]
-            # Reordered by how closely each span agrees with the question's
-            # period, cosine breaking ties. Qdrant's range filter can only say
-            # whether two ranges touch, and a one-year touch arriving at rank 1
-            # of this list earns the same fusion bonus as an exact match --
-            # which is how the first build made the temporal suite worse. The
-            # list is only reordered, never shortened. See the D-096 addendum.
-            dated = sorted(
-                found,
-                key=lambda r: (period.agreement(r.year_start, r.year_end), r.score),
-                reverse=True,
-            )
+                span.note = f"{len(thinned)} of {limit} slots"
 
-        if self._hybrid:
-            keyword = [
-                to_result(hit)
-                for hit in self._store.search_sparse(query_vector(question), limit=pool)
-            ]
+            whole.note = f"{len(thinned)} chunks"
 
-        # Fusion is skipped entirely when neither extra arm ran, so a question
-        # naming no period on a dense-only configuration takes exactly the code
-        # path it took before this phase -- same list, same order, provably.
-        if keyword or dated:
-            results = fuse(results, keyword, self._rrf_k, period=dated)
-
-        results = self._rerank(question, results)
-
-        thinned = thin(results, limit, self._max_per_document)
         logger.debug(
             "search %r: %d dense, %d keyword, %d in %s, %d after thinning",
             question,

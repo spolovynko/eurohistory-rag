@@ -11,6 +11,7 @@ import re
 from collections.abc import Iterator, Sequence
 from dataclasses import dataclass
 
+from eurohistory_rag.core.trace import Trace
 from eurohistory_rag.generation.client import (
     Completion,
     GenerationUnavailable,
@@ -122,7 +123,12 @@ class GenerationService:
         # as answering -- messages in, text out -- with a different prompt.
         self._verifier = verifier
 
-    def standalone(self, question: str, history: Sequence[Turn] = ()) -> str:
+    def standalone(
+        self,
+        question: str,
+        history: Sequence[Turn] = (),
+        trace: Trace | None = None,
+    ) -> str:
         """The question with the conversation folded into it.
 
         A second turn is not a question -- "when did it come down?" has no
@@ -137,18 +143,31 @@ class GenerationService:
         """
         if self._rewriter is None or not history:
             return question
-        return rewrite(self._rewriter, question, history)
+        if trace is None:
+            trace = Trace()
+        with trace.span("rewrite") as span:
+            rewritten = rewrite(self._rewriter, question, history)
+            span.note = f"{len(history)} turns of history"
+        return rewritten
 
-    def ask(self, question: str, k: int | None = None) -> Answer:
+    def ask(
+        self, question: str, k: int | None = None, trace: Trace | None = None
+    ) -> Answer:
         """Find the chunks, ask the model, return the answer and its sources.
 
         No shortcut when retrieval comes back empty: the prompt already has a
         rule for that case, and letting one code path handle every refusal
         means there is only one behaviour to test and to fix.
         """
-        return self.answer_from(question, self.search(question, k=k))
+        if trace is None:
+            trace = Trace()
+        return self.answer_from(
+            question, self.search(question, k=k, trace=trace), trace=trace
+        )
 
-    def search(self, question: str, k: int | None = None) -> list[SearchResult]:
+    def search(
+        self, question: str, k: int | None = None, trace: Trace | None = None
+    ) -> list[SearchResult]:
         """The retrieval half, on its own.
 
         Public because /ask has to do it *before* a streaming response begins:
@@ -156,9 +175,14 @@ class GenerationService:
         Qdrant can no longer be a 503. Doing the half that can fail early is
         what keeps that failure honest.
         """
-        return self._search.search(question, k=k)
+        return self._search.search(question, k=k, trace=trace)
 
-    def answer_from(self, question: str, results: list[SearchResult]) -> Answer:
+    def answer_from(
+        self,
+        question: str,
+        results: list[SearchResult],
+        trace: Trace | None = None,
+    ) -> Answer:
         """Answer from chunks already retrieved.
 
         The half of `ask` that does not search. Split out for the evaluation
@@ -166,13 +190,16 @@ class GenerationService:
         then generate from exactly the shipped path rather than a copy of it --
         a copy would drift, and the eval would stop measuring the real system.
         """
-        for piece in self.stream_from(question, results):
+        for piece in self.stream_from(question, results, trace=trace):
             if isinstance(piece, Answer):
                 return piece
         raise GenerationUnavailable("The answer stream ended without an answer.")
 
     def stream_from(
-        self, question: str, results: list[SearchResult]
+        self,
+        question: str,
+        results: list[SearchResult],
+        trace: Trace | None = None,
     ) -> Iterator[str | Answer]:
         """The answer as the model writes it, then the finished Answer.
 
@@ -186,24 +213,51 @@ class GenerationService:
         then taken back is worse than text that arrived late. So with a verifier
         configured this yields the answer in one piece and reports no first
         token, which the eval reads as "arrived at the end".
+
+        **What the `generate` span measures when streaming**: wall clock from
+        asking the model to the last piece arriving here, which includes
+        whatever the consumer did between pieces. For the eval runner that is a
+        tight loop and the difference is microseconds; for the page it is one
+        `json.dumps` per token. Named rather than engineered around -- the
+        honest quantity is "how long the reader waited", not "how long the
+        model was busy". D-101.
         """
-        messages = build_messages(question, results)
+        if trace is None:
+            trace = Trace()
+
+        with trace.span("prompt") as span:
+            messages = build_messages(question, results)
+            span.note = f"{len(results)} sources"
+
         if self._verifier is not None:
-            yield self._finish(question, results, complete(self._generator, messages))
+            with trace.span("generate") as span:
+                gated = complete(self._generator, messages)
+                span.note = "not streamed: the gate is on"
+            yield self._finish(question, results, gated, trace)
             return
 
         completion: Completion | None = None
-        for piece in self._generator.stream(messages):
-            if isinstance(piece, Completion):
-                completion = piece
-            else:
-                yield piece
+        with trace.span("generate") as span:
+            for piece in self._generator.stream(messages):
+                if isinstance(piece, Completion):
+                    completion = piece
+                else:
+                    yield piece
+            span.note = (
+                "no completion"
+                if completion is None or completion.first_token_ms is None
+                else f"first token at {completion.first_token_ms:.0f} ms"
+            )
         if completion is None:
             raise GenerationUnavailable("The model's stream ended without an answer.")
-        yield self._finish(question, results, completion)
+        yield self._finish(question, results, completion, trace)
 
     def _finish(
-        self, question: str, results: list[SearchResult], completion: Completion
+        self,
+        question: str,
+        results: list[SearchResult],
+        completion: Completion,
+        trace: Trace,
     ) -> Answer:
         """Run the groundedness gate if there is one, then resolve the markers."""
         text = completion.text
@@ -212,7 +266,9 @@ class GenerationService:
         revised = False
 
         if self._verifier is not None:
-            checked = verify(self._verifier, question, results, completion.text)
+            with trace.span("verify") as span:
+                checked = verify(self._verifier, question, results, completion.text)
+                span.note = "revised" if checked.changed else "left alone"
             text = checked.text
             revised = checked.changed
             prompt_tokens = _total(prompt_tokens, checked.prompt_tokens)
@@ -222,7 +278,9 @@ class GenerationService:
         # deleted a sentence, and a citation list naming a source no longer
         # referred to is the kind of quiet inconsistency nobody notices until a
         # reader clicks the link.
-        citations = cited(text, results)
+        with trace.span("cite") as span:
+            citations = cited(text, results)
+            span.note = f"{len(citations)} of {len(results)} used"
         logger.info(
             "ask %r: %d sources, %d cited, revised=%s",
             question,

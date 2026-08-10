@@ -46,6 +46,7 @@ answers — or, for the last two, what the measurement of it says.
 | `MIN_TAIL_CHARS` | 200 | `pipeline/gold/chunk.py` | D-040 | A final chunk shorter than this is merged backwards instead of standing alone |
 | `DEFAULT_K` | 5 | `retrieval/search.py` | D-047 | How many results a search returns |
 | `MAX_PER_DOCUMENT` | 2 | `retrieval/search.py` | D-047 | Most chunks allowed from any one section, so overlapping neighbours cannot fill the list |
+| `max_per_article` | unset (no cap) | `core/config.py` | D-082, D-100 | Most chunks allowed from any one **article**, across all its sections. Measured twice and shipped off both times: it buys distinct articles at 5 and costs coverage@5 at every value. Setting it to 2 is the only arm that fixes `versailles-vs-trianon`, at the price of ten other questions |
 | `OVERFETCH` | 4 | `retrieval/search.py` | D-047 | Multiplier on `k` when asking the store, so thinning has spares to draw from |
 | `RERANK_TOP_N` | 20 | `retrieval/search.py` | D-072 | How many candidates the cross-encoder scores. Fixed rather than `k × OVERFETCH`, so the eval and the answer path rerank the same pool |
 | `reranker_enabled` | `false` default, `true` in `.env` | `core/config.py` | D-069 | Whether reranking runs at all. The one knob here that lives in `.env`, because it is the on/off switch a before/after run needs to flip |
@@ -121,7 +122,7 @@ with the corpus, not as a fixed cost.
 | `MIN_SEEDS` | `curate` → `ingest` → `silver` → `chunk` → `index` | hours; a full Wikipedia fetch |
 | `MIN_SECTION_CHARS` | `silver` → `chunk` → `index` | ~5 min + an embedding pass |
 | `CHUNK_SIZE` / `CHUNK_OVERLAP` / `MIN_TAIL_CHARS` | `chunk` → `index` | seconds + an embedding pass |
-| `DEFAULT_K` / `MAX_PER_DOCUMENT` / `OVERFETCH` / `RERANK_TOP_N` / `RRF_K` | nothing | free, takes effect next query |
+| `DEFAULT_K` / `MAX_PER_DOCUMENT` / `max_per_article` / `OVERFETCH` / `RERANK_TOP_N` / `RRF_K` | nothing | free, takes effect next query |
 | `hybrid_enabled` | `index` **if the collection predates Phase 9** | free to flip; a rebuild is a few cents |
 | `temporal_enabled` | `chunk` then `index --payload-only` **if the payloads predate Phase 22** | free to flip; the payload refresh is free too — no vector is re-embedded |
 | `HEADING`, `SKIP_FIELDS` | `chunk` then `index --resume` | ~$0.008 — resume skips every batch already stored and pays only for the infobox chunks. A full `index` would be $0.26 **and** would move every cosine score in the fourth decimal, which is exactly what a before/after cannot afford |

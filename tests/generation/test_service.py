@@ -7,6 +7,7 @@ reaches the caller -- not whether the model writes good history.
 
 import pytest
 
+from eurohistory_rag.core.trace import Trace
 from eurohistory_rag.generation.rewrite import Turn
 from eurohistory_rag.generation.service import Answer, GenerationService, cited
 from eurohistory_rag.retrieval.search import SearchResult
@@ -41,6 +42,7 @@ class StubSearchService:
         question: str,
         k: int | None = None,
         min_score: float | None = None,
+        trace: Trace | None = None,
     ) -> list[SearchResult]:
         self.questions.append((question, k))
         return self._results
@@ -404,3 +406,123 @@ def test_with_conversation_off_a_history_changes_nothing(
     assert generation.standalone("When did it come down?", history) == (
         "When did it come down?"
     )
+
+
+# --- the trace (D-101) ------------------------------------------------------
+
+
+def test_a_single_turn_answer_records_prompt_generate_and_cite(
+    results: list[SearchResult],
+) -> None:
+    """The generation half of the stage set, on the path 92 questions take.
+
+    `rewrite` is absent because there is no history, and `verify` is absent
+    because the gate is off -- both are facts about the configuration, and a
+    trace that listed them would be attributing time to nothing.
+    """
+    generation, _ = service(results, "The wall went up in 1961 [1].")
+    trace = Trace()
+    generation.answer_from("why?", results, trace=trace)
+
+    assert [(s.name, s.depth) for s in trace.spans] == [
+        ("prompt", 0),
+        ("generate", 0),
+        ("cite", 0),
+    ]
+
+
+def test_a_follow_up_records_the_rewrite_as_its_own_stage(
+    results: list[SearchResult],
+) -> None:
+    """The one stage the 14 conversation questions run and the other 92 do not."""
+    generation = GenerationService(
+        StubSearchService(results),  # type: ignore[arg-type]
+        FakeGenerator(),
+        rewriter=FakeGenerator(answer="When did the Berlin Wall come down?"),
+    )
+    trace = Trace()
+    generation.standalone(
+        "When did it come down?",
+        [Turn(user="Why was the Berlin Wall built?", assistant="To stop [1].")],
+        trace=trace,
+    )
+
+    assert [span.name for span in trace.spans] == ["rewrite"]
+    assert trace.spans[0].note == "1 turns of history"
+
+
+def test_a_first_turn_records_no_rewrite(results: list[SearchResult]) -> None:
+    """No history means the rewriter is never reached, so nothing was spent."""
+    generation = GenerationService(
+        StubSearchService(results),  # type: ignore[arg-type]
+        FakeGenerator(),
+        rewriter=FakeGenerator(answer="something else entirely"),
+    )
+    trace = Trace()
+    generation.standalone("Why was the wall built?", trace=trace)
+
+    assert trace.spans == []
+
+
+def test_the_groundedness_gate_is_its_own_stage(
+    results: list[SearchResult],
+) -> None:
+    """A second model call must be visible as a second model call."""
+    generation = GenerationService(
+        StubSearchService(results),  # type: ignore[arg-type]
+        FakeGenerator(answer="The wall went up in 1961 [1]."),
+        verifier=FakeGenerator(answer="The wall went up in 1961 [1]."),
+    )
+    trace = Trace()
+    generation.answer_from("why?", results, trace=trace)
+
+    assert [span.name for span in trace.spans] == [
+        "prompt",
+        "generate",
+        "verify",
+        "cite",
+    ]
+
+
+def test_the_generate_span_reports_when_the_first_token_arrived(
+    results: list[SearchResult],
+) -> None:
+    """The one number D-095 added, carried into the trace rather than re-derived."""
+    generation = GenerationService(
+        StubSearchService(results),  # type: ignore[arg-type]
+        FakeGenerator(first_token_ms=87.0),
+    )
+    trace = Trace()
+    generation.answer_from("why?", results, trace=trace)
+
+    note = next(s.note for s in trace.spans if s.name == "generate")
+    assert note == "first token at 87 ms"
+
+
+def test_asking_without_a_trace_gives_the_same_answer(
+    results: list[SearchResult],
+) -> None:
+    """No second code path: the throwaway trace must not change an answer."""
+    generation, _ = service(results, "The wall went up in 1961 [1].")
+
+    assert generation.ask("why?").text == generation.ask("why?", trace=Trace()).text
+
+
+def test_ask_records_the_search_and_the_generation_side_by_side(
+    results: list[SearchResult],
+) -> None:
+    """Search and generate are siblings, not one inside the other.
+
+    That is what makes "share of the wall clock" a question with an answer:
+    every top-level span is a slice of the same total, and what they do not
+    add up to is the unattributed remainder D-101 checks.
+    """
+    generation, _ = service(results, "The wall went up in 1961 [1].")
+    trace = Trace()
+    generation.ask("why?", trace=trace)
+
+    assert [s.name for s in trace.spans if s.depth == 0] == [
+        "prompt",
+        "generate",
+        "cite",
+    ]

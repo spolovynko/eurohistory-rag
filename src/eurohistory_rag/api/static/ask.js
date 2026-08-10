@@ -17,6 +17,8 @@ const rewrittenLine = document.getElementById("rewritten");
 const sourcesHeading = document.getElementById("sources-heading");
 const sourceList = document.getElementById("sources");
 const footer = document.getElementById("footer");
+const traceBox = document.getElementById("trace");
+const traceStages = document.getElementById("trace-stages");
 
 // The controls describe what /ask will be asked for. Read from the server so
 // the page cannot offer a model the server would refuse.
@@ -81,6 +83,7 @@ function clearAnswer() {
   sourceList.replaceChildren();
   sourcesHeading.hidden = true;
   footer.hidden = true;
+  traceBox.hidden = true;
   rewrittenLine.hidden = true;
 }
 
@@ -226,6 +229,12 @@ form.addEventListener("submit", async (event) => {
         answerBox.textContent = text;
         return;
       }
+      if (name === "trace") {
+        // The server's own stopwatch, arriving after `done` because the
+        // generation stages do not exist until generation has finished.
+        renderTrace(data);
+        return;
+      }
       if (name === "error") {
         // The 200 went out with the first byte, so this is the only way a
         // failure can reach the page. It must not look like a short answer.
@@ -298,6 +307,35 @@ function finish(data, started, sourcesAt, firstWordAt, question) {
     data.license,
   ].join("  ·  ");
   footer.hidden = false;
+}
+
+
+// One row per stage: what ran, what it cost, a bar to compare them by, and
+// what the stage saw. Indented children, because four of these rows add up to
+// a fifth and a flat list would not say so. D-101.
+function renderTrace(spans) {
+  traceStages.replaceChildren();
+  if (spans.length === 0) {
+    traceBox.hidden = true;
+    return;
+  }
+  // Bars are scaled against the longest stage, not against the total: the
+  // total is dominated by generation every time, and a bar chart where six of
+  // seven rows are invisible answers no question.
+  const longest = Math.max(...spans.map((s) => s.ms));
+  for (const span of spans) {
+    const row = el("li", span.depth > 0 ? "child" : "");
+    row.append(
+      el("span", "stage", span.name),
+      el("span", "ms", span.ms.toFixed(0) + " ms"),
+      el("span", "bar"),
+      el("span", "note", span.note),
+    );
+    row.querySelector(".bar").style.width =
+      (longest > 0 ? Math.max(1, (span.ms / longest) * 100) : 1) + "%";
+    traceStages.append(row);
+  }
+  traceBox.hidden = false;
 }
 
 

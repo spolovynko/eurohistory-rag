@@ -9,6 +9,7 @@ from collections.abc import Mapping, Sequence
 from dataclasses import replace
 from typing import Any
 
+from eurohistory_rag.core.trace import Trace
 from eurohistory_rag.retrieval.rerank import Reranker
 from eurohistory_rag.retrieval.search import (
     SearchResult,
@@ -189,6 +190,46 @@ def test_both_caps_apply_and_the_tighter_one_wins() -> None:
     results = [result(f"c{i}", "same", page_id=1) for i in range(5)]
     assert len(thin(results, k=5, max_per_document=2, max_per_article=4)) == 2
     assert len(thin(results, k=5, max_per_document=4, max_per_article=1)) == 1
+
+
+def test_thinning_deeply_gives_the_same_head_as_thinning_shallowly() -> None:
+    """The eval thins at depth 20 and /ask thins at 5, and this is what makes
+    the two comparable.
+
+    Every coverage@5 in D-100's sweep is computed on the first five of a
+    twenty-deep list. If those five were not the same five /ask builds at k=5,
+    the whole table would describe a system nobody runs. They are the same by
+    construction -- thinning is greedy and order-preserving, so `k` only ever
+    truncates -- and this pins that rather than leaving it as an argument.
+    """
+    results = [
+        result(f"c{i}", f"doc:{i % 4}", score=1.0 - i / 100, page_id=i % 3)
+        for i in range(30)
+    ]
+    for section, article in ((2, None), (2, 3), (2, 2), (2, 1), (None, None)):
+        deep = thin(results, k=20, max_per_document=section, max_per_article=article)
+        shallow = thin(results, k=5, max_per_document=section, max_per_article=article)
+        assert [r.chunk_id for r in deep[:5]] == [r.chunk_id for r in shallow]
+
+
+def test_the_article_cap_reaches_search_from_its_setting() -> None:
+    """The dead-switch guard, and this cap is the sharpest case for one.
+
+    Phase 8 shipped a run whose reranker flag was never read, and 337 tests
+    passed against a feature doing nothing. A cap wired into `thin` but not into
+    `SearchService` would fail in exactly that way: silently, and only in the
+    direction that flatters the result. D-100.
+    """
+    # Three sections of one article, so only an article cap can thin them.
+    corpus = [
+        ("c0", "30030:1", "Marshall plan aid to Europe."),
+        ("c1", "30030:2", "Marshall plan aid divided per capita."),
+        ("c2", "30030:3", "Marshall plan aid and its critics."),
+    ]
+    uncapped, _ = service_over(corpus, max_per_document=None)
+    capped, _ = service_over(corpus, max_per_document=None, max_per_article=1)
+    assert len(uncapped.search("marshall plan aid", k=3)) == 3
+    assert len(capped.search("marshall plan aid", k=3)) == 1
 
 
 def test_thin_never_reorders() -> None:
@@ -494,3 +535,112 @@ def test_a_period_only_chunk_keeps_its_cosine_score() -> None:
     fused = fuse([], [], period=[result("in_period", "d0", score=0.61)])
     assert fused[0].score == 0.61
     assert fused[0].sparse_score is None
+
+
+# --- the trace (D-101) ------------------------------------------------------
+#
+# The stage set is a fact about the configuration, not a constant. A span is
+# opened only for a stage that actually runs, which is what makes "these two
+# questions ran different stages" worth checking rather than true by
+# construction.
+
+
+def test_the_shipped_configuration_runs_exactly_four_stages() -> None:
+    """Dense-only with a reranker: embed, dense, rerank, thin, under `search`.
+
+    This is the set every one of the 92 single-turn evaluation questions must
+    produce, and D-101's second impossible check is that no two of them differ.
+    """
+    # `hybrid=False` because that is what `.env` ships; the constructor's own
+    # default is True and the two have disagreed since Phase 9.
+    service, _ = service_over(
+        [("c0", "d0", "Berlin blockade and the airlift.")],
+        reranker=FakeReranker(),
+        hybrid=False,
+    )
+    trace = Trace()
+    service.search("Berlin blockade", k=5, trace=trace)
+
+    assert [(s.name, s.depth) for s in trace.spans] == [
+        ("search", 0),
+        ("embed", 1),
+        ("dense", 1),
+        ("rerank", 1),
+        ("thin", 1),
+    ]
+
+
+def test_a_stage_that_is_switched_off_leaves_no_span() -> None:
+    """The trace's version of the dead-switch guard.
+
+    Phase 8 shipped a reranker flag nothing read. A trace that listed `rerank`
+    on a service with no reranker would be the same failure in the instrument:
+    it would report time attributed to something that never ran.
+    """
+    service, _ = service_over(
+        [("c0", "d0", "Berlin blockade and the airlift.")], hybrid=False
+    )
+    trace = Trace()
+    service.search("Berlin blockade", k=5, trace=trace)
+
+    assert "rerank" not in [span.name for span in trace.spans]
+
+
+def test_switching_hybrid_on_adds_the_two_stages_it_costs() -> None:
+    """The keyword arm and the fusion it forces are two separate stages."""
+    service, _ = service_over(
+        [("c0", "d0", "Berlin blockade and the airlift.")], hybrid=True
+    )
+    trace = Trace()
+    service.search("Berlin blockade", k=5, trace=trace)
+
+    names = [span.name for span in trace.spans]
+    assert names == ["search", "embed", "dense", "sparse", "fuse", "thin"]
+
+
+def test_the_children_of_search_never_outlast_it() -> None:
+    """D-101's first impossible check, on a real search rather than a stub."""
+    service, _ = service_over(
+        [("c0", "d0", "Berlin blockade and the airlift.")],
+        reranker=FakeReranker(),
+    )
+    trace = Trace()
+    service.search("Berlin blockade", k=5, trace=trace)
+
+    whole = trace.spans[0]
+    children = [span for span in trace.spans if span.depth == 1]
+    assert sum(span.ms for span in children) <= whole.ms
+
+
+def test_a_search_with_no_trace_asked_for_behaves_identically() -> None:
+    """No second code path: the throwaway trace must not change a result."""
+    corpus = [(f"c{i}", f"d{i}", f"Marshall plan paragraph {i}.") for i in range(6)]
+    service, _ = service_over(corpus, reranker=FakeReranker())
+
+    without = service.search("Marshall plan", k=3)
+    with_trace = service.search("Marshall plan", k=3, trace=Trace())
+    assert [r.chunk_id for r in without] == [r.chunk_id for r in with_trace]
+
+
+def test_an_empty_question_records_nothing() -> None:
+    """It returns before any stage runs, so a trace claiming otherwise lies."""
+    service, _ = service_over([("c0", "d0", "Marshall plan aid.")])
+    trace = Trace()
+    assert service.search("   ", trace=trace) == []
+    assert trace.spans == []
+
+
+def test_each_stage_says_what_it_saw() -> None:
+    """The notes are what make a recorded trace replayable rather than countable."""
+    service, _ = service_over(
+        [(f"c{i}", f"d{i}", f"Marshall plan paragraph {i}.") for i in range(6)],
+        reranker=FakeReranker(),
+        hybrid=False,
+    )
+    trace = Trace()
+    service.search("Marshall plan", k=2, trace=trace)
+
+    notes = {span.name: span.note for span in trace.spans}
+    assert notes["embed"] == f"{FakeEmbedder().dimensions} dims"
+    assert notes["dense"] == "6 of 8 asked for"
+    assert notes["thin"] == "2 of 2 slots"

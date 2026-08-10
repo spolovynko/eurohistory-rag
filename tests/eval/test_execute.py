@@ -12,6 +12,7 @@ import pytest
 from pydantic import SecretStr
 
 from eurohistory_rag.core.config import Settings
+from eurohistory_rag.core.trace import Trace
 from eurohistory_rag.eval.execute import PREDICTION_FILE, RunConfig, execute
 from eurohistory_rag.eval.questions import Question
 from eurohistory_rag.eval.run import Cancelled, run_all
@@ -45,6 +46,7 @@ class StubSearch:
         question: str,
         k: int | None = None,
         min_score: float | None = None,
+        trace: Trace | None = None,
     ) -> list[SearchResult]:
         return self._results[: k or len(self._results)]
 
@@ -120,6 +122,7 @@ CONFIG = RunConfig(
     hybrid=False,
     temporal=False,
     conversation=False,
+    max_per_article=None,
 )
 
 
@@ -160,6 +163,7 @@ def test_the_configuration_reaches_meta_json(tmp_path: Path) -> None:
             hybrid=True,
             temporal=True,
             conversation=False,
+            max_per_article=None,
         ),
         run_id="2026-01-01T0000Z",
         runs_dir=tmp_path,

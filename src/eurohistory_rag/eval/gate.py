@@ -45,6 +45,7 @@ COMPARABILITY_FIELDS = (
     "points",
     "k",
     "max_per_document",
+    "max_per_article",
     "overfetch",
     "reranker",
     "hybrid",

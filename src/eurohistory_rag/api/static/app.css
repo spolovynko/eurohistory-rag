@@ -787,6 +787,37 @@
     font: 400 .73rem/1.6 ui-monospace, Menlo, Consolas, monospace;
   }
 
+  /* The trace. Folded away by default: it answers "which stage was slow",
+     which nobody asks until an answer feels slow. D-101. */
+  #trace { margin: .6rem 0 0; }
+  #trace summary {
+    cursor: pointer; color: var(--faint);
+    font: 400 .73rem/1.6 ui-monospace, Menlo, Consolas, monospace;
+  }
+  #trace summary:hover { color: var(--quiet); }
+  #trace ol { margin: .7rem 0 0; padding: 0; list-style: none; }
+  #trace li {
+    display: grid;
+    grid-template-columns: 8rem 4.5rem 7rem 1fr;
+    gap: .55rem; align-items: center;
+    margin: 0 0 .25rem;
+    font: 400 .73rem/1.7 ui-monospace, Menlo, Consolas, monospace;
+    color: var(--quiet);
+  }
+  /* One indent level per depth, so `embed` reads as part of `search` rather
+     than as its equal. The tree is the point: a flat list of eight numbers
+     would not say that four of them add up to a fifth. */
+  #trace li.child .stage { padding-left: 1.1rem; color: var(--faint); }
+  #trace .stage { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #trace .ms { text-align: right; color: var(--ink); }
+  #trace .bar {
+    height: .55rem; border-radius: 3px;
+    background: color-mix(in oklab, var(--c1) 55%, transparent);
+    min-width: 1px;
+  }
+  #trace li.child .bar { background: color-mix(in oklab, var(--c2) 45%, transparent); }
+  #trace .note { color: var(--faint); }
+
   @media (prefers-reduced-motion: reduce) {
     *, *::before { animation: none !important; transition: none !important; }
   }

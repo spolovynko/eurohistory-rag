@@ -22,6 +22,7 @@ from eurohistory_rag.api.dependencies import (
 )
 from eurohistory_rag.api.main import create_app
 from eurohistory_rag.core.config import get_settings
+from eurohistory_rag.core.trace import Trace
 from eurohistory_rag.generation.service import GenerationService
 from eurohistory_rag.retrieval.rerank import RerankUnavailable
 from eurohistory_rag.retrieval.search import SearchResult
@@ -58,6 +59,7 @@ class StubSearchService:
         question: str,
         k: int | None = None,
         min_score: float | None = None,
+        trace: Trace | None = None,
     ) -> list[SearchResult]:
         self.questions.append((question, k))
         return self._results[: k or len(self._results)]
@@ -71,6 +73,7 @@ class UnavailableSearchService:
         question: str,
         k: int | None = None,
         min_score: float | None = None,
+        trace: Trace | None = None,
     ) -> list[SearchResult]:
         raise VectorStoreUnavailable("connection refused")
 
@@ -486,8 +489,7 @@ def test_the_last_event_carries_the_citations_and_the_configuration() -> None:
     """A marker only becomes a citation once the sentence holding it exists."""
     parsed = stream_ask(asking_client("Aid arrived [2]."))
 
-    name, done = parsed[-1]
-    assert name == "done"
+    done = next(payload for name, payload in parsed if name == "done")
     assert [source["n"] for source in done["sources"]] == [2]
     assert done["configuration"]["k"] == 5
 
@@ -506,7 +508,9 @@ def test_a_model_that_dies_mid_stream_becomes_an_error_event_not_a_500() -> None
     with TestClient(app) as unavailable_client:
         parsed = stream_ask(unavailable_client)
 
-    assert [name for name, _ in parsed] == ["sources", "error"]
+    # The trace still arrives, and that is the point: the case worth tracing
+    # is the one that failed, so it is emitted outside the try. D-101.
+    assert [name for name, _ in parsed] == ["sources", "error", "trace"]
 
 
 def test_a_dead_store_is_still_a_real_503_even_when_a_stream_was_asked_for() -> None:
@@ -670,3 +674,30 @@ def test_a_disabled_reranker_is_ready_rather_than_broken(
     app.dependency_overrides[get_vector_store] = lambda: StubStore(True)
     with TestClient(app) as test_client:
         assert test_client.get("/ready").status_code == 200
+
+
+def test_the_stream_ends_with_a_trace_of_the_stages() -> None:
+    """The live /ask path had no timer in it at all before this. D-101."""
+    parsed = stream_ask(asking_client("Aid arrived [2]."))
+
+    name, spans = parsed[-1]
+    assert name == "trace"
+    # Three, not seven: the search here is `StubSearchService`, which returns a
+    # fixed list and writes no spans. The four retrieval stages are pinned in
+    # `tests/retrieval/test_search.py` against a real in-process store; what
+    # this asserts is that the trace survives the wire.
+    assert [span["name"] for span in spans] == ["prompt", "generate", "cite"]
+    assert all(span["ms"] >= 0.0 for span in spans)
+
+
+def test_a_json_ask_still_answers_and_carries_no_trace() -> None:
+    """The decision, as a test: the trace rides the stream, not the contract.
+
+    A JSON caller is the eval runner or `curl`, and the runner records its
+    spans on the `EvalRecord` instead. Adding a field here would widen the
+    public shape for a reader that does not exist. D-101.
+    """
+    response = asking_client("Aid arrived [2].").post("/ask", json={"question": "aid"})
+
+    assert response.status_code == 200
+    assert "trace" not in response.json()

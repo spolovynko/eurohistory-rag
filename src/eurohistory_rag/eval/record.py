@@ -12,6 +12,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from eurohistory_rag.core.trace import Span
 from eurohistory_rag.generation.rewrite import Turn
 
 # Where runs land. One directory per run, so the records, the readable dump and
@@ -63,6 +64,11 @@ class RunMeta:
     # "conversation was on" does not identify a run, and the rewriter is a
     # second model whose choice is part of what was measured. Phase 24, D-098.
     conversation: str = ""
+    # The per-article cap, or "" when there was none. A string rather than an
+    # int|None for the reason `hybrid` and `temporal` are strings: every run
+    # already on disk reads back as a run without it, which is what makes those
+    # runs valid "before" halves. Phase 26, D-100.
+    max_per_article: str = ""
     note: str = ""
 
 
@@ -168,6 +174,14 @@ class EvalRecord:
     history: list[Turn] = field(default_factory=list)
     standalone: str = ""
 
+    # Every stage this question passed through and what each one cost. A typed
+    # field rather than a corner of `extra`, for the reason `suite` and
+    # `history` are fields: `extra` has no schema, mypy cannot see into it, and
+    # the second thing put in it collides with the first in silence. Empty on
+    # every run made before Phase 28, which the reader takes as "this run was
+    # made before there was a trace" rather than as "no stages ran". D-101.
+    trace: list[Span] = field(default_factory=list)
+
     prompt_tokens: int | None = None
     completion_tokens: int | None = None
     error: str | None = None
@@ -216,5 +230,8 @@ def read_records(directory: Path) -> list[EvalRecord]:
         raw["retrieved"] = [Retrieved(**item) for item in raw["retrieved"]]
         raw["citations"] = [CitationRef(**item) for item in raw["citations"]]
         raw["history"] = [Turn(**item) for item in raw.get("history", [])]
+        # `.get`, not `[]`: 26 runs on disk were written before this field
+        # existed, and rescoring them is the whole reason records are read back.
+        raw["trace"] = [Span(**item) for item in raw.get("trace", [])]
         records.append(EvalRecord(**raw))
     return records

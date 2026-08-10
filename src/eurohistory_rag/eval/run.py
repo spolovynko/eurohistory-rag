@@ -11,6 +11,7 @@ import time
 from collections.abc import Callable, Sequence
 from datetime import UTC, datetime
 
+from eurohistory_rag.core.trace import Trace
 from eurohistory_rag.eval.questions import Question
 from eurohistory_rag.eval.record import CitationRef, EvalRecord, Retrieved, RunMeta
 from eurohistory_rag.generation.client import GenerationUnavailable
@@ -114,11 +115,15 @@ def run_question(
     call should not throw away the twenty-nine questions already answered.
     """
     started = time.perf_counter()
+    # One trace per question, created here and passed into both halves. Not a
+    # global and not one per run: 106 questions through one trace would be 106
+    # questions' spans in a heap with nothing saying where each began. D-101.
+    trace = Trace()
     # What actually gets embedded. With no rewriter, or with no history, this is
     # the question as written -- which is why every one of the 92 single-turn
     # questions takes the identical path it took before this phase existed.
-    standalone = generation.standalone(question.text, history(question))
-    results = search.search(standalone, k=retrieval_k)
+    standalone = generation.standalone(question.text, history(question), trace=trace)
+    results = search.search(standalone, k=retrieval_k, trace=trace)
     search_ms = _elapsed_ms(started)
 
     sent = results[:answer_k]
@@ -127,7 +132,7 @@ def run_question(
         # The resolved question, not the typed one: the model is asked what the
         # reader meant. Identical to `question.text` for every single-turn
         # question, so nothing outside the conversation suite can move.
-        answer = generation.answer_from(standalone, sent)
+        answer = generation.answer_from(standalone, sent, trace=trace)
     except GenerationUnavailable as failure:
         logger.warning("%s: generation failed: %s", question.id, failure)
         generate_ms = _elapsed_ms(generation_started)
@@ -149,6 +154,7 @@ def run_question(
             search_ms=search_ms,
             generate_ms=generate_ms,
             total_ms=_elapsed_ms(started),
+            trace=trace.spans,
             error=str(failure),
         )
     generate_ms = _elapsed_ms(generation_started)
@@ -190,6 +196,10 @@ def run_question(
         ),
         prompt_tokens=answer.prompt_tokens,
         completion_tokens=answer.completion_tokens,
+        # The stages, in the order they ran. `total_ms` is read one line above
+        # and these are read after, so anything the spans do not account for is
+        # real unattributed time rather than a rounding artefact.
+        trace=trace.spans,
     )
 
 
@@ -245,6 +255,7 @@ def build_meta(
     verifier: str = "",
     temporal: str = "",
     conversation: str = "",
+    max_per_article: str = "",
     note: str = "",
 ) -> RunMeta:
     """Capture the conditions this run happened under."""
@@ -264,5 +275,6 @@ def build_meta(
         verifier=verifier,
         temporal=temporal,
         conversation=conversation,
+        max_per_article=max_per_article,
         note=note,
     )

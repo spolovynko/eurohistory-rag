@@ -53,6 +53,7 @@ def get_search_service() -> SearchService:
         reranker=get_reranker(),
         hybrid=settings.hybrid_enabled,
         temporal=settings.temporal_enabled,
+        max_per_article=settings.max_per_article,
     )
 
 
@@ -180,6 +181,10 @@ def configured_search_service(*, hybrid: bool, reranker: str | None) -> SearchSe
         # knobs the eval sweeps switchable; this one is a setting until the
         # D-096 verdict says what its default should be.
         temporal=settings.temporal_enabled,
+        # Not switchable per request either, and for a stronger reason: D-100
+        # measured it twice and did not ship it on, so a dropdown offering it
+        # would hand someone a configuration the verdict argues against.
+        max_per_article=settings.max_per_article,
     )
 
 
