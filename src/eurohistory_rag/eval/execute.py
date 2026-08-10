@@ -18,6 +18,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from eurohistory_rag.core.config import Settings
+from eurohistory_rag.core.spend import Meter, get_ledger
 from eurohistory_rag.eval import report
 from eurohistory_rag.eval import run as run_module
 from eurohistory_rag.eval.questions import Question
@@ -119,13 +120,21 @@ def build_stack(
         temporal=config.temporal,
         max_per_article=config.max_per_article,
     )
+    # Metered like the API's clients are, and by the same daily ceiling. A run
+    # started from the terminal spends exactly what a run started from the page
+    # does, so a limit that only one of them respected would be a limit on the
+    # button rather than on the money. Phase 30, D-104.
+    meter = Meter(ledger=get_ledger(), day_ceiling=settings.max_day_dollars)
     generator = OpenAIGenerator(
-        api_key=settings.openai_api_key.get_secret_value(), model=config.model
+        api_key=settings.openai_api_key.get_secret_value(),
+        model=config.model,
+        meter=meter,
     )
     verifier = (
         OpenAIGenerator(
             api_key=settings.openai_api_key.get_secret_value(),
             model=settings.verify_model,
+            meter=meter,
         )
         if settings.verify_enabled
         else None
@@ -134,6 +143,7 @@ def build_stack(
         OpenAIGenerator(
             api_key=settings.openai_api_key.get_secret_value(),
             model=settings.rewrite_model,
+            meter=meter,
         )
         if config.conversation
         else None

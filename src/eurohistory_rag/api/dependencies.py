@@ -8,6 +8,7 @@ run the API against fakes.
 from functools import lru_cache
 
 from eurohistory_rag.core.config import get_settings
+from eurohistory_rag.core.spend import Meter, get_ledger
 from eurohistory_rag.generation.client import OpenAIGenerator
 from eurohistory_rag.generation.service import GenerationService
 from eurohistory_rag.retrieval.embedding import OpenAIEmbedder
@@ -58,6 +59,21 @@ def get_search_service() -> SearchService:
 
 
 @lru_cache(maxsize=1)
+def get_meter() -> Meter:
+    """The one spend meter for this process.
+
+    Cached like everything else here, but for a different reason: the others
+    are cached because they are expensive, this one because a second meter
+    would be a second opinion about what today has cost. Every OpenAI client
+    this module builds gets it, including the rewriter and the verifier -- a
+    ceiling that only counted the answering call would miss two thirds of what
+    an /ask spends when both are on. Phase 30, D-104.
+    """
+    settings = get_settings()
+    return Meter(ledger=get_ledger(), day_ceiling=settings.max_day_dollars)
+
+
+@lru_cache(maxsize=1)
 def get_generation_service() -> GenerationService:
     """The one GenerationService for this process.
 
@@ -68,6 +84,7 @@ def get_generation_service() -> GenerationService:
     generator = OpenAIGenerator(
         api_key=settings.openai_api_key.get_secret_value(),
         model=settings.generation_model,
+        meter=get_meter(),
     )
     return GenerationService(
         get_search_service(),
@@ -91,6 +108,7 @@ def get_rewriter() -> OpenAIGenerator | None:
     return OpenAIGenerator(
         api_key=settings.openai_api_key.get_secret_value(),
         model=settings.rewrite_model,
+        meter=get_meter(),
     )
 
 
@@ -107,6 +125,7 @@ def get_verifier() -> OpenAIGenerator | None:
     return OpenAIGenerator(
         api_key=settings.openai_api_key.get_secret_value(),
         model=settings.verify_model,
+        meter=get_meter(),
     )
 
 
@@ -160,7 +179,9 @@ def get_generator(model: str) -> OpenAIGenerator:
     """One OpenAI client per answering model."""
     settings = get_settings()
     return OpenAIGenerator(
-        api_key=settings.openai_api_key.get_secret_value(), model=model
+        api_key=settings.openai_api_key.get_secret_value(),
+        model=model,
+        meter=get_meter(),
     )
 
 

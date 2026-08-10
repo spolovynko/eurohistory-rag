@@ -11,7 +11,12 @@ from pathlib import Path
 from typing import Annotated
 
 from fastapi import Depends, FastAPI, HTTPException, Query, Request, status
-from fastapi.responses import HTMLResponse, Response, StreamingResponse
+from fastapi.responses import (
+    HTMLResponse,
+    JSONResponse,
+    Response,
+    StreamingResponse,
+)
 from pydantic import BaseModel, Field
 
 from eurohistory_rag import __version__
@@ -30,6 +35,7 @@ from eurohistory_rag.api.experiment import (
 )
 from eurohistory_rag.api.jobs import EvalJob, JobStatus, get_job
 from eurohistory_rag.core.config import CORPUS_LICENSE, Settings, get_settings
+from eurohistory_rag.core.spend import CeilingExceeded, check_run
 from eurohistory_rag.core.trace import Trace
 from eurohistory_rag.eval.browse import RunListing, RunView, list_runs, load_run
 from eurohistory_rag.eval.cost import estimate
@@ -353,6 +359,14 @@ def _answer_events(
                         configuration=used.model_copy(update={"model": piece.model}),
                     ).model_dump(),
                 )
+    except CeilingExceeded as refused:
+        # The exception handler above cannot help here: the status line went out
+        # with the first byte of the stream, so the only way to say this is in
+        # the stream itself. Its own branch rather than the one below because
+        # the two mean opposite things to a reader -- one is "try again", the
+        # other is "this will keep happening until the limit moves".
+        logger.warning("stream refused by the daily ceiling: %s", refused)
+        yield _sse("error", str(refused))
     except (VectorStoreUnavailable, GenerationUnavailable) as error:
         logger.warning("stream failed after the response began: %s", error)
         yield _sse("error", "Answering is temporarily unavailable.")
@@ -437,6 +451,26 @@ def create_app() -> FastAPI:
     # -- still answers /ready rather than raising. Optimistic by default,
     # because "nobody tried to load it" is not the same fact as "it failed".
     app.state.reranker_ready = True
+
+    @app.exception_handler(CeilingExceeded)
+    def ceiling_exceeded(request: Request, error: Exception) -> JSONResponse:
+        """Answer 402 when this machine has spent its allowance for the day.
+
+        Registered once for the whole app rather than caught per endpoint. The
+        ceiling is enforced inside `OpenAIGenerator`, which sits under /ask, the
+        follow-up rewriter and the groundedness gate alike -- so a per-endpoint
+        `except` would have to be written at every point a model is reached, and
+        the one that got forgotten would be a 500 instead of an explanation.
+
+        402 rather than 503: "temporarily unavailable" is what a dead provider
+        means and a reader would reasonably retry it. This is not that. Nothing
+        is broken, the limit was reached, and retrying will not help until
+        tomorrow or until somebody raises the number. Phase 30, D-104.
+        """
+        logger.warning("refused by the daily ceiling: %s", error)
+        return JSONResponse(
+            status_code=status.HTTP_402_PAYMENT_REQUIRED, content={"detail": str(error)}
+        )
 
     @app.get("/", summary="The one page", response_class=HTMLResponse)
     def page() -> str:
@@ -765,6 +799,23 @@ def create_app() -> FastAPI:
                     f"{len(questions)}. Reload and confirm the new cost."
                 ),
             )
+
+        # Before `write_prediction`, before the thread, before any question.
+        # The quote checked here is the same figure `/eval/plan` put next to the
+        # Start button, so the number that refuses the run and the number the
+        # person read cannot disagree. This is the line the phase's done-when
+        # is about: over the ceiling, nothing is asked and nothing is spent.
+        try:
+            check_run(
+                estimate(
+                    body.model or settings.generation_model, len(questions)
+                ).dollars,
+                settings.max_run_dollars,
+            )
+        except CeilingExceeded as refused:
+            raise HTTPException(
+                status_code=status.HTTP_402_PAYMENT_REQUIRED, detail=str(refused)
+            ) from refused
 
         failing = [check for check in check_preconditions(settings) if not check.ok]
         if failing:

@@ -19,6 +19,7 @@ from eurohistory_rag.api import experiment as experiment_module
 from eurohistory_rag.api import main as main_module
 from eurohistory_rag.api.jobs import EvalJob, get_job
 from eurohistory_rag.api.main import create_app
+from eurohistory_rag.eval.cost import Estimate
 from eurohistory_rag.eval.execute import PREDICTION_FILE, RunConfig
 from eurohistory_rag.eval.questions import (
     QUESTIONS_PATH,
@@ -456,3 +457,63 @@ def test_the_real_runs_directory_is_untouched_by_these_tests() -> None:
     ]
 
     assert leaked == []
+
+
+# --- the cost ceiling -------------------------------------------------------
+
+
+def test_a_run_over_the_per_run_ceiling_is_refused_before_anything_is_written(
+    app_with_job: tuple[TestClient, EvalJob, list[Path]],
+    monkeypatch: pytest.MonkeyPatch,
+    runs_root: Path,
+) -> None:
+    """Phase 30's done-when at the endpoint: no directory, no thread, no spend.
+
+    The three assertions after the status code are the ones that matter. A 402
+    on its own would be satisfied by refusing *after* starting the run, and the
+    thing being claimed is that nothing happened at all -- so the job is still
+    idle, the stub work was never reached, and `write_prediction` never made a
+    directory. D-104.
+    """
+    client, job, seen = app_with_job
+    monkeypatch.setattr(
+        main_module,
+        "estimate",
+        lambda model, questions: Estimate(
+            dollars=9.99, questions=questions, model=model, basis="a very long run"
+        ),
+    )
+
+    response = client.post("/eval/run", json={"prediction": PREDICTION, "questions": 3})
+
+    assert response.status_code == 402
+    assert "per-run ceiling" in response.json()["detail"]
+    assert job.status().state == "idle"
+    assert seen == []
+    assert list(runs_root.iterdir()) == []
+
+
+def test_a_run_under_the_ceiling_still_starts(
+    app_with_job: tuple[TestClient, EvalJob, list[Path]],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Under the limit the ceiling is invisible, which is the ordinary case.
+
+    Worth its own test because the failure mode of a ceiling nobody checks the
+    other side of is one that refuses everything -- and every other test in this
+    file would still pass, since they mock the questions down to three.
+    """
+    client, job, seen = app_with_job
+    monkeypatch.setattr(
+        main_module,
+        "estimate",
+        lambda model, questions: Estimate(
+            dollars=0.01, questions=questions, model=model, basis="a short run"
+        ),
+    )
+
+    response = client.post("/eval/run", json={"prediction": PREDICTION, "questions": 3})
+
+    assert response.status_code == 200
+    wait_for(job, "done")
+    assert len(seen) == 1

@@ -8,10 +8,12 @@ from, and what an empty stream becomes.
 
 from collections.abc import Iterator
 from dataclasses import dataclass
+from pathlib import Path
 
 import pytest
 from openai import APIConnectionError
 
+from eurohistory_rag.core.spend import CeilingExceeded, Ledger, Meter, dollars
 from eurohistory_rag.generation.client import (
     Completion,
     EmptyCompletion,
@@ -69,15 +71,21 @@ class StubCompletions:
     def __init__(self, chunks: list[Chunk]) -> None:
         self._chunks = chunks
         self.kwargs: dict[str, object] = {}
+        # How many times the SDK was actually reached. Added in Phase 30: the
+        # cost ceiling's whole claim is that a refusal happens before this
+        # number moves, and "it raised" does not say that. D-104.
+        self.calls = 0
 
     def create(self, **kwargs: object) -> Iterator[Chunk]:
         self.kwargs = kwargs
+        self.calls += 1
         return iter(self._chunks)
 
 
 class StubClient:
     def __init__(self, chunks: list[Chunk]) -> None:
-        self.chat = type("Chat", (), {"completions": StubCompletions(chunks)})()
+        self.completions = StubCompletions(chunks)
+        self.chat = type("Chat", (), {"completions": self.completions})()
 
 
 def generator(chunks: list[Chunk]) -> OpenAIGenerator:
@@ -200,3 +208,86 @@ def test_an_sdk_error_becomes_the_one_exception_callers_know_about() -> None:
 
 def test_complete_returns_the_whole_answer_and_drops_the_pieces() -> None:
     assert complete(FakeGenerator(answer="Berlin [1]."), []).text == "Berlin [1]."
+
+
+# --- the cost ceiling --------------------------------------------------------
+
+
+def usage_chunk(prompt: int, cached: int, completion: int) -> Chunk:
+    """The final chunk, carrying counts and no text."""
+    return Chunk(
+        choices=[],
+        usage=Usage(
+            prompt_tokens=prompt,
+            completion_tokens=completion,
+            prompt_tokens_details=PromptTokensDetails(cached_tokens=cached),
+        ),
+    )
+
+
+def metered(chunks: list[Chunk], ledger: Ledger, ceiling: float) -> OpenAIGenerator:
+    """A real generator over a stand-in SDK, with a meter attached."""
+    built = OpenAIGenerator(
+        api_key="not-a-key",
+        model="gpt-4.1-mini",
+        meter=Meter(ledger=ledger, day_ceiling=ceiling),
+    )
+    built._client = StubClient(chunks)  # type: ignore[assignment]
+    return built
+
+
+def test_the_real_client_refuses_before_it_reaches_the_sdk(tmp_path: Path) -> None:
+    """A maxed-out day stops `OpenAIGenerator` inside its own `stream`.
+
+    The same claim `tests/core/test_spend.py` makes about the meter, made here
+    against the class that actually spends -- and the stand-in SDK is the proof.
+    If the ceiling were checked anywhere after the request were built, `calls`
+    would read 1. It is the phase's done-when at the one place money leaves.
+    """
+    ledger = Ledger(tmp_path / "spend")
+    ledger.record(5.00, "gpt-4.1-mini")
+    built = metered([text_chunk("never asked")], ledger, 1.00)
+
+    with pytest.raises(CeilingExceeded):
+        list(built.stream([]))
+
+    assert built._client.completions.calls == 0  # type: ignore[attr-defined]
+
+
+def test_a_completed_call_is_added_to_the_day(tmp_path: Path) -> None:
+    """Under the ceiling the call goes through and the ledger moves.
+
+    The pair to the test above: together they say the meter is wired into the
+    real client rather than merely defined next to it.
+    """
+    ledger = Ledger(tmp_path / "spend")
+    built = metered([text_chunk("an answer"), usage_chunk(1000, 0, 100)], ledger, 1.00)
+
+    complete(built, [])
+
+    assert ledger.today().calls == 1
+    assert ledger.today().dollars == pytest.approx(
+        dollars(1000, 0, 100, "gpt-4.1-mini")
+    )
+
+
+def test_a_stream_that_dies_partway_is_still_charged(tmp_path: Path) -> None:
+    """A broken stream is billed by the provider, so it is billed here.
+
+    The recording sits in a `finally` for this reason. A ledger that only
+    counted clean successes would let a loop of failures spend without the
+    total ever moving -- which is exactly the shape this phase exists to notice.
+    """
+    ledger = Ledger(tmp_path / "spend")
+    built = metered([usage_chunk(1000, 0, 100)], ledger, 1.00)
+
+    with pytest.raises(EmptyCompletion):
+        complete(built, [])
+
+    assert ledger.today().calls == 1
+
+
+def test_an_unmetered_generator_still_works(tmp_path: Path) -> None:
+    """No meter means no ceiling and no ledger, which is what the fakes get."""
+    pieces = list(generator([text_chunk("fine")]).stream([]))
+    assert pieces[0] == "fine"

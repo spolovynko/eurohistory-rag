@@ -147,6 +147,25 @@ class Settings(BaseSettings):
     # jobs, and this is the line that lets a cheaper model do the first.
     rewrite_model: str = "gpt-4.1-mini"
 
+    # The most one evaluation may be quoted at before it is refused outright.
+    # Per-machine and not per-request on purpose: a limit the caller chooses is
+    # not a limit. A laptop and a server want different numbers here and
+    # neither is a design decision, which is exactly `tuning.md`'s first tier.
+    #
+    # $0.50 is about three and a half full runs of the current 106 questions at
+    # the measured $0.1364. Chosen so that the ordinary thing -- one run, one
+    # comparison -- never touches it, while a question set that has quietly
+    # tripled does. A ceiling that fires on normal work gets raised until it
+    # means nothing. D-104.
+    max_run_dollars: float = 0.50
+
+    # The most this machine may spend in one UTC day across everything that
+    # calls a model -- evaluations and /ask alike. Four ordinary runs plus room
+    # for a day of reading. This is the one that notices a loop: /ask has no
+    # rate limit, no concurrency limit and no counter, so an accidental loop
+    # there is bounded by nothing else in this system. D-104.
+    max_day_dollars: float = 1.00
+
 
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:

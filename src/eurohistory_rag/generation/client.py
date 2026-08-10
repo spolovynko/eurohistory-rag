@@ -14,6 +14,7 @@ from typing import Protocol, cast
 from openai import OpenAI, OpenAIError
 from openai.types.chat import ChatCompletionMessageParam
 
+from eurohistory_rag.core.spend import Meter
 from eurohistory_rag.generation.messages import Message
 
 logger = logging.getLogger(__name__)
@@ -119,9 +120,16 @@ def complete(generator: Generator, messages: Sequence[Message]) -> Completion:
 class OpenAIGenerator:
     """Generator backed by the OpenAI chat completions API."""
 
-    def __init__(self, api_key: str, model: str) -> None:
+    def __init__(self, api_key: str, model: str, meter: Meter | None = None) -> None:
         self._client = OpenAI(api_key=api_key, max_retries=MAX_RETRIES)
         self._model = model
+        # The ceiling belongs next to the code that spends, which is this class
+        # and nothing above it. A limit enforced in the endpoint would be a
+        # limit on one door into the building: `/ask`, the eval runner, the
+        # verifier and the follow-up rewriter all reach the provider through
+        # here, and three of those four have no endpoint of their own. Optional
+        # because the fakes and the pipeline have nothing to meter. D-104.
+        self._meter = meter
 
     @property
     def model(self) -> str:
@@ -149,6 +157,14 @@ class OpenAIGenerator:
         measures, and it fails silently -- the run still writes, with a blank
         where the money was.
         """
+        # Before the request is built, not after it returns. `CeilingExceeded`
+        # is deliberately not a `GenerationUnavailable`: "the provider is down"
+        # and "this machine has spent its allowance" are different facts and a
+        # reader is owed the difference, so the API layer answers 402 for one
+        # and 503 for the other rather than collapsing both into "try later".
+        if self._meter is not None:
+            self._meter.check()
+
         started = time.perf_counter()
         first_token_ms: float | None = None
         pieces: list[str] = []
@@ -189,6 +205,21 @@ class OpenAIGenerator:
         except OpenAIError as error:
             logger.warning("generation failed: %s", error)
             raise GenerationUnavailable(str(error)) from error
+        finally:
+            # In `finally`, so a call that failed halfway through a stream is
+            # still charged for what it consumed. The provider bills a stream
+            # that broke after two hundred tokens; a ledger that only counts
+            # clean successes would let a loop of failures spend without ever
+            # moving the total, which is the exact shape this phase is meant
+            # to notice.
+            if self._meter is not None:
+                self._meter.record_tokens(
+                    prompt_tokens,
+                    cached_tokens,
+                    completion_tokens,
+                    self._model,
+                    self._model,
+                )
 
         text = "".join(pieces).rstrip()
         if not text:

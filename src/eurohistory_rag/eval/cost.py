@@ -13,31 +13,17 @@ tokens per question times this run's question count times the published price.
 from dataclasses import dataclass
 from pathlib import Path
 
+from eurohistory_rag.core.spend import PRICES, dollars
 from eurohistory_rag.eval.record import RUNS_DIR, EvalRecord, read_records
 
-# Dollars per million tokens, (prompt, cached prompt, completion). A hardcoded
-# price list is a thing that goes stale, and this one will: it is here rather
-# than in `Settings` because it is not a per-machine setting, and it is small
-# enough to correct in one line when OpenAI moves a price. The estimate is a
-# warning before a spend, not an invoice -- being 20% wrong is survivable,
-# having no number is not.
-#
-# The middle column arrived in Phase 29, and the honest note is that it barely
-# changes anything here. A prompt token the provider has already seen costs a
-# quarter of a fresh one, and the system prompt is ~62% of every prompt this
-# system sends -- but it is only ~1,600 tokens, and gpt-4.1-mini needs a shared
-# prefix over ~2,048 before it caches at all. Measured: 1 of 106 answering calls
-# cached anything, 0.9% of the run's prompt tokens, so the figure beside the
-# Start button was overstating the spend by under 1% rather than by a third.
-# The column is here because the price list should describe the price list, and
-# because the day the prompt crosses the threshold this becomes load-bearing
-# with no code change. D-103.
-PRICES: dict[str, tuple[float, float, float]] = {
-    "gpt-4.1-mini": (0.40, 0.10, 1.60),
-    "gpt-4.1-nano": (0.10, 0.025, 0.40),
-    "gpt-4.1": (2.00, 0.50, 8.00),
-    "gpt-4o-mini": (0.15, 0.075, 0.60),
-}
+# `PRICES` and `dollars` used to live here and moved to `core/spend.py` in Phase
+# 30. They are imported back rather than re-typed because this module's job is
+# unchanged -- it is still what quotes a run before anyone agrees to pay for it
+# -- but the ceiling that refuses a run has to apply the same price list, and
+# `generation/` cannot import anything under `eval/` without a cycle: this file
+# imports `eval/record.py`, which imports `generation/rewrite.py`. Re-exported
+# so that every existing caller of `eval.cost.dollars` keeps working. D-104.
+__all__ = ["FALLBACK_TOKENS", "PRICES", "Estimate", "dollars", "estimate"]
 
 # Used when no previous run of this model exists. Taken from the 60-question
 # runs of Phase 16: ~2,620 prompt and ~182 completion tokens per question. The
@@ -57,28 +43,6 @@ class Estimate:
     # Plain English, shown next to the number. An estimate whose basis is
     # invisible is an estimate nobody can sanity-check.
     basis: str
-
-
-def dollars(
-    prompt_tokens: int, cached_tokens: int, completion_tokens: int, model: str
-) -> float:
-    """What a set of token counts actually cost, in dollars.
-
-    The one place the price list is applied, so the estimate before a run and
-    the figure printed after it cannot disagree -- which they would within a
-    phase of each other if the arithmetic were written twice. `cached_tokens` is
-    a subset of `prompt_tokens`, not an addition to it: the rest are billed at
-    the full rate.
-    """
-    full_price, cached_price, completion_price = PRICES.get(
-        model, PRICES["gpt-4.1-mini"]
-    )
-    fresh = max(prompt_tokens - cached_tokens, 0)
-    return (
-        fresh * full_price
-        + cached_tokens * cached_price
-        + completion_tokens * completion_price
-    ) / 1_000_000
 
 
 def _tokens_per_question(

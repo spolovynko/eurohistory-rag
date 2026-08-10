@@ -10,6 +10,12 @@ import typer
 
 from eurohistory_rag.core.config import Settings, get_settings
 from eurohistory_rag.core.logging import configure_logging
+from eurohistory_rag.core.spend import (
+    CeilingExceeded,
+    Meter,
+    check_run,
+    get_ledger,
+)
 from eurohistory_rag.eval import execute as execute_module
 from eurohistory_rag.eval import gate as gate_module
 from eurohistory_rag.eval import judge as judge_module
@@ -19,6 +25,7 @@ from eurohistory_rag.eval import split_probes as split_probes_module
 from eurohistory_rag.eval import sweep as sweep_module
 from eurohistory_rag.eval import synthetic as synthetic_module
 from eurohistory_rag.eval import timeline as timeline_module
+from eurohistory_rag.eval.cost import estimate
 from eurohistory_rag.eval.metrics import summarise
 from eurohistory_rag.eval.questions import (
     QUESTIONS_PATH,
@@ -93,9 +100,17 @@ def _reranker(settings: Settings) -> LocalReranker | None:
 
 
 def _generator(settings: Settings, model: str) -> OpenAIGenerator:
-    """A generation client for `model`, which may not be the answering model."""
+    """A generation client for `model`, which may not be the answering model.
+
+    Metered against the same daily ceiling the API and the eval runner use.
+    This function builds the judge and the answer splitter, which are the two
+    quietest spenders in the project -- `judge` over a 106-question run is more
+    model calls than the run itself. Phase 30, D-104.
+    """
     return OpenAIGenerator(
-        api_key=settings.openai_api_key.get_secret_value(), model=model
+        api_key=settings.openai_api_key.get_secret_value(),
+        model=model,
+        meter=Meter(ledger=get_ledger(), day_ceiling=settings.max_day_dollars),
     )
 
 
@@ -283,6 +298,19 @@ def evaluate(
     # Built from settings and then narrowed, rather than field by field: a
     # field listed here by hand is a field the next one can be forgotten beside.
     config = replace(execute_module.RunConfig.from_settings(settings), k=k)
+
+    # Before the stack is built and therefore before anything is asked. The
+    # page enforces the same ceiling on the same quote; doing it here as well is
+    # not duplication of knowledge, it is the same knowledge applied at the two
+    # doors that exist. Phase 30, D-104.
+    quote = estimate(config.model, len(questions), runs)
+    try:
+        check_run(quote.dollars, settings.max_run_dollars)
+    except CeilingExceeded as refused:
+        typer.echo(str(refused), err=True)
+        raise typer.Exit(code=1) from refused
+    typer.echo(f"about to spend ~${quote.dollars:.4f} -- {quote.basis}")
+
     directory = execute_module.execute(
         questions, settings, config, runs_dir=runs, note=note
     )

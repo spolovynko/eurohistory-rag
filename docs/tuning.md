@@ -294,3 +294,71 @@ build failure first and an edit second, which is the right order.** D-102.
 The knob that does not exist for the same reason: there is no threshold, no
 tolerance and no "probably a refusal" score. A refusal either opens by declining
 or it does not.
+
+---
+
+## The two cost ceilings — Phase 30
+
+Both are **per-machine, in `.env`**, and that is the one placement decision this
+phase made. A ceiling that varies per request would be set by the caller, and a
+limit the caller chooses is not a limit. A module constant would be wrong for
+the opposite reason: a laptop and a server want different numbers and neither is
+a design decision.
+
+| Knob | Default | What it does |
+|---|---|---|
+| `MAX_RUN_DOLLARS` | `0.50` | Refuses one evaluation whose **quote** exceeds it, before the run directory exists. |
+| `MAX_DAY_DOLLARS` | `1.00` | Refuses the **next model call** once today's recorded spend reaches it. |
+
+**Zero or less means no limit**, so a machine that wants none says so in `.env`
+rather than by editing code.
+
+### What the defaults are calibrated against
+
+`$0.50` is about three and a half runs of the current 106 questions at the
+measured `$0.1364`. Checked against the real quote: 106 questions pass at
+`$0.1364`, 300 pass at `$0.3860`, **500 are refused at `$0.6434`**. A ceiling
+that fires during ordinary work gets raised until it means nothing, so the
+ordinary thing has to pass comfortably and a question set that has quietly
+tripled has to fail.
+
+`$1.00` is about seven and a half such runs. Measured by replaying the
+`2026-08-10T1413Z` token counts call by call: **it stops after 779 calls at
+`$1.0010`, an overshoot of exactly one call.**
+
+### The day ceiling can stop a run halfway, and that is deliberate
+
+It is checked before every call, not once before a run. Replayed, run 8 is
+stopped at its 37th question. A run killed that way **writes no
+`records.jsonl`**, exactly like a cancelled one — so it never appears as a run
+and nothing half-measured gets compared against a baseline. Its `prediction.txt`
+stays on disk, which is the same trace a cancelled run leaves.
+
+The alternative — check once, then let a started run finish — was rejected
+because it makes the daily ceiling advisory: one run that begins under the limit
+could end arbitrarily far over it.
+
+### Where the day's total lives, and the one weakness
+
+`data/spend/YYYY-MM-DD.jsonl`, one line per call, appended and never rewritten.
+UTC, so the day a ceiling covers is the day the run directories are named after.
+
+**This is the first thing under `data/` that cannot be rebuilt from Bronze.**
+Silver, Gold and the Qdrant collection are caches; a record of money already
+spent is not. Deleting `data/spend/` starts the day over, and nothing detects
+that. It stays gitignored because what one machine spent is not a fact about
+this project. The honest summary: the ledger stops an accident, not a person
+who wants to spend more.
+
+**Second weakness, written down rather than discovered.** One process. Two
+uvicorn workers get two ledgers over one file; the appends still land, so the
+total stays right, but the read-then-refuse decision is no longer indivisible.
+Same limitation `api/jobs.py` already documents for `EvalJob`.
+
+### What this does not do
+
+It is not authentication. There is still none anywhere in this system, and a cap
+is not a substitute for one — `LOOPBACK` in `api/main.py` is what keeps a run
+from being started by anyone but this machine, and it is an origin check, not an
+identity. A ceiling limits the damage of a loop; it does nothing about who is
+looping.

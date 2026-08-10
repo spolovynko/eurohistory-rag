@@ -22,7 +22,9 @@ from eurohistory_rag.api.dependencies import (
 )
 from eurohistory_rag.api.main import create_app
 from eurohistory_rag.core.config import get_settings
+from eurohistory_rag.core.spend import CeilingExceeded
 from eurohistory_rag.core.trace import Trace
+from eurohistory_rag.generation.client import Completion
 from eurohistory_rag.generation.service import GenerationService
 from eurohistory_rag.retrieval.rerank import RerankUnavailable
 from eurohistory_rag.retrieval.search import SearchResult
@@ -701,3 +703,39 @@ def test_a_json_ask_still_answers_and_carries_no_trace() -> None:
 
     assert response.status_code == 200
     assert "trace" not in response.json()
+
+
+# --- the cost ceiling -------------------------------------------------------
+
+
+class RefusingGenerator:
+    """A generator whose meter has already said no.
+
+    Stands in for a real client on a machine that has spent its allowance. The
+    ceiling itself is tested in `tests/core/test_spend.py` and against the real
+    client in `tests/generation/test_client.py`; what is being checked here is
+    only the translation -- that the refusal reaches a reader as 402 and not as
+    a 500 or a "temporarily unavailable" that invites a retry.
+    """
+
+    @property
+    def model(self) -> str:
+        return "gpt-4.1-mini"
+
+    def stream(self, messages: object) -> Iterator[str | Completion]:
+        raise CeilingExceeded("Today has spent $1.0000, the daily ceiling.")
+        yield ""  # pragma: no cover -- makes this a generator function
+
+
+def test_ask_answers_402_when_the_day_is_spent() -> None:
+    """Not 503: nothing is broken and retrying will not help. D-104."""
+    app = create_app()
+    app.dependency_overrides[get_generation_service] = lambda: GenerationService(
+        StubSearchService([result("30030:1:0")]),  # type: ignore[arg-type]
+        RefusingGenerator(),  # type: ignore[arg-type]
+    )
+    with TestClient(app) as spent:
+        response = spent.post("/ask", json={"question": "how much?"})
+
+    assert response.status_code == 402
+    assert "daily ceiling" in response.json()["detail"]
