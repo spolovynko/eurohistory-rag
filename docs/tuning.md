@@ -240,6 +240,37 @@ nobody can accidentally disable is worth more than a microsecond. D-101.
 
 ---
 
+## Prompt caching has no knob either, and the prompt's length is the knob
+
+There is nothing to switch on. OpenAI caches any shared prompt prefix
+automatically on `gpt-4o` and newer, and `PRICES` in `eval/cost.py` now carries
+the cached rate — $0.10 per million against $0.40 on `gpt-4.1-mini`. What decides
+whether this project ever gets that discount is not a setting at all. It is **how
+long `system_prompt.md` is.**
+
+**Measured in Phase 29, four times over: the shared prefix must exceed ~2,048
+tokens before anything caches.** `system_prompt.md` is ~1,600, so 105 of 106
+answering calls in a full eval cached exactly nothing, and the run's cached share
+was 0.9%. A padded prefix of ~2,100 tokens cached 1,920 on its second call. Grants
+arrive in 128-token blocks, floored inside the shared prefix, which is why a hit
+is 1,920 rather than a round 2,100.
+
+**What this means for anyone editing the prompt.** Adding ~450 tokens to
+`system_prompt.md` would cross the threshold and start the discount, worth
+**$0.0004 per question** — four hundredths of a cent, against a prompt change that
+can move an answer. D-103 says no. But the direction matters the other way too:
+**a future prompt that grows past ~2,048 tokens for its own reasons gets the
+discount for free**, and the `spend:` line on every run summary is where that
+would show up.
+
+**The one rule that is not negotiable:** the static part of the prompt stays
+first. `messages.py` sends the system message, then the sources, then the
+question, and a cache can only ever reuse a *prefix* — so anything variable moved
+above the instructions would take the cacheable run down to zero. It has been in
+the right order since Phase 6 and Phase 29 deliberately changed nothing about it.
+
+---
+
 ## The refusal test is a closed list, and that is the decision
 
 Phase 27 replaced `metrics.REFUSAL` — one string — with `REFUSAL_OPENERS`, three

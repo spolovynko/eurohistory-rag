@@ -54,6 +54,10 @@ class Answer:
     # ignore fields it does not expose.
     prompt_tokens: int | None = None
     completion_tokens: int | None = None
+    # The share of `prompt_tokens` the provider served from cache and charged a
+    # quarter for. Summed across the writing call and the checking call, so it
+    # is comparable with `prompt_tokens` beside it. D-103.
+    cached_tokens: int | None = None
     # Whether the groundedness gate changed anything. False also means "the
     # gate was off", and the two are told apart by meta.json rather than here:
     # the eval needs a firing rate, and an answer does not need to know why it
@@ -263,6 +267,7 @@ class GenerationService:
         text = completion.text
         prompt_tokens = completion.prompt_tokens
         completion_tokens = completion.completion_tokens
+        cached_tokens = completion.cached_tokens
         revised = False
 
         if self._verifier is not None:
@@ -273,6 +278,7 @@ class GenerationService:
             revised = checked.changed
             prompt_tokens = _total(prompt_tokens, checked.prompt_tokens)
             completion_tokens = _total(completion_tokens, checked.completion_tokens)
+            cached_tokens = _total(cached_tokens, checked.cached_tokens)
 
         # Read back out of the *shipped* text, not the draft: the gate may have
         # deleted a sentence, and a citation list naming a source no longer
@@ -295,6 +301,7 @@ class GenerationService:
             citations=citations,
             prompt_tokens=prompt_tokens,
             completion_tokens=completion_tokens,
+            cached_tokens=cached_tokens,
             revised=revised,
             draft=completion.text if revised else "",
             # A gated answer was not streamed, whatever the draft's own clock

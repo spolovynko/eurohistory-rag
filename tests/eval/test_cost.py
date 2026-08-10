@@ -8,11 +8,15 @@ import json
 from dataclasses import asdict
 from pathlib import Path
 
-from eurohistory_rag.eval.cost import FALLBACK_TOKENS, PRICES, estimate
+import pytest
+
+from eurohistory_rag.eval.cost import FALLBACK_TOKENS, PRICES, dollars, estimate
 from eurohistory_rag.eval.record import EvalRecord
 
 
-def record(model: str, prompt: int, completion: int) -> EvalRecord:
+def record(
+    model: str, prompt: int, completion: int, cached: int | None = None
+) -> EvalRecord:
     return EvalRecord(
         question_id="q1",
         question="why?",
@@ -29,6 +33,7 @@ def record(model: str, prompt: int, completion: int) -> EvalRecord:
         total_ms=2100.0,
         prompt_tokens=prompt,
         completion_tokens=completion,
+        cached_tokens=cached,
     )
 
 
@@ -108,5 +113,54 @@ def test_every_selectable_model_has_a_price() -> None:
 
 
 def test_the_fallback_is_the_phase_16_measurement() -> None:
-    """Documented rather than invented: it came off three sixty-question runs."""
-    assert FALLBACK_TOKENS == (2620.0, 182.0)
+    """Documented rather than invented: it came off three sixty-question runs.
+
+    The cached figure is 0 deliberately -- with no run on disk there is no
+    evidence of a cache hit, and assuming one would under-warn before a spend.
+    """
+    assert FALLBACK_TOKENS == (2620.0, 182.0, 0.0)
+
+
+def test_cached_tokens_are_billed_at_the_cached_rate(tmp_path: Path) -> None:
+    """The whole point of the middle column: a cached token costs a quarter.
+
+    2,000 fresh prompt tokens at $0.40 per million, 600 cached at $0.10, and 100
+    completion at $1.60 -- spelled out because the arithmetic is the assertion.
+    """
+    spend = dollars(2600, 600, 100, "gpt-4.1-mini")
+
+    assert spend == pytest.approx((2000 * 0.40 + 600 * 0.10 + 100 * 1.60) / 1_000_000)
+
+
+def test_cached_tokens_are_a_subset_of_the_prompt_not_an_addition() -> None:
+    """A run whose whole prompt was cached must cost less, never more.
+
+    Phase 29's defect was the opposite reading -- every token charged at the full
+    rate -- and the failure mode of over-correcting is billing twice.
+    """
+    all_cached = dollars(2600, 2600, 0, "gpt-4.1-mini")
+    none_cached = dollars(2600, 0, 0, "gpt-4.1-mini")
+
+    assert all_cached == pytest.approx(none_cached / 4)
+
+
+def test_a_measured_cache_share_lowers_the_estimate(tmp_path: Path) -> None:
+    """The number shown before a spend follows the discount the last run got.
+
+    Two runs of the same shape, one that cached most of its prompt and one that
+    cached none, must not quote the same price. D-103.
+    """
+    write_run(
+        tmp_path / "cold", "2026-08-10T1413Z", [record("gpt-4.1-mini", 2600, 160)]
+    )
+    write_run(
+        tmp_path / "warm",
+        "2026-08-10T1413Z",
+        [record("gpt-4.1-mini", 2600, 160, cached=2000)],
+    )
+
+    cold = estimate("gpt-4.1-mini", 106, tmp_path / "cold")
+    warm = estimate("gpt-4.1-mini", 106, tmp_path / "warm")
+
+    assert warm.dollars < cold.dollars
+    assert "77% of it cached" in warm.basis

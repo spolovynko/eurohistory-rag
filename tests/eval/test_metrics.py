@@ -31,6 +31,9 @@ def make_record(
     total_ms: float = 100.0,
     ttft_ms: float | None = None,
     expected_answers: list[str] | None = None,
+    prompt_tokens: int | None = None,
+    cached_tokens: int | None = None,
+    completion_tokens: int | None = None,
 ) -> EvalRecord:
     """An EvalRecord with only the fields a metric reads set meaningfully."""
     docs = doc_ids if doc_ids is not None else ["1:0", "2:0", "3:0"]
@@ -41,6 +44,9 @@ def make_record(
         kind=kind,
         suite=suite,
         expected_doc_ids=expected if expected is not None else ["2:0"],
+        prompt_tokens=prompt_tokens,
+        cached_tokens=cached_tokens,
+        completion_tokens=completion_tokens,
         retrieved=[
             Retrieved(
                 rank=i,

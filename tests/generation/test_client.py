@@ -35,9 +35,17 @@ class Choice:
 
 
 @dataclass
+class PromptTokensDetails:
+    cached_tokens: int
+
+
+@dataclass
 class Usage:
     prompt_tokens: int
     completion_tokens: int
+    # Optional in the SDK and absent on providers that do not cache, which is
+    # why the loop must not assume it is there. D-103.
+    prompt_tokens_details: PromptTokensDetails | None = None
 
 
 @dataclass
@@ -109,12 +117,35 @@ def test_the_token_counts_come_out_of_the_final_usage_chunk() -> None:
     """
     pieces = list(
         generator(
-            [text_chunk("Berlin [1]."), Chunk(choices=[], usage=Usage(2629, 178))]
+            [
+                text_chunk("Berlin [1]."),
+                Chunk(
+                    choices=[],
+                    usage=Usage(2629, 178, PromptTokensDetails(cached_tokens=1664)),
+                ),
+            ]
         ).stream([])
     )
 
     assert isinstance(pieces[-1], Completion)
     assert (pieces[-1].prompt_tokens, pieces[-1].completion_tokens) == (2629, 178)
+    assert pieces[-1].cached_tokens == 1664
+
+
+def test_a_provider_that_reports_no_cache_detail_leaves_cached_tokens_none() -> None:
+    """None means "nobody said", and it must not become a zero.
+
+    A zero would read as "this call paid full price for every token", which is a
+    claim about money the response never made. D-103.
+    """
+    pieces = list(
+        generator(
+            [text_chunk("Berlin [1]."), Chunk(choices=[], usage=Usage(2629, 178))]
+        ).stream([])
+    )
+
+    assert isinstance(pieces[-1], Completion)
+    assert pieces[-1].cached_tokens is None
 
 
 def test_usage_is_asked_for_explicitly() -> None:

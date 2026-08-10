@@ -196,6 +196,7 @@ def run_question(
         ),
         prompt_tokens=answer.prompt_tokens,
         completion_tokens=answer.completion_tokens,
+        cached_tokens=answer.cached_tokens,
         # The stages, in the order they ran. `total_ms` is read one line above
         # and these are read after, so anything the spans do not account for is
         # real unattributed time rather than a rounding artefact.

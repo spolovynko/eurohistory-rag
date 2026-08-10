@@ -184,6 +184,14 @@ class EvalRecord:
 
     prompt_tokens: int | None = None
     completion_tokens: int | None = None
+    # How many of `prompt_tokens` the provider had already seen and billed at
+    # the cached rate. `None` on every run made before Phase 29, which reads as
+    # "nobody looked", not as "nothing was cached" -- the discount was running
+    # unmeasured from the first run on disk, and no rescore can recover the
+    # number because the provider only reports it at call time. Same immutability
+    # trade as `trace` and `suite`: a new optional field, so all 27 runs still
+    # read back. D-103.
+    cached_tokens: int | None = None
     error: str | None = None
     extra: dict[str, Any] = field(default_factory=dict)
 

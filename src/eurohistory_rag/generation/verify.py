@@ -72,6 +72,10 @@ class Verified:
     changed: bool
     prompt_tokens: int | None = None
     completion_tokens: int | None = None
+    # The discounted share of `prompt_tokens`. Carried for the same reason the
+    # other counts are -- the call was paid for either way, and the check sends
+    # its own long static prefix, so it caches too. D-103.
+    cached_tokens: int | None = None
 
 
 def build_verify_messages(
@@ -139,6 +143,7 @@ def _decide(completion: Completion, draft: str) -> Verified:
         changed=False,
         prompt_tokens=completion.prompt_tokens,
         completion_tokens=completion.completion_tokens,
+        cached_tokens=completion.cached_tokens,
     )
 
     block = ANSWER_BLOCK.search(completion.text)
@@ -166,4 +171,5 @@ def _decide(completion: Completion, draft: str) -> Verified:
         changed=changed,
         prompt_tokens=completion.prompt_tokens,
         completion_tokens=completion.completion_tokens,
+        cached_tokens=completion.cached_tokens,
     )

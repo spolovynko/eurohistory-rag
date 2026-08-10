@@ -221,6 +221,11 @@ class Summary:
     mean_generate_ms: float
     prompt_tokens: int | None
     completion_tokens: int | None
+    # The cached share of `prompt_tokens`, in tokens. None on every run made
+    # before Phase 29, where it means the field was never read rather than that
+    # nothing was cached -- the distinction matters because a 0 here would say
+    # the project paid full price, and it did not. D-103.
+    cached_tokens: int | None
     errors: int
 
 
@@ -252,6 +257,7 @@ def summarise(records: Collection[EvalRecord], kind: str = "all") -> Summary:
     completions = [
         r.completion_tokens for r in records if r.completion_tokens is not None
     ]
+    cached = [r.cached_tokens for r in records if r.cached_tokens is not None]
 
     return Summary(
         kind=kind,
@@ -287,6 +293,7 @@ def summarise(records: Collection[EvalRecord], kind: str = "all") -> Summary:
         mean_generate_ms=mean(r.generate_ms for r in records) if records else 0.0,
         prompt_tokens=sum(prompts) if prompts else None,
         completion_tokens=sum(completions) if completions else None,
+        cached_tokens=sum(cached) if cached else None,
         errors=sum(1 for r in records if r.error),
     )
 

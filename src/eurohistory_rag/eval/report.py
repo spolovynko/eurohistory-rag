@@ -7,6 +7,7 @@ found two errors that no metric here would have caught.
 
 from collections.abc import Sequence
 
+from eurohistory_rag.eval.cost import dollars
 from eurohistory_rag.eval.metrics import (
     Summary,
     first_hit_rank,
@@ -29,8 +30,37 @@ def _num(value: float | None) -> str:
     return "n/a" if value is None else f"{value:5.2f}"
 
 
-def render_summary(summaries: Sequence[Summary]) -> str:
-    """The comparison table: one row per question kind, plus the total."""
+def _spend_line(total: Summary, model: str) -> str:
+    """What the run cost, and how much of the prompt was served from cache.
+
+    The cost lives here rather than only in the estimate because Phase 29 found
+    the estimate had been the only cost figure this project printed, and it was
+    charging the full rate for tokens billed at a quarter. A run that reports
+    what it spent is checkable against an invoice; one that reports only what it
+    expected to spend is not. Blank on runs made before the field existed --
+    "unknown" is the honest reading there, and a dollar figure computed with
+    `cached = 0` would be a claim the record does not support. D-103.
+    """
+    if total.cached_tokens is None or not total.prompt_tokens:
+        return "spend: unknown -- this run recorded no cached-token counts"
+    spent = dollars(
+        total.prompt_tokens, total.cached_tokens, total.completion_tokens or 0, model
+    )
+    share = total.cached_tokens / total.prompt_tokens
+    return (
+        f"spend: ${spent:.4f} over {total.questions} questions, "
+        f"${spent / total.questions:.6f} each   "
+        f"cached: {total.cached_tokens:,} prompt tokens, {share:.1%}"
+    )
+
+
+def render_summary(summaries: Sequence[Summary], model: str = "") -> str:
+    """The comparison table: one row per question kind, plus the total.
+
+    `model` is only needed for the spend line, and it defaults to empty so a
+    caller holding summaries but no records -- the sweep, which never generates
+    -- still gets a table.
+    """
     header = (
         f"{'kind':<13}{'n':>3}  {'r@5':>6} {'r@20':>6} {'cov@5':>6} {'MRR':>6} "
         f"{'top':>6} {'docs':>5} {'arts':>5} {'refuse':>7} {'fact':>6} "
@@ -58,6 +88,7 @@ def render_summary(summaries: Sequence[Summary]) -> str:
             f"errors: {total.errors}",
             f"tokens: {total.prompt_tokens or 0:,} prompt, "
             f"{total.completion_tokens or 0:,} completion",
+            _spend_line(total, model),
         ]
     return "\n".join(lines)
 
@@ -73,6 +104,7 @@ def render_by_suite(records: Sequence[EvalRecord]) -> str:
     must reproduce the earlier baseline, and the new thirty are the measurement.
     """
     suites = sorted({record.suite for record in records})
+    model = records[0].generation_model if records else ""
     blocks = []
     for suite in suites:
         subset = [record for record in records if record.suite == suite]
@@ -80,14 +112,14 @@ def render_by_suite(records: Sequence[EvalRecord]) -> str:
             f"--- {suite} ({len(subset)} questions) "
             + "-" * max(0, 60 - len(suite))
             + "\n"
-            + render_summary(summarise_by_kind(subset))
+            + render_summary(summarise_by_kind(subset), model)
         )
     if len(suites) > 1:
         blocks.append(
             f"--- all suites ({len(records)} questions) "
             + "-" * 52
             + "\n"
-            + render_summary(summarise_by_kind(list(records)))
+            + render_summary(summarise_by_kind(list(records)), model)
         )
     return "\n\n".join(blocks)
 

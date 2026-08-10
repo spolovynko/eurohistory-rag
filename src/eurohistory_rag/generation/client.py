@@ -61,6 +61,15 @@ class Completion:
     text: str
     prompt_tokens: int | None = None
     completion_tokens: int | None = None
+    # How many of `prompt_tokens` the provider served from its own cache and
+    # billed at the cached rate -- a quarter of the full price on gpt-4.1-mini.
+    # OpenAI has been doing this automatically since before this project existed
+    # and nothing here read the field, so every cost figure printed up to Phase
+    # 29 charged full price for tokens that were already discounted. Optional
+    # for the same reason the other two are: a provider that does not cache
+    # reports nothing, and a zero there would be a claim rather than a silence.
+    # D-103.
+    cached_tokens: int | None = None
     # Milliseconds from the request leaving to the first word of the answer
     # arriving. The number a reader experiences as "slow"; total time is not,
     # because an answer that starts in one second and finishes in five feels
@@ -129,6 +138,12 @@ class OpenAIGenerator:
         by then some of the answer has already been handed over, which is the
         one thing streaming makes harder and /ask has to render honestly.
 
+        No caching flag is sent and none exists: OpenAI caches any prefix over
+        1,024 tokens automatically on gpt-4o and newer, and `system_prompt.md`
+        is about 1,600 tokens sitting first in the message list. The only thing
+        Phase 29 changed here is that the discount is now *read* -- see D-103,
+        which found it had been running unmeasured for the whole project.
+
         `include_usage` is not optional. Without it a streamed call reports no
         token counts at all, `eval/cost.py` loses the only price this project
         measures, and it fails silently -- the run still writes, with a blank
@@ -139,6 +154,7 @@ class OpenAIGenerator:
         pieces: list[str] = []
         prompt_tokens: int | None = None
         completion_tokens: int | None = None
+        cached_tokens: int | None = None
 
         try:
             chunks = self._client.chat.completions.create(
@@ -153,6 +169,8 @@ class OpenAIGenerator:
                 if chunk.usage is not None:
                     prompt_tokens = chunk.usage.prompt_tokens
                     completion_tokens = chunk.usage.completion_tokens
+                    details = chunk.usage.prompt_tokens_details
+                    cached_tokens = None if details is None else details.cached_tokens
                 if not chunk.choices:
                     continue
                 delta = chunk.choices[0].delta.content or ""
@@ -180,5 +198,6 @@ class OpenAIGenerator:
             text=text,
             prompt_tokens=prompt_tokens,
             completion_tokens=completion_tokens,
+            cached_tokens=cached_tokens,
             first_token_ms=first_token_ms,
         )
