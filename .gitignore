@@ -219,12 +219,12 @@ __marimo__/
 
 # --- Project-specific ---
 
-# Planning and working documents (kept local, not versioned)
+# Planning and working documents (kept local, not versioned).
+# roadmap.md, progress.md and decisions.md left this list after Phase 32: the
+# decision record is the evidence that the numbers in the README were measured
+# rather than claimed, and evidence nobody can read proves nothing.
 /CLAUDE.md
 /docs/plan.md
-/docs/roadmap.md
-/docs/progress.md
-/docs/decisions.md
 
 # Medallion data layers. Only bronze/ is irreplaceable - back it up outside git.
 /data/
