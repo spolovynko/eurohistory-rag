@@ -1,6 +1,7 @@
 """The sweep harness: the fusion maths, the control check, and the ordering."""
 
 from collections.abc import Mapping, Sequence
+from typing import cast
 
 from eurohistory_rag.eval.metrics import summarise
 from eurohistory_rag.eval.questions import Question, Turn
@@ -18,7 +19,7 @@ from eurohistory_rag.eval.sweep import (
     weighted_fuse,
 )
 from eurohistory_rag.retrieval.search import SearchResult
-from eurohistory_rag.retrieval.vectorstore import Hit
+from eurohistory_rag.retrieval.vectorstore import Hit, VectorStore
 from tests.fakes import FakeEmbedder, FakeReranker
 
 
@@ -195,6 +196,22 @@ class NullStore:
         return []
 
 
+def null_store() -> VectorStore:
+    """`NullStore` as the type `collect_pools` asks for.
+
+    `collect_pools` is annotated with the concrete `VectorStore`, and
+    `vectorstore.py` says why there is no Protocol: one implementation, so one
+    class. That was true until the sweep started being tested against a fake,
+    and mypy has rejected these two calls since Phase 32 -- unnoticed, because
+    the phase that added them never ran it.
+
+    The real fix is a two-method Protocol beside `Embedder` and `Reranker`, and
+    it belongs to a phase permitted to edit `retrieval/`. Phase 33 is not one;
+    a cast keeps the suite honest about types without changing a search path.
+    """
+    return cast(VectorStore, NullStore())
+
+
 def test_a_replacement_query_is_embedded_but_never_reranked() -> None:
     """HyDE's contract, and the easiest thing here to get quietly wrong.
 
@@ -212,7 +229,7 @@ def test_a_replacement_query_is_embedded_but_never_reranked() -> None:
     collect_pools(
         [question],
         embedder,
-        NullStore(),
+        null_store(),
         reranker,
         queries={"q": "a made-up encyclopedia passage"},
     )
@@ -231,7 +248,7 @@ def test_without_a_replacement_the_question_itself_is_embedded() -> None:
     )
     embedder = FakeEmbedder()
 
-    collect_pools([question], embedder, NullStore())
+    collect_pools([question], embedder, null_store())
 
     assert embedder.calls == [["the real question"]]
 

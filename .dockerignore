@@ -1,0 +1,39 @@
+# What must never reach the build context. Phase 33.
+#
+# This file is the reason `docker build` takes seconds rather than minutes: the
+# daemon copies the whole directory before reading the first line of the
+# Dockerfile, and `data/` alone is gigabytes of Parquet the image has no use for.
+
+# Secrets. First on purpose. .env holds a live OpenAI key, and a key that enters
+# a build context is in the image whether or not any COPY names it.
+.env
+.envrc
+
+# The medallion layers and the local venv -- the two big ones.
+data/
+.venv/
+logs/
+
+# Everything the image does not run with.
+tests/
+docs/
+corpus/
+scripts/
+.git/
+.github/
+.claude/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+__pycache__/
+*.pyc
+scratch_*.py
+corpus_map.txt
+compose.yaml
+Dockerfile
+.dockerignore
+CLAUDE.md
+
+# eval/ is NOT ignored: eval/questions.toml and eval/runs/ are copied in
+# deliberately, so the run browser works in a container with no key. See the
+# Dockerfile's COPY of eval/ for why that is worth ~39 MB.

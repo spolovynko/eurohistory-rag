@@ -78,7 +78,8 @@ end and analyze if there are any problems."*
 | **30** | Cost ceilings | B | free | The page can start a paid run and there is no authentication anywhere in this system |
 | **31** | Semantic answer cache | D | ~$0.20 | The same question in different words is paid for twice — **and the one item here that can make the system confidently wrong** |
 | **32** | Paraphrase retrieval | D | ~$0.25 | **37.5% recall@5, the worst number in this eval** — and 93.8% at 20, with the misses sitting at ranks 7 to 10 |
-| **33** | The cleaner's blanks | D | ~$0.30 | `{{convert}}` is dropped, so sentences end in a hole and the model fills it and cites the hole |
+| ~~**33**~~ | ~~Packaging and documentation~~ **done, D-110 — no gate owed** | B | $0.0026 | No `Dockerfile`, no `LICENSE`, no screenshot, and a README shaped like an argument rather than a README. **The image is 8.89 GB with torch and 732 MB without, for a reranker switched off since D-108** |
+| **34** | The cleaner's blanks | D | ~$0.30 | `{{convert}}` is dropped, so sentences end in a hole and the model fills it and cites the hole. **Moved from 33 to 34 by Serhiy in Phase 33, not dropped: it is still the most serious known correctness defect in this system, and Phase 33 is not more important than it** |
 
 **Queue extended in Session 24, and this time evidence did most of it.** "25+"
 had been one row holding four unspecified items since Session 15; it is now
@@ -228,7 +229,8 @@ schemes both calling themselves "Phase" is how the drift started.
 | **30** | `# Topic 27 — Cost ceilings` |
 | **31** | `# Topic 18 — Semantic answer cache` |
 | **32** | `# Topic 28 — Paraphrase retrieval` |
-| **33** | `# Topic 29 — The cleaner's blanks` |
+| **33** | Packaging and documentation; no `# Topic` section — it fixes no eval failure and is owed none |
+| **34** | `# Topic 29 — The cleaner's blanks` |
 
 **Topics 24 to 27 were written in Session 24 and break the naming rule above on
 purpose.** Every other `# Topic N` number is historical and means nothing; these

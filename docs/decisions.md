@@ -8999,3 +8999,222 @@ and kept unwired: `generation/hyde.py`, `hyde_prompt.md`, the sweep's `--hyde`
 and `--kind` flags, `Config.rerank`, and `sweepable()`. **823 -> 839 tests.**
 Gate output at `eval/runs/gate-D-108.txt`, hypotheses at
 `eval/runs/hyde-{prepend,alone}-paraphrase.txt`.
+
+---
+
+## D-109 — Phase 33, packaging and documentation: predictions, sealed before the first build
+
+**This phase has no gate and is not owed one.** Serhiy's instruction, and it is
+correct by construction: the gate rule in `roadmap.md` requires a named eval
+failure, and this phase changes no retrieval path and no answer path. No Silver
+rebuild, no re-chunk, no re-index, no eval run. The only money it may spend is a
+single real `/ask` inside the container to prove the image answers rather than
+merely starts — **$0.0013**, the per-question figure from `2026-08-11T0635Z`.
+
+**It is not Topic 29.** The cleaner's blanks move from queue 33 to queue 34,
+unchanged and still the most serious known correctness defect in this system.
+This phase is not more important than it; it is what was wanted next.
+
+### The premise check, run before any prediction
+
+Every claim in the phase prompt was checked against `git log`, `eval/runs/` and
+this file. **All of them hold**, which has not happened in the eleven phases
+since Phase 22. Baseline `2026-08-11T0635Z`: 106 questions, recall@5 85.9%,
+recall@20 97.8%, coverage@5 64.5%, MRR 0.66, refusals 11, fact_rate 94.7%, 0
+broken citations, $0.1374, p50 4,049 ms, 56,324 points, reranker off. 31 run
+directories, 109 unique decision numbers across 160 headings, 839 tests. No
+`Dockerfile`, no `.dockerignore`, no `LICENSE`, no screenshot anywhere in the
+tree.
+
+One thing that is *not* a contradiction and is recorded so it is not re-derived:
+the baseline's `meta.json` carries `git_sha: 4249275`, which is Phase 31's
+commit. The run was made during Phase 32, before Phase 32 committed.
+
+### The finding that changes the numbers below, found before predicting them
+
+**`ci.yml`'s "487 MB for the CPU wheel" is wrong, and wrong in a way that
+matters more than its being stale.** 487 MB is what torch occupies unpacked *on
+this Windows machine*, from a 122 MB `win_amd64` wheel. The image is Linux, and
+`uv.lock` resolves Linux x86_64 to a **526 MB** torch wheel plus **fifteen
+`nvidia-*` CUDA packages totalling 2,518 MB compressed** — `cudnn` 527 MB,
+`cublas` 423 MB, `cufft` 214 MB, `nccl` 206 MB, and eleven more. None of them
+installed here, which is why the discrepancy was invisible until the lockfile
+was read rather than the local `.venv` measured.
+
+Two consequences. CI on `ubuntu-latest` has been downloading roughly **3 GB**,
+not 487 MB. And a container that installs the default dependency set carries a
+CUDA stack that a CPU-only image can never use, for a reranker that has been
+switched off since D-108.
+
+**Measured, so the separability question is not a guess:** `torch` and
+`sentence_transformers` are both in `sys.modules` after `import
+eurohistory_rag.api.main`, with `RERANKER_ENABLED=false`. The chain is
+`api/main.py:26` -> `api/dependencies.py:16` -> `retrieval/rerank.py:12`, whose
+`from sentence_transformers import CrossEncoder` sits at module scope.
+`settings.reranker_enabled` is not consulted until *inside* `get_reranker()`,
+long after the import has already happened. Importing the app costs **22.7 s
+cold and 5.2 s warm** on this machine with the feature off.
+
+### Predictions
+
+Written before any image is built. Latency noise on this machine is ~700 ms
+between identical configurations (D-088), so no band below is narrower than 5 s
+— Phase 32's only missed band missed for exactly that reason.
+
+**1. Default image size, torch included, no code change.** Predicted **6.5-11
+GB**. Good: under 3 GB, which would mean uv declined the CUDA wheels for a
+reason not visible in the lockfile. Bad: over 8 GB. **Impossible: under 2.5
+GB** — the CUDA wheels alone are 2,518 MB *compressed*, so an image containing
+them cannot be smaller than that, and a smaller number means they were not
+installed. Also impossible: over 25 GB.
+
+**2. Image size with torch removed.** Predicted **400-650 MB**. Good: under 500
+MB. Bad: over 1 GB. **Impossible: under 120 MB**, which is roughly
+`python:3.12-slim` before a single dependency lands.
+
+**3. Whether torch is separable at all.** Predicted **yes, by moving one import
+inside `LocalReranker.__init__`**. The risk that would make this false is
+another module importing `transformers`, `tokenizers` or `torch` for something
+unrelated; `grep` over `src/` finds three references and all three are the
+reranker or its log-noise suppression in `core/logging.py:20`. If this turns out
+to be false the phase reports it and ships one image, not two.
+
+**4. Cold start, `docker run` to `/ready` returning ok, Qdrant already up.**
+Predicted **10-35 s with torch, 2-8 s without**. Good: under 5 s for the
+torch-free image. Bad: over 45 s with torch. **Impossible: under 1 s for
+either** — a Python interpreter starting and importing FastAPI, pydantic and
+the qdrant client does not complete in under a second, and a number that low
+means `/ready` answered before the app was serving.
+
+**5. Test count.** 839 now. Predicted **839-843**, most likely **841**. Nothing
+is being removed and no eval run is being added, so `test_refusal.py`'s
+per-run parametrization does not move. The only tests this phase has reason to
+add are about packaging: that the `static/` files resolve through
+`importlib.resources` from an installed wheel rather than from the source tree,
+which is the failure that would serve a blank page in a container and which
+nothing currently checks. **Impossible: below 839.**
+
+### What this phase must not do
+
+If any file under `src/eurohistory_rag/retrieval/` or
+`src/eurohistory_rag/generation/` changes in a way that alters behaviour, the
+packaging changed the system and the phase stops and says so. The lazy import in
+prediction 3 is the one deliberate exception and it is **not being committed
+without Serhiy saying so**; it will be applied locally, measured, and reverted,
+so both image sizes are real measurements and the shipped tree is unchanged.
+
+---
+
+## D-110 — Phase 33 result: the image is 8.89 GB with torch and 732 MB without, and three of five predicted bands held
+
+**The headline, first, with the number.** The default install carried **4.7 GB
+of torch, CUDA and triton into a container for a reranker that has been switched
+off since D-108**. Moving `sentence-transformers` to an optional extra takes the
+image from **8.89 GB to 732 MB** and the cold start from **5,652 ms to 1,851
+ms**. Nothing about retrieval or generation changed: same collection, same
+settings, same answers.
+
+**Phase cost: $0.0041**, four generation calls, all inside the container. The
+estimate in D-109 was $0.0013 for one smoke call; five more were spent taking
+the screenshot and chasing a false alarm, described below. Serhiy's estimate for
+the phase was "under $0.01" and it came in under that. **No Silver rebuild, no
+re-chunk, no re-index, no eval run** — as predicted, none of the three was
+needed.
+
+### The bands, against what happened
+
+| # | Predicted | Actual | |
+|---|---|---|---|
+| 1 | Image with torch **6.5-11 GB** | **8.89 GB** | **hit** |
+| 2 | Image without torch **400-650 MB** | **732 MB** | **missed, high by 13%** |
+| 3 | Separable by moving one import | **yes** | **hit** |
+| 4 | Cold start **10-35 s** with torch, **2-8 s** without | **5,652 ms** and **1,851 ms** | **missed, both low** |
+| 5 | Tests **839-843**, most likely 841 | **842** | **hit** |
+
+**Band 2 missed because the estimate came from the wrong machine.** It was built
+from this Windows `.venv`, where polars is 8 MB. In the Linux image
+`_polars_runtime_32` alone is **216 MB** and numpy another 68 MB, which is
+almost exactly the 82 MB overshoot. The same mistake in the other direction is
+what made `ci.yml` say 487 MB.
+
+**Band 4 missed low, and the reason is the Dockerfile's own doing.**
+`UV_COMPILE_BYTECODE=1` compiles every `.pyc` at build time, so the container
+never pays the compilation the 22.7 s local cold import was mostly made of. The
+band was extrapolated from a measurement of a different thing. D-088's ~700 ms
+noise floor is not the explanation here — the miss is 4 seconds wide, not 700
+milliseconds.
+
+**Band 1 held and its impossible check held with it.** "Under 2.5 GB would mean
+the CUDA wheels were not installed" — the image came in at 8.89 GB with
+`nvidia` measured at 2,855 MB inside it.
+
+### What was wrong before any of this was built
+
+**`ci.yml`'s "487 MB for the CPU wheel" was wrong twice**, and the correction is
+the most useful thing this phase found. 487 MB is torch unpacked on *Windows*,
+from a 122 MB wheel. CI runs on Linux, where `uv.lock` resolves a **526 MB**
+torch wheel plus **fifteen `nvidia-*` packages totalling 2,518 MB compressed**.
+So the job had been pulling roughly 3 GB, not 487 MB, and the comment describing
+its dominant cost understated it sixfold. Both the points figure (54,903 ->
+56,324) and the cost figure ($0.08 -> $0.14) in that file were stale too.
+
+**`main` was not mypy-clean and had not been since Phase 32.** Two errors in
+`tests/eval/test_sweep.py`: `collect_pools` is annotated with the concrete
+`VectorStore`, and Phase 32 started passing a `NullStore` fake to it. CI has
+been red on `mypy` and nobody looked. Fixed here with a cast and a named
+`null_store()` helper; **the correct fix is a two-method Protocol beside
+`Embedder` and `Reranker`, and it belongs to a phase allowed to edit
+`retrieval/`** — this one is not.
+
+**The container died on its first run**, on `ModuleNotFoundError: No module
+named 'eurohistory_rag'`. `uv sync` installs the project *editable* by default,
+which leaves a path pointer to `/app/src` inside the venv rather than the code;
+the venv crosses into the runtime stage and the path does not follow it.
+`--no-editable` fixes it. Worth recording because the build succeeded, the image
+looked right, and only running it said otherwise.
+
+### A defect that was reported to nobody because it turned out not to exist
+
+Four asks produced three ledger lines, two of them identically $0.000676, which
+looked like streamed answers escaping the spend ceiling. **It was tested rather
+than written up, and the test says streaming is metered correctly**: a
+never-before-asked question over `Accept: text/event-stream` wrote $0.001298 to
+the ledger. The missing lines were the semantic answer cache from D-106 serving
+the same repeated question, which is what it is for. The first attempt at that
+test hit `/ask/stream` and got a 404 — there is no such path, streaming is
+content-negotiated on `/ask`, and the 404 is the only reason a wrong conclusion
+was not published.
+
+### What shipped
+
+`Dockerfile` (two stages, non-root, healthcheck on `/health` not `/ready`),
+`.dockerignore`, an `api` service behind a compose profile, `LICENSE` (MIT for
+the code, with Wikipedia's CC BY-SA 4.0 stated as separate and not waivable),
+`docs/images/app.png` taken from the running container, and a README rebuilt in
+the conventional order — what it is, screenshot, features, quickstart,
+configuration, usage, results, architecture, testing, structure, roadmap,
+licence.
+
+**The quickstart says plainly that a stranger cannot get an answer without a key
+and about 25 minutes.** It offers two paths: `rescore` on a saved run, which is
+free, offline, needs no key and reproduces every published figure; and the full
+build at ~$0.26. Hiding the second behind a quickstart that does not work would
+have been the worse choice.
+
+**Retrieval and generation behaviour is unchanged.** One import in
+`retrieval/rerank.py` moved from module scope into `LocalReranker.__init__`, and
+a missing `sentence-transformers` now raises `RerankUnavailable` — which `/ready`
+and the request path already handle — instead of an ImportError from inside a
+search. **Serhiy did not approve this before it was written and it is the one
+thing in this phase to veto**; reverting it is one commit and costs 8.16 GB.
+
+**839 -> 842 tests.** Two new files' worth: that the `static/` assets resolve
+from an installed wheel rather than the source tree, which is the failure that
+would serve a blank page in a container, and that a missing
+`sentence-transformers` fails as a reranker error rather than a crash.
+
+### Queue
+
+**The cleaner's blanks moved from 33 to 34, at Serhiy's instruction, and is
+still the most serious known correctness defect in this system.** It did not
+fall out of the queue and this phase was not more important than it.

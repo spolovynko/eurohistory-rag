@@ -21,5 +21,35 @@ services:
       - qdrant_storage:/qdrant/storage
     restart: unless-stopped
 
+  # The API. Phase 33.
+  #
+  # Not started by default: `docker compose up -d` brings up Qdrant alone, which
+  # is what every pipeline command needs and what phases 5 to 32 assumed. The
+  # API is behind a profile because running it is a choice -- during a rebuild
+  # or an eval you want the host's uvicorn with --reload, not this.
+  #
+  #   docker compose --profile app up -d --build
+  #
+  # It answers nothing until `eurohistory index` has filled the collection from
+  # the host. See "Full build" in README.md; /ready returns 503 until then.
+  api:
+    profiles: ["app"]
+    build: .
+    container_name: eurohistory-api
+    ports:
+      - "8000:8000"
+    environment:
+      # Service name, not localhost: inside a container localhost is the
+      # container. This is the single most common way a working stack looks
+      # broken.
+      QDRANT_URL: http://qdrant:6333
+    env_file:
+      # The key and the User-Agent, which have no defaults and must not be
+      # baked into an image. .env is gitignored; copy .env.example first.
+      - .env
+    depends_on:
+      - qdrant
+    restart: unless-stopped
+
 volumes:
   qdrant_storage:

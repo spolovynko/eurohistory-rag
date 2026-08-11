@@ -1,8 +1,8 @@
 # Everything that can be checked without a database, a key or money.
 #
 # The eval itself is deliberately NOT here. It needs a Qdrant container holding
-# 54,903 points, a `data/` directory that is gitignored, an OpenAI key, and
-# about $0.08 and four minutes per run. `roadmap.md` asked for "the eval runs on
+# 56,324 points, a `data/` directory that is gitignored, an OpenAI key, and
+# about $0.14 and five minutes per run. `roadmap.md` asked for "the eval runs on
 # every commit"; that is not buildable, and D-089 records the correction.
 #
 # What IS here is the half that catches the failure the eval cannot: the scoring
@@ -24,9 +24,13 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v5
         with:
-          # sentence-transformers pulls torch -- 487 MB for the CPU wheel, and
-          # the dominant cost of this job. Keyed on uv.lock, so the download
-          # happens again only when a dependency actually moves.
+          # Keyed on uv.lock, so the download happens again only when a
+          # dependency actually moves. It used to say "sentence-transformers
+          # pulls torch -- 487 MB for the CPU wheel", which was wrong twice:
+          # 487 MB is torch unpacked on Windows, and this runner is Linux,
+          # where uv.lock resolves a 526 MB torch wheel plus 2,518 MB of
+          # nvidia-* CUDA wheels. Phase 33 moved sentence-transformers to an
+          # optional extra, so none of that is installed here any more.
           enable-cache: true
           cache-dependency-glob: uv.lock
 

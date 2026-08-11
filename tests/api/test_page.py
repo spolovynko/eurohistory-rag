@@ -199,3 +199,19 @@ def test_the_page_sends_the_conversation_back_with_every_question() -> None:
 def test_the_page_shows_what_was_actually_searched_for() -> None:
     """A rewrite nobody can see is Phase 8's dead switch with better manners."""
     assert '"understood as: " + data.standalone' in SCRIPTS
+
+
+def test_every_static_file_is_package_data_not_a_source_tree_path() -> None:
+    """The page must survive being installed as a wheel.
+
+    `STATIC` is built from `importlib.resources`, which reads whichever copy of
+    the package is on the path -- the source tree here, a wheel inside
+    /app/.venv in the container. Nothing checked that the files were actually
+    *packaged*, and a build that dropped them would import cleanly and then
+    serve an empty page to anyone who opened the container. Phase 33.
+    """
+    expected = {"index.html", "app.css", "main.js", "ask.js", "controls.js"}
+
+    assert expected <= set(STATIC)
+    assert all(body.strip() for body, _ in STATIC.values())
+    assert PAGE.lstrip().startswith("<!")

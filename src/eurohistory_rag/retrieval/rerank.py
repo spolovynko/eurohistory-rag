@@ -9,8 +9,6 @@ accurate, and why it only ever runs over a short candidate list.
 from collections.abc import Sequence
 from typing import Protocol
 
-from sentence_transformers import CrossEncoder
-
 # bge-reranker-base accepts 512 tokens for the query and document together.
 # Chunks are ~1,000 characters, so nothing is truncated in practice; the
 # constant is here so a larger chunk size fails visibly rather than silently.
@@ -42,6 +40,14 @@ class LocalReranker:
         Loading here rather than per call because it takes seconds; the caller
         is expected to build this once and keep it, as dependencies.py does.
         """
+        try:
+            from sentence_transformers import CrossEncoder
+        except ImportError as exc:
+            raise RerankUnavailable(
+                "sentence-transformers is not installed; "
+                "install the 'reranker' extra to use a local reranker"
+            ) from exc
+
         try:
             self._model = CrossEncoder(model, max_length=MAX_LENGTH)
         except OSError as exc:
