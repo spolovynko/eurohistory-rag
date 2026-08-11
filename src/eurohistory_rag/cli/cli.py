@@ -38,6 +38,7 @@ from eurohistory_rag.eval.record import (
     RunMeta,
     read_records,
 )
+from eurohistory_rag.generation import hyde as hyde_module
 from eurohistory_rag.generation.client import OpenAIGenerator
 from eurohistory_rag.pipeline.bronze import curate as curate_module
 from eurohistory_rag.pipeline.bronze import ingest as ingest_module
@@ -444,8 +445,17 @@ def sweep(
         typer.Option(help="A run directory the control row must reproduce."),
     ] = None,
     configs: Annotated[
-        str, typer.Option(help="Which set of arms to sweep: thinning or hybrid.")
+        str,
+        typer.Option(help="Which set of arms to sweep: thinning, hybrid or rerank."),
     ] = "thinning",
+    kind: Annotated[
+        str | None,
+        typer.Option(help="Measure one kind only, e.g. paraphrase."),
+    ] = None,
+    hyde: Annotated[
+        str | None,
+        typer.Option(help="Search with a hypothetical passage: prepend or alone."),
+    ] = None,
 ) -> None:
     """Measure many retrieval settings at once, without generating anything.
 
@@ -455,23 +465,73 @@ def sweep(
 
     Pass `--baseline eval/runs/<id>` and the control row is checked against
     that run before the table is printed. Without it the table is unverified.
+
+    `--kind` narrows both the sweep and the control to one question kind. It
+    exists because the overall figure is 92 questions and paraphrase is 17 of
+    them: an arm that moves paraphrase by ten points moves the total by two,
+    which reads as noise. The control is narrowed with it, so a filtered table
+    is still checked against the same run rather than against nothing.
     """
     arms = {
         "thinning": sweep_module.THINNING_CONFIGS,
         "hybrid": sweep_module.HYBRID_CONFIGS,
+        "rerank": sweep_module.RERANK_CONFIGS,
     }
     if configs not in arms:
         raise typer.BadParameter(f"unknown config set {configs!r}")
 
     settings = get_settings()
-    questions = [q for q in load_questions(questions_path) if q.expected]
+    questions = sweep_module.sweepable(load_questions(questions_path), kind)
+    if not questions:
+        raise typer.BadParameter(f"no scored questions of kind {kind!r}")
+    queries: dict[str, str] | None = None
+    if hyde is not None:
+        if hyde not in ("prepend", "alone"):
+            raise typer.BadParameter(f"unknown hyde mode {hyde!r}")
+        generator = _generator(settings, settings.generation_model)
+        hypotheses = {
+            q.id: hyde_module.hypothesise(
+                generator, q.text, keep_question=hyde == "prepend"
+            )
+            for q in questions
+        }
+        queries = {qid: h.text for qid, h in hypotheses.items()}
+        # Written out unconditionally. A retrieval number from a query nobody
+        # typed is unreadable without the query, and D-083 puts reading it on
+        # this side rather than on Serhiy's.
+        record = RUNS_DIR / f"hyde-{hyde}-{kind or 'all'}.txt"
+        record.parent.mkdir(parents=True, exist_ok=True)
+        record.write_text(
+            "\n\n".join(
+                f"### {qid}  (used={h.used})\n{q.text}\n---\n{h.passage}"
+                for (qid, h), q in zip(hypotheses.items(), questions, strict=True)
+            ),
+            encoding="utf-8",
+        )
+        typer.echo(
+            f"hyde: {hyde}, {sum(h.used for h in hypotheses.values())}"
+            f"/{len(hypotheses)} used -> {record}\n"
+        )
+
     pools = sweep_module.collect_pools(
-        questions, _embedder(settings), _store(settings), _reranker(settings)
+        questions,
+        _embedder(settings),
+        _store(settings),
+        _reranker(settings),
+        queries=queries,
     )
     rows = sweep_module.sweep(arms[configs], questions, pools)
 
     if baseline is not None:
-        wanted = summarise([r for r in read_records(baseline) if r.expected_doc_ids])
+        wanted = summarise(
+            [
+                r
+                for r in read_records(baseline)
+                if r.expected_doc_ids
+                and not r.history
+                and (kind is None or r.kind == kind)
+            ]
+        )
         if sweep_module.control_matches(rows[0][1], wanted):
             typer.echo(f"control reproduces {baseline.name}\n")
         else:

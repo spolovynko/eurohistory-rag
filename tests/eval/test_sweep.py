@@ -1,19 +1,25 @@
 """The sweep harness: the fusion maths, the control check, and the ordering."""
 
+from collections.abc import Mapping, Sequence
+
 from eurohistory_rag.eval.metrics import summarise
-from eurohistory_rag.eval.questions import Question
+from eurohistory_rag.eval.questions import Question, Turn
 from eurohistory_rag.eval.sweep import (
     Config,
     Pool,
     as_record,
+    collect_pools,
     control_matches,
     rank_for,
     render,
     run_config,
+    sweepable,
     union,
     weighted_fuse,
 )
 from eurohistory_rag.retrieval.search import SearchResult
+from eurohistory_rag.retrieval.vectorstore import Hit
+from tests.fakes import FakeEmbedder, FakeReranker
 
 
 def result(
@@ -146,3 +152,109 @@ def test_render_puts_the_control_first() -> None:
         for config in (Config("dense only (control)", "dense"), Config("fuse", "fuse"))
     ]
     assert "dense only (control)" in render(rows).splitlines()[2]
+
+
+def test_rerank_off_keeps_vector_order_even_when_scores_exist() -> None:
+    """Phase 32's arm. The scores are present and are deliberately ignored.
+
+    Distinct from `test_rank_for_keeps_vector_order_without_a_reranker`, which
+    passes because there is nothing to sort by. This one proves the *setting*
+    is doing the work: same pool, same scores, the only difference is the flag.
+    """
+    pool = Pool(
+        dense=DENSE,
+        sparse=[],
+        rerank_scores={"1:0:0": 0.1, "2:0:0": 0.9, "3:0:0": 0.5},
+    )
+
+    assert [r.chunk_id for r in rank_for(Config("on", "dense"), pool)] == [
+        "2:0:0",
+        "3:0:0",
+        "1:0:0",
+    ]
+    assert [
+        r.chunk_id for r in rank_for(Config("off", "dense", rerank=False), pool)
+    ] == [r.chunk_id for r in DENSE]
+
+
+def test_rerank_off_still_attaches_the_scores_it_did_not_use() -> None:
+    """So a table read afterwards can ask what the reranker would have done."""
+    pool = Pool(dense=DENSE, sparse=[], rerank_scores={"2:0:0": 0.9})
+    ranked = rank_for(Config("off", "dense", rerank=False), pool)
+
+    assert {r.chunk_id: r.rerank_score for r in ranked}["2:0:0"] == 0.9
+
+
+class NullStore:
+    """A store that returns nothing and records nothing but the call."""
+
+    def search(self, vector: Sequence[float], limit: int) -> list[Hit]:
+        return []
+
+    def search_sparse(self, sparse: Mapping[int, float], limit: int) -> list[Hit]:
+        return []
+
+
+def test_a_replacement_query_is_embedded_but_never_reranked() -> None:
+    """HyDE's contract, and the easiest thing here to get quietly wrong.
+
+    The made-up passage is what the *vector search* runs on. The cross-encoder
+    must still see the reader's question, because that is what the real system
+    shows it -- a sweep that reranked against the hypothesis would be measuring
+    a system nobody runs.
+    """
+    question = Question(
+        id="q", kind="paraphrase", text="the real question", expected=("1:0",)
+    )
+    embedder = FakeEmbedder()
+    reranker = FakeReranker()
+
+    collect_pools(
+        [question],
+        embedder,
+        NullStore(),
+        reranker,
+        queries={"q": "a made-up encyclopedia passage"},
+    )
+
+    assert embedder.calls == [["a made-up encyclopedia passage"]]
+    # Nothing was found, so the reranker had nothing to score and was never
+    # called -- which is exactly why the embedder's call is the assertion that
+    # matters. The store returning nothing keeps this test off the network.
+    assert reranker.calls == []
+
+
+def test_without_a_replacement_the_question_itself_is_embedded() -> None:
+    """The default path, pinned so the HyDE parameter cannot change it."""
+    question = Question(
+        id="q", kind="paraphrase", text="the real question", expected=("1:0",)
+    )
+    embedder = FakeEmbedder()
+
+    collect_pools([question], embedder, NullStore())
+
+    assert embedder.calls == [["the real question"]]
+
+
+def test_sweepable_drops_questions_the_harness_cannot_reproduce() -> None:
+    """A conversation question is searched here on text no run ever embedded."""
+    plain = Question(id="a", kind="paraphrase", text="q", expected=("1:0",))
+    unanswerable = Question(id="b", kind="unanswerable", text="q")
+    follow_up = Question(
+        id="c",
+        kind="paraphrase",
+        text="and after that?",
+        expected=("1:0",),
+        suite="conversation",
+        history=(Turn(user="earlier", assistant="answer"),),
+    )
+
+    assert [q.id for q in sweepable([plain, unanswerable, follow_up])] == ["a"]
+
+
+def test_sweepable_narrows_to_one_kind() -> None:
+    """Paraphrase is 16 of 92; the total cannot see it move."""
+    para = Question(id="a", kind="paraphrase", text="q", expected=("1:0",))
+    easy = Question(id="b", kind="easy", text="q", expected=("1:0",))
+
+    assert [q.id for q in sweepable([para, easy], "paraphrase")] == ["a"]

@@ -1,0 +1,79 @@
+### army-never-beaten  (used=True)
+Why did so many Germans come to believe their army had never actually been beaten in the field?
+---
+Many Germans came to believe their army had never been decisively defeated in the field due to the myth of the "clean Wehrmacht" and postwar narratives promoted by former military leaders and nationalist groups. After 1945, German generals like Heinz Guderian and Erich von Manstein portrayed the Wehrmacht as a professional, apolitical force that fought valiantly and was only undone by Hitler’s strategic errors and overwhelming Allied material superiority. This narrative ignored defeats such as Stalingrad in 1943 and the Battle of Kursk in 1943, instead emphasizing tactical withdrawals and fighting retreats as evidence of an undefeated army in combat.
+
+### money-became-worthless  (used=True)
+What made German savings worthless in the early 1920s, so that a loaf of bread cost billions?
+---
+The hyperinflation of 1923 in Germany rendered savings worthless as the government printed vast amounts of currency to pay reparations imposed by the Treaty of Versailles and to finance passive resistance against the French occupation of the Ruhr. This excessive money printing caused prices to skyrocket, with the cost of basic goods like bread reaching billions of marks. The value of the German mark plummeted, wiping out personal savings and destabilizing the economy until the introduction of the Rentenmark in late 1923 restored some stability.
+
+### democracy-to-one-party  (used=True)
+How did the Nazis take apart a working democracy in a matter of months?
+---
+The Nazis dismantled the Weimar Republic’s democracy rapidly after Adolf Hitler became Chancellor in January 1933. Following the Reichstag fire in February, the Reichstag Fire Decree suspended civil liberties and allowed detention without trial. The Enabling Act passed in March 1933 gave Hitler’s cabinet legislative powers, bypassing parliament. Political parties were banned or dissolved, trade unions were replaced by the German Labour Front, and state governments were brought under Nazi control. By mid-1933, all opposition was suppressed, and Germany had become a one-party totalitarian state.
+
+### stopped-short-of-moscow  (used=True)
+What stopped the German advance short of the Soviet capital in the winter of 1941?
+---
+The German advance on Moscow in the winter of 1941 was halted by a combination of factors including the harsh Russian winter, logistical difficulties, and stiff Soviet resistance. Operation Typhoon, launched in October 1941, aimed to capture Moscow but German troops were ill-prepared for subzero temperatures and deep snow. Supply lines became overstretched, and Soviet forces, reinforced by fresh reserves and Siberian divisions, mounted counterattacks. The Battle of Moscow from October 1941 to January 1942 ended with the Red Army pushing the Germans back, marking the first major defeat of the Wehrmacht in World War II.
+
+### france-fell-fast  (used=True)
+Why did the French army collapse in weeks in 1940 when it had held out for years in the previous war?
+---
+The French army collapsed rapidly in 1940 due to a combination of outdated tactics, poor leadership, and the effectiveness of the German Blitzkrieg. Unlike in World War I, when trench warfare favored defensive positions, the German forces used fast-moving tanks, aircraft, and motorized infantry to bypass the heavily fortified Maginot Line by invading through the Ardennes forest, which the French considered impassable. The French command was slow to react and failed to coordinate a coherent defense, leading to the encirclement of large French forces. Additionally, low morale and inadequate communication contributed to the swift defeat within six weeks.
+
+### killing-became-policy  (used=True)
+At what point did murdering Europe's Jews become coordinated state policy rather than scattered local violence?
+---
+The transition to coordinated state policy for the murder of Europe's Jews occurred in 1941 following the launch of Operation Barbarossa, the German invasion of the Soviet Union. Prior to this, killings were often carried out by local militias, Einsatzgruppen, and SS units in a more decentralized manner. The Wannsee Conference in January 1942 formalized the "Final Solution," directing all Nazi agencies to systematically deport and exterminate Jews across occupied Europe. This marked the shift from sporadic violence to an organized, bureaucratic genocide implemented by the Nazi state apparatus.
+
+### could-germany-afford-it  (used=True)
+What was Germany made to pay after 1918, and could the country actually afford it?
+---
+After 1918, Germany was required to pay reparations under the Treaty of Versailles, signed in 1919. The reparations were initially set at 132 billion gold marks, intended to compensate the Allied powers for war damages. Germany struggled to meet these payments due to the severe economic disruption caused by the war, loss of industrial territory, and the burden of reparations itself. The payments contributed to hyperinflation in the early 1920s, and Germany was unable to afford the full amount, leading to renegotiations such as the Dawes Plan in 1924 and the Young Plan in 1929, which reduced and restructured the payments.
+
+### bolsheviks-held-on  (used=True)
+How did the Bolsheviks hold on to power when so much of the country was in arms against them?
+---
+The Bolsheviks maintained power during the Russian Civil War (1918–1921) through a combination of centralized control, effective use of the Red Army, and political repression. Under Lenin and Trotsky, the Red Army was organized and disciplined, defeating fragmented White forces and foreign interventions. The Bolsheviks controlled key urban centers, railways, and communication lines, enabling rapid troop movements. They also implemented the Cheka secret police to suppress opposition and dissent. War communism policies ensured resources for the military, while propaganda promoted Bolshevik legitimacy despite widespread peasant uprisings and regional rebellions.
+
+### why-life-got-better-fast  (used=True)
+Why could ordinary families in western Europe suddenly afford cars, holidays and washing machines in the 1950s and 1960s?
+---
+In the 1950s and 1960s, Western European families experienced rising living standards due to rapid economic growth known as the post-war economic boom or "Trente Glorieuses" in France. Reconstruction after World War II, aided by the Marshall Plan, modernised industries and infrastructure. Increased productivity, higher wages, and expanding consumer credit allowed more households to purchase durable goods like cars and washing machines. The growth of mass tourism and improved transport networks made holidays more accessible. Social welfare policies and rising employment rates also contributed to greater disposable income and consumer confidence during this period.
+
+### why-the-east-refused-the-money  (used=True)
+Why did Stalin stop the countries under his control from taking American money for rebuilding?
+---
+After World War II, Joseph Stalin prevented Eastern European countries under Soviet influence from accepting American aid through the Marshall Plan, launched in 1948. Stalin viewed the plan as a threat to Soviet control and feared that accepting Western funds would increase American political and economic influence in the region. Instead, he established the Council for Mutual Economic Assistance (COMECON) in 1949 to coordinate economic development within the Eastern Bloc and ensure that rebuilding efforts aligned with Soviet interests and ideology, maintaining strict control over satellite states.
+
+### travel-without-showing-papers  (used=True)
+How did it become possible to drive across half a dozen European countries without stopping to show a document?
+---
+The ability to drive across multiple European countries without stopping to show documents was made possible by the Schengen Agreement, signed in 1985 and implemented in 1995. This treaty abolished internal border controls among its member states, allowing for passport-free travel across much of Europe. Initially signed by five countries, including Germany, France, and the Benelux states, the Schengen Area expanded to include most EU countries and some non-EU members. The agreement facilitated the free movement of people and goods, enhancing economic integration and tourism within Europe.
+
+### empires-let-go  (used=True)
+Why did the European powers give up their overseas possessions in the two decades after 1945?
+---
+After 1945, European powers relinquished their overseas colonies due to a combination of weakened postwar economies, rising nationalist movements, and changing international attitudes. World War II had devastated European infrastructure and finances, making colonial administration costly and unsustainable. Anti-colonial leaders in India, Algeria, Vietnam, and other territories mobilized mass resistance, demanding independence. The United States and the Soviet Union, emerging superpowers, opposed traditional colonialism, promoting self-determination through the United Nations. Britain granted independence to India in 1947, France lost Indochina after 1954, and by the 1960s most African colonies had achieved sovereignty, marking the end of European imperialism.
+
+### why-so-many-came-in-2015  (used=True)
+Why did so many people try to reach Europe by boat and on foot in a single year, and where did they set out from?
+---
+In 2015, a record number of migrants and refugees attempted to reach Europe by boat and on foot due to conflicts such as the Syrian civil war, instability in Afghanistan, and economic hardship in parts of Africa. Many fled violence, persecution, and poverty, seeking asylum and better opportunities. The main departure points included Turkey and Libya for sea crossings to Greece and Italy, respectively, while others traveled overland through the Balkans and Eastern Europe. The influx overwhelmed European border controls and sparked political debates over migration policy and humanitarian response.
+
+### care-from-cradle-to-grave  (used=True)
+How did Britain come to promise everyone medical treatment and support from birth to death?
+---
+Britain established the National Health Service (NHS) in 1948 following the Beveridge Report of 1942, which identified "want" as one of five social evils to be tackled after World War II. The Labour government under Clement Attlee implemented the NHS to provide comprehensive medical treatment and social support free at the point of use, funded through taxation. This system aimed to ensure healthcare access from birth to death for all citizens, replacing a patchwork of private, charitable, and municipal services. The NHS became a cornerstone of the postwar welfare state, reflecting a commitment to social security and universal care.
+
+### when-the-good-years-ended  (used=True)
+Why did the long run of rising prosperity in western Europe come apart in the 1970s?
+---
+The long postwar economic boom in Western Europe ended in the 1970s due to a combination of factors including the 1973 oil crisis, which caused energy prices to soar and disrupted industrial production. Stagflation emerged, characterized by simultaneous inflation and unemployment, challenging Keynesian economic policies. Additionally, increased global competition from Japan and the United States weakened traditional industries. Structural changes in the economy, such as deindustrialization and shifts toward service sectors, also contributed. Political instability and labor unrest further undermined growth, marking the end of the "Golden Age" of prosperity.
+
+### country-came-apart  (used=True)
+Why did a country that had held together for forty years break into pieces and then into war?
+---
+Yugoslavia, a multi-ethnic federation formed after World War I and reconstituted after World War II under Josip Broz Tito, began to unravel in the late 1980s and early 1990s due to rising nationalist tensions, economic decline, and weakening central authority after Tito’s death in 1980. The fall of communism in Eastern Europe and the collapse of the Soviet Union further destabilized the region. Slovenia and Croatia declared independence in 1991, followed by Bosnia and Herzegovina, triggering violent conflicts as ethnic Serbs opposed secession, leading to the Yugoslav Wars marked by ethnic cleansing and international intervention until the late 1990s.

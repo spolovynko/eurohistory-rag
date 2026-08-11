@@ -27,7 +27,7 @@ than eyeballed afterwards.
 """
 
 import logging
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, replace
 
 from eurohistory_rag.eval.metrics import Summary, summarise
@@ -80,6 +80,13 @@ class Config:
 
     name: str
     mode: str
+    # Whether the cross-encoder gets to reorder the head. False leaves the
+    # candidates in the order the vector search produced them, which is Phase
+    # 5's system. It is a setting rather than a fact because D-069 kept the
+    # reranker against its own revert condition, trading three paraphrase
+    # failures for three comparison wins, and no sweep has ever re-measured
+    # that trade on the 92-question set it now has to hold on.
+    rerank: bool = True
     sparse_weight: float = 1.0
     sparse_pool: int = 80
     rrf_k: int = 60
@@ -111,6 +118,39 @@ THINNING_CONFIGS = (
     Config("article cap 2", "dense", max_per_article=2),
     Config("article cap 1", "dense", max_per_article=1),
 )
+
+
+# Phase 32's question: is the reranker helping or hurting the paraphrase
+# questions it was installed to rescue. Read with `--kind paraphrase`, which is
+# the only population where the answer is in doubt -- easy sits at 97.9% and
+# cannot move far in either direction.
+RERANK_CONFIGS = (
+    Config("reranked (control)", "dense"),
+    Config("vector order only", "dense", rerank=False),
+    Config("vector order, no cap", "dense", rerank=False, max_per_document=None),
+)
+
+
+def sweepable(questions: Sequence[Question], kind: str | None = None) -> list[Question]:
+    """The questions this harness can honestly measure, optionally one kind.
+
+    Two exclusions, and both are about the control row rather than about taste.
+    A question with no answer key has nothing to score. A question carrying
+    history is searched here on its own text and by a real run on whatever the
+    rewriter turned that into, so the harness cannot reproduce it and the
+    control would fail for a reason that is not the arm being measured.
+
+    `kind` narrows both this list and the baseline it is checked against.
+    Paraphrase is 16 of 92, so an arm moving it ten points moves the total by
+    two, which reads as noise.
+    """
+    return [
+        question
+        for question in questions
+        if question.expected
+        and not question.history
+        and (kind is None or question.kind == kind)
+    ]
 
 
 @dataclass(frozen=True, slots=True)
@@ -195,13 +235,16 @@ def rank_for(config: Config, pool: Pool) -> list[SearchResult]:
     way would be measuring a system nobody runs.
     """
     ordered, window = candidates(config, pool)
-    head = sorted(
-        (
-            replace(result, rerank_score=pool.rerank_scores.get(result.chunk_id))
-            for result in ordered[:window]
-        ),
-        key=lambda result: result.rerank_score or 0.0,
-        reverse=True,
+    scored = [
+        replace(result, rerank_score=pool.rerank_scores.get(result.chunk_id))
+        for result in ordered[:window]
+    ]
+    head = (
+        sorted(scored, key=lambda result: result.rerank_score or 0.0, reverse=True)
+        if config.rerank
+        # Scores are still attached, so the table can be read afterwards to ask
+        # what the reranker would have done. Only the order is left alone.
+        else scored
     )
     return thin(
         head + ordered[window:],
@@ -253,15 +296,23 @@ def collect_pools(
     store: VectorStore,
     reranker: Reranker | None = None,
     max_pool: int = MAX_POOL,
+    queries: Mapping[str, str] | None = None,
 ) -> dict[str, Pool]:
     """Fetch and rerank every question's candidates once.
 
     The only function here that touches the network, which is what lets
     everything above it be tested with no Qdrant, no API key and no weights.
+
+    `queries` replaces what is *embedded* for a question and nothing else. HyDE
+    is the caller: the search runs on a made-up passage while the reranker and
+    the keyword arm keep seeing the reader's actual question, because that is
+    what the real system does -- the cross-encoder is never shown a query nobody
+    typed. Getting this wrong would measure a system that does not exist.
     """
     pools: dict[str, Pool] = {}
     for position, question in enumerate(questions, start=1):
-        vector = embedder.embed([question.text])[0]
+        embedded = queries.get(question.id, question.text) if queries else question.text
+        vector = embedder.embed([embedded])[0]
         dense = [to_result(hit) for hit in store.search(vector, limit=max_pool)]
         sparse = [
             to_result(hit)
