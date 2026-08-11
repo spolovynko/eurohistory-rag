@@ -1,0 +1,308 @@
+# Probes for the semantic answer cache. Phase 31, D-105.
+#
+# Each entry is one original question and two questions asked against it:
+#
+#   `paraphrase` -- the same question in different words. It MUST be served
+#     from the cache, and a threshold that misses it is too strict.
+#   `negative`   -- a near-miss. Same topic, same vocabulary, often the same
+#     article, but a different question with a different answer. It MUST NOT be
+#     served, and a threshold that serves it has made the system confidently
+#     wrong, which is the failure this whole phase exists to detect.
+#
+# The negatives are the load-bearing half. A probe set of paraphrases alone
+# would measure how often the cache fires and would have no way at all to
+# measure how often it fires wrongly -- the two are quantities on different
+# populations, and D-105 predicts them separately for exactly this reason.
+#
+# **`set` splits tuning from testing and the two must never be swapped.** The
+# threshold is chosen on `tune` alone; `test` is scored once, afterwards, and
+# its numbers are the phase's verdict. Both halves were written in one sitting,
+# before a single similarity had been computed, so neither could be shaped to
+# flatter a number that did not exist yet.
+#
+# Every original is a real question from `eval/questions.toml`, so the answers
+# being cached are answers this corpus can actually give.
+
+# ------------------------------------------------------------------ tune (20)
+
+[[pair]]
+id = "brest-territory"
+set = "tune"
+original = "What territory did Russia give up under the Treaty of Brest-Litovsk?"
+paraphrase = "Which lands did the Russians have to hand over when they signed the peace at Brest-Litovsk?"
+negative = "Why did the Bolsheviks agree to sign the Treaty of Brest-Litovsk at all?"
+
+[[pair]]
+id = "enabling-act"
+set = "tune"
+original = "How was the Enabling Act of 1933 passed by the Reichstag?"
+paraphrase = "By what means did the Reichstag come to vote through the Enabling Act in 1933?"
+negative = "What powers did the Enabling Act of 1933 actually give Hitler once it had passed?"
+
+[[pair]]
+id = "wannsee"
+set = "tune"
+original = "What was discussed and decided at the Wannsee Conference?"
+paraphrase = "What came out of the meeting of officials at Wannsee, and what did they agree?"
+negative = "Who attended the Wannsee Conference, and which parts of the German state did they represent?"
+
+[[pair]]
+id = "barbarossa"
+set = "tune"
+original = "When did Operation Barbarossa begin and what were its objectives?"
+paraphrase = "On what date did the Germans invade the Soviet Union, and what were they trying to achieve?"
+negative = "Why did Operation Barbarossa fail to achieve what it set out to do?"
+
+[[pair]]
+id = "munich"
+set = "tune"
+original = "What did the Munich Agreement of 1938 give Germany?"
+paraphrase = "What did Germany walk away with from the agreement signed at Munich in 1938?"
+negative = "Which countries signed the Munich Agreement of 1938, and who was not invited?"
+
+[[pair]]
+id = "mrp-protocol"
+set = "tune"
+original = "What was in the secret protocol of the Molotov-Ribbentrop Pact?"
+paraphrase = "What did the hidden clauses of the Nazi-Soviet pact actually say?"
+negative = "When was the secret protocol of the Molotov-Ribbentrop Pact finally admitted to exist?"
+
+[[pair]]
+id = "nuremberg-laws"
+set = "tune"
+original = "What did the Nuremberg Laws of 1935 forbid?"
+paraphrase = "What was made illegal by the race laws announced at Nuremberg in 1935?"
+negative = "How did the Nuremberg Laws of 1935 define who counted as a Jew?"
+
+[[pair]]
+id = "sea-lion"
+set = "tune"
+original = "Why was Operation Sea Lion never launched after the Battle of Britain?"
+paraphrase = "What stopped the Germans from actually invading Britain once the air battle was over?"
+negative = "What was Operation Sea Lion supposed to involve if it had been launched?"
+
+[[pair]]
+id = "dawes-young"
+set = "tune"
+original = "How did the Young Plan change the arrangement the Dawes Plan had set up for German reparations?"
+paraphrase = "In what ways was the Young Plan different from the Dawes Plan it replaced for German payments?"
+negative = "Why was the Dawes Plan introduced in the first place?"
+
+[[pair]]
+id = "stalingrad-kursk"
+set = "tune"
+original = "Why are both Stalingrad and Kursk described as turning points on the Eastern Front?"
+paraphrase = "What makes historians call Stalingrad and Kursk the moments the Eastern war turned?"
+negative = "How many casualties were suffered at Stalingrad and at Kursk?"
+
+[[pair]]
+id = "austria-czechoslovakia"
+set = "tune"
+original = "How did Germany take control of Austria and then of Czechoslovak territory during 1938?"
+paraphrase = "By what steps did the Germans absorb Austria and then Czechoslovak land in the course of 1938?"
+negative = "How did Britain and France respond to Germany taking Austria and Czechoslovak territory in 1938?"
+
+[[pair]]
+id = "kulaks-famine"
+set = "tune"
+original = "How was the campaign against the kulaks connected to the famine in Ukraine?"
+paraphrase = "What was the link between the drive against wealthier peasants and the Ukrainian starvation?"
+negative = "How many people died in the famine in Ukraine?"
+
+[[pair]]
+id = "finland-two-wars"
+set = "tune"
+original = "Why did Finland end up fighting the Soviet Union twice within five years?"
+paraphrase = "How did the Finns come to be at war with the Soviets on two separate occasions in five years?"
+negative = "What territory did Finland lose to the Soviet Union in those wars?"
+
+[[pair]]
+id = "berlin-airlift"
+set = "tune"
+original = "How did the Western allies keep West Berlin supplied during the Soviet blockade of 1948?"
+paraphrase = "What did the Western powers do to feed and fuel West Berlin while the Soviets had it cut off in 1948?"
+negative = "Why did the Soviet Union blockade West Berlin in 1948?"
+
+[[pair]]
+id = "stasi-scale"
+set = "tune"
+original = "How many people did the Stasi employ, and how did it recruit its informants?"
+paraphrase = "What was the size of the Stasi's staff, and by what methods did it sign up its informers?"
+negative = "What happened to the Stasi's files after East Germany collapsed?"
+
+[[pair]]
+id = "prague-1968"
+set = "tune"
+original = "Which countries took part in the invasion of Czechoslovakia in August 1968, and how many troops were involved?"
+paraphrase = "Who sent forces into Czechoslovakia in August 1968, and what was the size of that force?"
+negative = "What reforms in Czechoslovakia had prompted the invasion of August 1968?"
+
+[[pair]]
+id = "chernobyl-reactor"
+set = "tune"
+original = "What happened at reactor 4 of the Chernobyl Nuclear Power Plant on 26 April 1986?"
+paraphrase = "What took place in the fourth reactor at Chernobyl on the night of 26 April 1986?"
+negative = "How far did the contamination from Chernobyl spread across Europe?"
+
+[[pair]]
+id = "suez"
+set = "tune"
+original = "What did Nasser nationalise in July 1956, and which countries invaded Egypt in response?"
+paraphrase = "What did Nasser take into state ownership in July 1956, and who then attacked Egypt over it?"
+negative = "How did the Suez crisis end, and what forced the invaders to withdraw?"
+
+[[pair]]
+id = "comecon"
+set = "tune"
+original = "How did Comecon differ from the Marshall Plan in what it offered the countries of Eastern Europe?"
+paraphrase = "In what way was what Comecon gave Eastern Europe unlike what the Marshall Plan offered?"
+negative = "When was Comecon founded and which countries belonged to it?"
+
+[[pair]]
+id = "gorbachev-dissolution"
+set = "tune"
+original = "How did Gorbachev's reforms contribute to the end of the Soviet Union?"
+paraphrase = "In what ways did the changes Gorbachev introduced help bring the Soviet Union to an end?"
+negative = "What were Gorbachev's reforms called, and what did each of them change?"
+
+# ------------------------------------------------------------------ test (20)
+
+[[pair]]
+id = "weimar-inflation"
+set = "test"
+original = "What caused the hyperinflation in the Weimar Republic?"
+paraphrase = "What made German savings worthless in the early 1920s, so that a loaf of bread cost billions?"
+negative = "How was the hyperinflation in the Weimar Republic finally brought to an end?"
+
+[[pair]]
+id = "versailles-trianon"
+set = "test"
+original = "How did the Treaty of Trianon differ from the Treaty of Versailles in what it took from the defeated country?"
+paraphrase = "What did Trianon strip from Hungary that Versailles did not strip from Germany?"
+negative = "When were the Treaty of Versailles and the Treaty of Trianon each signed?"
+
+[[pair]]
+id = "mussolini-hitler"
+set = "test"
+original = "How did Mussolini's march on Rome differ from the way Hitler became chancellor?"
+paraphrase = "What was different about how Mussolini seized power compared with how Hitler was handed the chancellorship?"
+negative = "What did Mussolini and Hitler each do to their countries' parliaments once in power?"
+
+[[pair]]
+id = "marshall-aid"
+set = "test"
+original = "How much aid did the Marshall Plan provide, and how was it divided between the countries that received it?"
+paraphrase = "What was the total value of Marshall Plan assistance, and how was it shared out among the recipients?"
+negative = "Why did Stalin stop the countries under his control from taking Marshall Plan money?"
+
+[[pair]]
+id = "maastricht"
+set = "test"
+original = "What did the Maastricht Treaty establish?"
+paraphrase = "What was brought into being by the treaty signed at Maastricht?"
+negative = "Which countries opted out of parts of the Maastricht Treaty, and from what?"
+
+[[pair]]
+id = "beveridge"
+set = "test"
+original = "What did the Beveridge Report of 1942 recommend?"
+paraphrase = "What did Beveridge propose in his 1942 report?"
+negative = "What was actually built in Britain after the war as a result of the Beveridge Report?"
+
+[[pair]]
+id = "prague-brezhnev"
+set = "test"
+original = "How did the invasion of Czechoslovakia produce the Brezhnev Doctrine, and where was that doctrine applied afterwards?"
+paraphrase = "How did the events in Czechoslovakia give rise to the Brezhnev Doctrine, and where was it used later?"
+negative = "When was the Brezhnev Doctrine finally abandoned, and what replaced it?"
+
+[[pair]]
+id = "poland-czechoslovakia-1989"
+set = "test"
+original = "How did the end of communist rule in Poland differ from the way it ended in Czechoslovakia?"
+paraphrase = "What was different about the way communism fell in Poland compared with Czechoslovakia?"
+negative = "How did communist rule end in Romania, and why was it more violent there?"
+
+[[pair]]
+id = "wall-inner-border"
+set = "test"
+original = "How did the Berlin Wall and the inner German border differ, and what was each one built to stop?"
+paraphrase = "What was the difference between the wall in Berlin and the fortified border across Germany, and what was each meant to prevent?"
+negative = "When was the Berlin Wall built, and when did it come down?"
+
+[[pair]]
+id = "indochina-algeria"
+set = "test"
+original = "How did France's defeat at Dien Bien Phu affect the war it then fought in Algeria?"
+paraphrase = "What effect did losing at Dien Bien Phu have on the way France fought in Algeria afterwards?"
+negative = "How did the war in Algeria end, and what happened to the French settlers there?"
+
+[[pair]]
+id = "maastricht-euro"
+set = "test"
+original = "How did the Maastricht Treaty lead to the single currency, and what did a country have to do to qualify for it?"
+paraphrase = "By what route did Maastricht produce the euro, and what conditions had a country to meet to join?"
+negative = "Which countries were the first to adopt the euro, and in what year did the notes and coins appear?"
+
+[[pair]]
+id = "croatia-bosnia"
+set = "test"
+original = "How did the fighting that began in Slovenia and Croatia in 1991 spread into Bosnia?"
+paraphrase = "How did the war that started in Slovenia and Croatia in 1991 come to engulf Bosnia?"
+negative = "How did the war in Bosnia end, and what settlement was reached?"
+
+[[pair]]
+id = "army-not-beaten"
+set = "test"
+original = "Why did so many Germans come to believe their army had never actually been beaten in the field?"
+paraphrase = "How did the idea take hold in Germany that the army had been betrayed rather than defeated?"
+negative = "What condition was the German army actually in by the autumn of 1918?"
+
+[[pair]]
+id = "nazi-democracy"
+set = "test"
+original = "How did the Nazis take apart a working democracy in a matter of months?"
+paraphrase = "By what steps was the German republic dismantled by the Nazis within a few months?"
+negative = "How had the Nazis performed in German elections before they came to power?"
+
+[[pair]]
+id = "moscow-1941"
+set = "test"
+original = "What stopped the German advance short of the Soviet capital in the winter of 1941?"
+paraphrase = "Why did the Germans fail to reach Moscow before the winter of 1941 halted them?"
+negative = "How close to Moscow did the German advance actually get?"
+
+[[pair]]
+id = "france-1940"
+set = "test"
+original = "Why did the French army collapse in weeks in 1940 when it had held out for years in the previous war?"
+paraphrase = "How did France, which had held on for four years in the first war, fall in six weeks in 1940?"
+negative = "What terms did France have to accept when it surrendered in 1940?"
+
+[[pair]]
+id = "killing-policy"
+set = "test"
+original = "At what point did murdering Europe's Jews become coordinated state policy rather than scattered local violence?"
+paraphrase = "When did the killing of Jews across Europe turn from local massacres into organised policy of the state?"
+negative = "Which camps were built specifically for killing rather than for imprisonment?"
+
+[[pair]]
+id = "reparations-afford"
+set = "test"
+original = "What was Germany made to pay after 1918, and could the country actually afford it?"
+paraphrase = "What sum was demanded of Germany after the First World War, and was it within the country's means?"
+negative = "Who decided the size of the reparations Germany was made to pay after 1918?"
+
+[[pair]]
+id = "bolsheviks-power"
+set = "test"
+original = "How did the Bolsheviks hold on to power when so much of the country was in arms against them?"
+paraphrase = "What allowed the Bolsheviks to keep control while much of Russia was fighting against them?"
+negative = "Which foreign powers intervened against the Bolsheviks, and what did they achieve?"
+
+[[pair]]
+id = "empires-decolonise"
+set = "test"
+original = "Why did the European powers give up their overseas possessions in the two decades after 1945?"
+paraphrase = "What made Europe's imperial states let go of their colonies in the twenty years following 1945?"
+negative = "Which European empire was the last to give up its overseas territories?"

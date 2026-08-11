@@ -14,6 +14,7 @@ const answerBox = document.getElementById("answer");
 const thread = document.getElementById("thread");
 const newChat = document.getElementById("new-chat");
 const rewrittenLine = document.getElementById("rewritten");
+const cachedLine = document.getElementById("cached");
 const sourcesHeading = document.getElementById("sources-heading");
 const sourceList = document.getElementById("sources");
 const footer = document.getElementById("footer");
@@ -56,6 +57,11 @@ function archive() {
   if (onScreen.standalone) {
     turn.append(el("p", "rewritten", "understood as: " + onScreen.standalone));
   }
+  if (onScreen.cachedFrom) {
+    turn.append(
+      el("p", "cached", "Answered from a saved answer to: “" + onScreen.cachedFrom + "”")
+    );
+  }
   turn.append(el("div", "said", onScreen.answer));
   thread.append(turn);
   onScreen = null;
@@ -85,6 +91,7 @@ function clearAnswer() {
   footer.hidden = true;
   traceBox.hidden = true;
   rewrittenLine.hidden = true;
+  cachedLine.hidden = true;
 }
 
 function renderAnswer(text, cited) {
@@ -275,8 +282,20 @@ function finish(data, started, sourcesAt, firstWordAt, question) {
   rewrittenLine.textContent = "understood as: " + data.standalone;
   rewrittenLine.hidden = !data.standalone;
 
+  // The cache disclosure. The sources listed below belong to the question named
+  // here, not to the one that was typed -- so saying which one it was is the
+  // difference between a shortcut and a substitution nobody was told about.
+  cachedLine.textContent =
+    "Answered from a saved answer to: “" + data.cached_from + "”";
+  cachedLine.hidden = !data.cached_from;
+
   history.push({ user: question, assistant: data.answer });
-  onScreen = { question: question, answer: data.answer, standalone: data.standalone };
+  onScreen = {
+    question: question,
+    answer: data.answer,
+    standalone: data.standalone,
+    cachedFrom: data.cached_from,
+  };
 
   for (const item of [...sourceList.children]) {
     if (!cited.has(Number(item.id.replace("source-", "")))) item.remove();

@@ -9,9 +9,10 @@ own -- /search proves that -- and generation is not useful without retrieval.
 import logging
 import re
 from collections.abc import Iterator, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 from eurohistory_rag.core.trace import Trace
+from eurohistory_rag.generation.cache import SemanticCache
 from eurohistory_rag.generation.client import (
     Completion,
     GenerationUnavailable,
@@ -73,6 +74,12 @@ class Answer:
     # because this object has no idea whether one happened. None when nothing
     # streamed, which is what the groundedness gate forces. D-095.
     first_token_ms: float | None = None
+    # The question this text was originally written for, when it was served from
+    # the semantic cache; empty when the model wrote it just now. This is the
+    # disclosure: an answer produced for a different wording is not the same
+    # object as an answer produced for yours, and a system whose selling point
+    # is grounding does not get to blur that. Phase 31.
+    cached_from: str = ""
 
 
 def _total(first: int | None, second: int | None) -> int | None:
@@ -112,8 +119,15 @@ class GenerationService:
         generator: Generator,
         verifier: Generator | None = None,
         rewriter: Generator | None = None,
+        cache: "SemanticCache[Answer] | None" = None,
     ) -> None:
         self._search = search
+        # Answers already written, findable by what a question meant. None when
+        # the cache is off, which is the default and is what the eval runs on:
+        # three of its conversation controls are byte-identical to golden
+        # questions, and a cache would serve them the earlier answer and destroy
+        # the thing they were written to measure. Phase 31.
+        self._cache = cache
         self._generator = generator
         # The model that turns a follow-up into a standalone question, or None
         # when conversation is off. Its own client rather than a flag on the
@@ -165,9 +179,20 @@ class GenerationService:
         """
         if trace is None:
             trace = Trace()
-        return self.answer_from(
-            question, self.search(question, k=k, trace=trace), trace=trace
-        )
+        results, vector = self.search_with_vector(question, k=k, trace=trace)
+        return self.answer_from(question, results, vector=vector, trace=trace)
+
+    def search_with_vector(
+        self, question: str, k: int | None = None, trace: Trace | None = None
+    ) -> tuple[list[SearchResult], list[float]]:
+        """Retrieval, plus the vector the question became.
+
+        The vector is what the answer cache is keyed on. Handed up from the
+        search rather than made here, because the search already paid for it --
+        the cache costs nothing extra to consult, which is the only reason it
+        can sit in front of every question rather than only the repeated ones.
+        """
+        return self._search.search_with_vector(question, k=k, trace=trace)
 
     def search(
         self, question: str, k: int | None = None, trace: Trace | None = None
@@ -186,6 +211,8 @@ class GenerationService:
         question: str,
         results: list[SearchResult],
         trace: Trace | None = None,
+        *,
+        vector: Sequence[float] | None = None,
     ) -> Answer:
         """Answer from chunks already retrieved.
 
@@ -193,8 +220,12 @@ class GenerationService:
         runner, which needs one search of its own to score retrieval and must
         then generate from exactly the shipped path rather than a copy of it --
         a copy would drift, and the eval would stop measuring the real system.
+
+        `vector` is the question's embedding, and passing none simply turns the
+        cache off for this call -- which is what the eval runner and every test
+        that builds results by hand do today.
         """
-        for piece in self.stream_from(question, results, trace=trace):
+        for piece in self.stream_from(question, results, vector=vector, trace=trace):
             if isinstance(piece, Answer):
                 return piece
         raise GenerationUnavailable("The answer stream ended without an answer.")
@@ -204,6 +235,8 @@ class GenerationService:
         question: str,
         results: list[SearchResult],
         trace: Trace | None = None,
+        *,
+        vector: Sequence[float] | None = None,
     ) -> Iterator[str | Answer]:
         """The answer as the model writes it, then the finished Answer.
 
@@ -229,6 +262,15 @@ class GenerationService:
         if trace is None:
             trace = Trace()
 
+        served = self._from_cache(question, vector, trace)
+        if served is not None:
+            # The whole answer in one piece. A cached answer has no first token
+            # to wait for, so there is nothing to stream and pretending
+            # otherwise would only make the page look busy.
+            yield served.text
+            yield served
+            return
+
         with trace.span("prompt") as span:
             messages = build_messages(question, results)
             span.note = f"{len(results)} sources"
@@ -237,7 +279,9 @@ class GenerationService:
             with trace.span("generate") as span:
                 gated = complete(self._generator, messages)
                 span.note = "not streamed: the gate is on"
-            yield self._finish(question, results, gated, trace)
+            yield self._keep(
+                question, vector, self._finish(question, results, gated, trace)
+            )
             return
 
         completion: Completion | None = None
@@ -254,7 +298,68 @@ class GenerationService:
             )
         if completion is None:
             raise GenerationUnavailable("The model's stream ended without an answer.")
-        yield self._finish(question, results, completion, trace)
+        yield self._keep(
+            question, vector, self._finish(question, results, completion, trace)
+        )
+
+    def _from_cache(
+        self, question: str, vector: Sequence[float] | None, trace: Trace
+    ) -> Answer | None:
+        """A previously written answer close enough in meaning to serve, if any.
+
+        What comes back is deliberately *not* the stored object. Three fields
+        are rewritten and each is a small honesty:
+
+        - `question` becomes the one that was asked and `cached_from` the one
+          the text was written for, so the disclosure travels with the answer
+          rather than being the caller's job to remember.
+        - The token counts go to zero. They are what this question cost, and
+          this question cost nothing; leaving the original's counts in place
+          would bill a run twice for words bought once.
+        - `revised` and `draft` are cleared. The groundedness gate did not run
+          on this request, and a firing rate that counted cache hits would be
+          measuring history rather than the gate.
+
+        The citations are the *stored* ones, not the ones just retrieved. The
+        [1] markers in the text point at the sources the writer was shown, and
+        renumbering them onto a fresh search would silently attach the answer's
+        claims to chunks nobody wrote it from -- which is the exact failure this
+        phase is built to avoid, arriving through the back door.
+        """
+        if self._cache is None or vector is None:
+            return None
+        with trace.span("cache") as span:
+            hit = self._cache.lookup(vector)
+            span.note = "miss" if hit is None else f"hit at {hit.similarity:.4f}"
+        if hit is None:
+            return None
+        logger.info(
+            "cache hit %r served by %r at %.4f", question, hit.question, hit.similarity
+        )
+        return replace(
+            hit.value,
+            question=question,
+            cached_from=hit.question,
+            prompt_tokens=0,
+            completion_tokens=0,
+            cached_tokens=0,
+            revised=False,
+            draft="",
+            first_token_ms=0.0,
+        )
+
+    def _keep(
+        self, question: str, vector: Sequence[float] | None, answer: Answer
+    ) -> Answer:
+        """Put a freshly written answer on the shelf, and hand it back unchanged.
+
+        Returns the answer so it can wrap the `yield` at the end of both
+        branches: storing is a side effect of finishing, and separating them
+        would leave one branch that could be edited without the other.
+        """
+        if self._cache is not None and vector is not None:
+            self._cache.store(question, vector, answer)
+        return answer
 
     def _finish(
         self,

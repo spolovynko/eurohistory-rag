@@ -33,7 +33,7 @@ machine settings. See D-037 and the Phase 4 session note.
 
 ## The knobs
 
-Fifteen entries. Changing any of them changes what the system retrieves or
+Seventeen entries. Changing any of them changes what the system retrieves or
 answers — or, for the last two, what the measurement of it says.
 
 | Knob | Value | File | Decision | What it controls |
@@ -57,6 +57,8 @@ answers — or, for the last two, what the measurement of it says.
 | `ERAS` | 10 named periods | `retrieval/temporal.py` | D-096 | Which years "the interwar years", "the Cold War", "the early Cold War" and the rest mean. Every row is a judgement somebody could argue with; the Cold War's start date has a literature of its own. Only consulted when no year or decade is stated |
 | `_DECADE_PARTS` | early 0-3, mid 4-6, late 6-9 | `retrieval/temporal.py` | D-096 | Which slice of a decade "early", "mid" and "late" mean. Early and late are four years and overlap the middle, which is the permissive direction |
 | `_DIRECTIONAL` | 12 words | `retrieval/temporal.py` | D-096 | Words that make a date a reference point rather than a period — "after 1918" is not the year 1918. A question containing one resolves to no period at all unless it states an explicit range or decade. 43 of 78 evaluation questions take this path |
+| `SIMILARITY_THRESHOLD` | 0.8124 | `generation/cache.py` | D-105 | How alike two questions must be, as cosine similarity, before one is answered with the other's stored answer. **The only knob in this table that can make the system confidently wrong**, so it is set by the one rule the roadmap leaves open: the lowest bar admitting none of the twenty near-misses in `eval/cache_probes.toml`, plus a 0.005 margin. Lowering it buys hit rate and spends grounding; the worst tuning near-miss sat at 0.8074 |
+| `MAX_ENTRIES` | 256 | `generation/cache.py` | D-105 | How many answers the cache holds before the oldest is dropped. Cannot change an answer, only whether one is found. Small because this holds whole answers in memory for one process and one user |
 | `HEADING` | `"Infobox"` | `pipeline/gold/infobox.py` | D-097 | What the infobox chunk calls itself, and so what a reader sees as the source name of a fact taken from a box. Every article with a box gets one chunk per `CHUNK_SIZE` of fields — 1,421 chunks over 988 articles |
 | `SKIP_FIELDS` | 16 prefixes | `pipeline/silver/article.py` | D-031, D-097 | Infobox fields dropped as presentational — images, captions, map pins. Written in Phase 3 when the box was read only for its type; **it now decides what is retrievable**, so a fact behind one of these prefixes cannot be found |
 | `hybrid_enabled` | `false` default | `core/config.py` | D-074 | Whether the BM25 keyword search runs and gets fused in. Lives in `.env` for the same reason as `reranker_enabled`: it is the switch a before/after run flips. **Needs an index built with sparse vectors** — turning it on against a pre-Phase-9 collection finds nothing |

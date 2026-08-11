@@ -1,0 +1,82 @@
+[
+  {
+    "pair": "mussolini-hitler",
+    "kind": "paraphrase",
+    "asked": "What was different about how Mussolini seized power compared with how Hitler was handed the chancellorship?",
+    "written_for": "How did Mussolini's march on Rome differ from the way Hitler became chancellor?",
+    "similarity": 0.8462,
+    "answer": "Mussolini's March on Rome in October 1922 was an organized mass demonstration by the National Fascist Party that resulted in Mussolini being legally appointed Prime Minister by King Victor Emmanuel III without armed conflict. The King feared bloodshed and persuaded the previous Prime Minister to resign, allowing Mussolini to form his cabinet within the framework of the Italian constitution, following the surrender of public authorities to fascist intimidation [1][2][3]. \n\nIn contrast, Hitler's attempt to emulate this with a \"March on Berlin\" became the failed Beer Hall Putsch in 1923, which was not successful in seizing power. Hitler later became Chancellor through political appointment rather than a mass march or demonstration [5]. Mussolini did not respond to Hitler's requests for guidance on organizing a similar march and regarded Hitler's movement as somewhat crazy [5]. \n\nThus, Mussolini's rise involved a mass demonstration that precipitated a constitutional transfer of power with royal support, while Hitler's initial attempt at a similar march failed and his eventual rise to Chancellor came through political processes rather than a march on the capital."
+  },
+  {
+    "pair": "marshall-aid",
+    "kind": "paraphrase",
+    "asked": "What was the total value of Marshall Plan assistance, and how was it shared out among the recipients?",
+    "written_for": "How much aid did the Marshall Plan provide, and how was it divided between the countries that received it?",
+    "similarity": 0.8444,
+    "answer": "The Marshall Plan provided aid to eighteen European countries, with the largest recipient being the United Kingdom, which received about 26% of the total aid. France received 18%, and West Germany received 11%. The aid was divided roughly on a per capita basis, with larger amounts given to major industrial powers, as their recovery was seen as essential for general European revival. Allied nations received somewhat more aid per capita, while those that had been part of the Axis or remained neutral received less, except for Iceland, which was neutral but received far more per capita than the second highest recipient. The total amount of aid included both grants and loans, with about 15% of the aid in loans and 85% in grants for countries like the UK and France. The total American grants and loans to the world from 1945 to 1953 amounted to $44.3 billion, but this includes aid outside the Marshall Plan as well [1][2][3][4]."
+  },
+  {
+    "pair": "maastricht",
+    "kind": "paraphrase",
+    "asked": "What was brought into being by the treaty signed at Maastricht?",
+    "written_for": "What did the Maastricht Treaty establish?",
+    "similarity": 0.8158,
+    "answer": "The Maastricht Treaty established the European Union (EU) on the foundation of the three already partially merged European Communities: the European Economic Community (EEC), the European Coal and Steel Community (ECSC), and the European Atomic Energy Community (Euratom) [5]. It announced a new stage in European integration, chiefly providing for a shared European citizenship, the eventual introduction of a single currency, common foreign and security policies, and changes to European institutions and decision-making procedures, including strengthening the European Parliament and more majority voting in the Council of Ministers [1][5]. The treaty also built on the idea of Community-wide citizenship rights, recognizing the free movement of workers as a personal right within the Union [4]."
+  },
+  {
+    "pair": "beveridge",
+    "kind": "paraphrase",
+    "asked": "What did Beveridge propose in his 1942 report?",
+    "written_for": "What did the Beveridge Report of 1942 recommend?",
+    "similarity": 0.9361,
+    "answer": "The Beveridge Report of 1942 recommended that all people of working age should pay a weekly National Insurance contribution. In return, benefits would be paid to people who were sick, unemployed, retired, or widowed. It urged the government to provide citizens with adequate income, health care, education, housing, and employment. The report identified \"five giants\" to be tackled: Want, Disease, Ignorance, Squalor, and Idleness. It assumed the establishment of a National Health Service to provide free health care and proposed a Universal Child Benefit to support families. The report aimed to ensure a minimum standard of living \"below which no one should be allowed to fall\" [1][2][3][4]."
+  },
+  {
+    "pair": "prague-brezhnev",
+    "kind": "paraphrase",
+    "asked": "How did the events in Czechoslovakia give rise to the Brezhnev Doctrine, and where was it used later?",
+    "written_for": "How did the invasion of Czechoslovakia produce the Brezhnev Doctrine, and where was that doctrine applied afterwards?",
+    "similarity": 0.9095,
+    "answer": "The invasion of Czechoslovakia in August 1968 was carried out by Eastern Bloc armies from the Soviet Union, Poland, East Germany, Hungary, and Bulgaria to end the Prague Spring reforms, which were seen as a shift towards capitalism and a threat to socialist rule. This invasion was justified retroactively by the Brezhnev Doctrine, which proclaimed that any threat to \"socialist rule\" in any Soviet Bloc state was a threat to all and justified intervention by fellow socialist states. The doctrine was first clearly outlined by Sergei Kovalev in a Pravda article in September 1968 and reiterated by Leonid Brezhnev in November 1968, emphasizing that hostile forces turning a socialist country towards capitalism became a common problem for all socialist countries. The doctrine was meant to maintain Soviet hegemony and control over the Eastern Bloc, considered a strategic buffer against NATO. After its proclamation, the doctrine was applied to justify the Soviet-led occupation of Czechoslovakia and earlier interventions such as the invasion of Hungary in 1956. It was also used to compel Eastern Bloc states to subordinate national interests to those of the Bloc as a whole, with the Soviet Union exercising the right to intervene if a country appeared to shift away from socialism. The doctrine increased tensions within the communist world and was repudiated by Mikhail Gorbachev in the late 1980s when the Kremlin accepted the peaceful overthrow of Soviet rule in its satellite countries in Eastern Europe [1][2][3][4][5]."
+  },
+  {
+    "pair": "poland-czechoslovakia-1989",
+    "kind": "paraphrase",
+    "asked": "What was different about the way communism fell in Poland compared with Czechoslovakia?",
+    "written_for": "How did the end of communist rule in Poland differ from the way it ended in Czechoslovakia?",
+    "similarity": 0.862,
+    "answer": "The end of communist rule in Poland involved negotiations and partial elections: in February 1989, the Polish People's Republic opened talks with the opposition in the Polish Round Table Agreement, allowing elections with participation of anti-Communist parties in June 1989, which led to a sweeping victory for opposition candidates and effectively ended communist rule [3]. A new non-communist government was approved by parliament on 13 September 1989, and the communist party dissolved itself on 29 January 1990 [5]. Lech Wałęsa was elected president in 1990, marking the formal end of communist Poland [5].\n\nIn contrast, in Czechoslovakia, the communist government was peacefully deposed during the Velvet Revolution, which began on 17 November 1989 and ended 11 days later on 28 November when all top Communist leaders and the Communist party resigned [2]. The Communist Party announced on 28 November that it would relinquish power and end the one-party state, and the federal parliament formally removed the sections of the Constitution giving the Communist Party a monopoly of power two days later [1]. The first largely non-communist government was appointed on 10 December 1989, and Václav Havel was elected president on 29 December 1989 [1].\n\nThus, Poland's transition involved negotiated talks and partially free elections leading to a gradual end of communist rule, while Czechoslovakia's transition was a rapid, peaceful popular uprising resulting in the immediate resignation of communist leaders and the end of one-party rule [1][2][3][5]."
+  },
+  {
+    "pair": "wall-inner-border",
+    "kind": "paraphrase",
+    "asked": "What was the difference between the wall in Berlin and the fortified border across Germany, and what was each meant to prevent?",
+    "written_for": "How did the Berlin Wall and the inner German border differ, and what was each one built to stop?",
+    "similarity": 0.8389,
+    "answer": "The inner German border was the border between East Germany (GDR) and West Germany (FRG) from 1949 to 1990, running in a 1381 km irregular L-shaped line from Dassow at the Baltic Sea to Eichigt at the border with Czechoslovakia [2]. The Berlin Wall was a physically separate, less elaborate, and much shorter border barrier surrounding West Berlin, more than 170 km to the east of the inner German border [2]. \n\nThe inner German border was closed and guarded, causing widespread economic and social disruption, especially for East Germans living nearby who faced draconian restrictions [1][4]. The Berlin Wall was built to stop the flow of East Germans escaping to West Berlin, as Berlin was a \"loophole\" through which Eastern Bloc citizens could still escape despite penalties and restrictions [1][3]. The Berlin Wall included an unfortified outer strip of Eastern territory outside the wall, usually no more than four meters wide, which was used for maintenance and was less strictly controlled than the inner German border [5].\n\nIn summary, the inner German border was the main border between East and West Germany, heavily fortified and long, while the Berlin Wall was a shorter, separate barrier around West Berlin designed specifically to stop East Germans from fleeing through Berlin [1][2][3][5]."
+  },
+  {
+    "pair": "indochina-algeria",
+    "kind": "paraphrase",
+    "asked": "What effect did losing at Dien Bien Phu have on the way France fought in Algeria afterwards?",
+    "written_for": "How did France's defeat at Dien Bien Phu affect the war it then fought in Algeria?",
+    "similarity": 0.8878,
+    "answer": "France's defeat at Dien Bien Phu had a significant political impact beyond Indochina, as news of the French defeat rapidly spread throughout its other colonies. The Algerian National Liberation Front viewed the battle as an epoch-changing moment and a symbol of the affirmation of colonized peoples against European rule, marking a loss of the French claim to legitimacy based on the right of the strongest to rule the weakest [4]. During the Algerian War, popular opposition to the conflict grew in France, including from the French Communist Party, which supported the Algerian Revolution. Revelations of torture and brutality by the French army in Algeria prompted widespread revulsion and increased support for national liberation. By 1959, it was clear in France that the status quo in Algeria was untenable, and the country faced the choice of granting Algeria independence or allowing real equality with the Muslim population [1]. The defeat at Dien Bien Phu thus contributed to a broader context in which French colonial authority was increasingly challenged and questioned."
+  },
+  {
+    "pair": "croatia-bosnia",
+    "kind": "paraphrase",
+    "asked": "How did the war that started in Slovenia and Croatia in 1991 come to engulf Bosnia?",
+    "written_for": "How did the fighting that began in Slovenia and Croatia in 1991 spread into Bosnia?",
+    "similarity": 0.9132,
+    "answer": "The fighting that began in Slovenia and Croatia in 1991 spread into Bosnia as the Yugoslav People's Army (JNA) used Bosnian territory as a staging ground for attacks against Croatian territory. During the Croatian War of Independence, from July 1991 to January 1992, the JNA and Serb paramilitaries operated from Bosnia to mount attacks on Croatia, arming Bosnian Serbs, while the Croatian Defence Force armed Herzegovinian Croats. By March 1992, nationalist claims by Serbs and Croats had covered perhaps three-quarters of Bosnia. When Bosnia and Herzegovina declared independence in 1992, Bosnian Serb political representatives established Republika Srpska and their forces attacked the Republic of Bosnia and Herzegovina, escalating the conflict within Bosnia itself [1][3][4]."
+  },
+  {
+    "pair": "killing-policy",
+    "kind": "paraphrase",
+    "asked": "When did the killing of Jews across Europe turn from local massacres into organised policy of the state?",
+    "written_for": "At what point did murdering Europe's Jews become coordinated state policy rather than scattered local violence?",
+    "similarity": 0.8758,
+    "answer": "Murdering Europe's Jews became coordinated state policy around the time of the Wannsee Conference on 20 January 1942, convened by Reinhard Heydrich to coordinate anti-Jewish policy across German-occupied Europe. Before this, killings were carried out by local initiatives such as Einsatzgruppen mass shootings and violence in ghettos and occupied territories, but the Wannsee Conference formalized plans for the total eradication of the Jewish population of Europe as the Final Solution. The majority of Holocaust killings were then carried out in 1942, marking the peak of the genocide with over 3 million Jews murdered that year [1][4][5]. Some historians argue that Hitler issued an explicit order to kill all Jews before December 1941, but the general consensus is that the decision-making process was prolonged and incremental, with the Wannsee Conference marking the point of coordinated state policy [1][2]."
+  }
+]

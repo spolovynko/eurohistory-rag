@@ -9,8 +9,9 @@ from functools import lru_cache
 
 from eurohistory_rag.core.config import get_settings
 from eurohistory_rag.core.spend import Meter, get_ledger
+from eurohistory_rag.generation.cache import SemanticCache, fingerprint
 from eurohistory_rag.generation.client import OpenAIGenerator
-from eurohistory_rag.generation.service import GenerationService
+from eurohistory_rag.generation.service import Answer, GenerationService
 from eurohistory_rag.retrieval.embedding import OpenAIEmbedder
 from eurohistory_rag.retrieval.rerank import LocalReranker, Reranker
 from eurohistory_rag.retrieval.search import SearchService
@@ -91,6 +92,33 @@ def get_generation_service() -> GenerationService:
         generator,
         verifier=get_verifier(),
         rewriter=get_rewriter(),
+        cache=get_answer_cache(),
+    )
+
+
+@lru_cache(maxsize=1)
+def get_answer_cache() -> "SemanticCache[Answer]":
+    """The one answer cache for this process, and the reason it is in memory.
+
+    Cached for a third reason again: the others here are shared because they are
+    expensive to build or must be single, this one because a per-request cache
+    would be empty on every request and would therefore be nothing at all.
+
+    **Nothing writes it to disk, deliberately.** `data/spend/` is append-only
+    because a ledger cannot be rebuilt; a cache is rebuildable by definition, so
+    the same argument runs the other way. A cache on disk would also outlive a
+    prompt edit or a re-index, turning invalidation from something that happens
+    by itself into something somebody has to remember. The cost is real and
+    accepted: a restart loses every stored answer. Phase 31.
+    """
+    settings = get_settings()
+    return SemanticCache(
+        fingerprint=fingerprint(
+            collection=settings.qdrant_collection,
+            points=get_vector_store().count(),
+            embedding_model=settings.embedding_model,
+            generation_model=settings.generation_model,
+        )
     )
 
 

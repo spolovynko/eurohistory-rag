@@ -8,6 +8,7 @@ reaches the caller -- not whether the model writes good history.
 import pytest
 
 from eurohistory_rag.core.trace import Trace
+from eurohistory_rag.generation.cache import SemanticCache
 from eurohistory_rag.generation.rewrite import Turn
 from eurohistory_rag.generation.service import Answer, GenerationService, cited
 from eurohistory_rag.retrieval.search import SearchResult
@@ -36,6 +37,10 @@ class StubSearchService:
     def __init__(self, results: list[SearchResult]) -> None:
         self._results = results
         self.questions: list[tuple[str, int | None]] = []
+        # What every question embeds to. One vector rather than one per question
+        # because a test that wants two *different* meanings sets it between
+        # calls, which reads better than a lookup table nobody can see.
+        self.vector: list[float] = [1.0, 0.0, 0.0]
 
     def search(
         self,
@@ -46,6 +51,15 @@ class StubSearchService:
     ) -> list[SearchResult]:
         self.questions.append((question, k))
         return self._results
+
+    def search_with_vector(
+        self,
+        question: str,
+        k: int | None = None,
+        min_score: float | None = None,
+        trace: Trace | None = None,
+    ) -> tuple[list[SearchResult], list[float]]:
+        return self.search(question, k, min_score, trace), self.vector
 
 
 @pytest.fixture
@@ -526,3 +540,149 @@ def test_ask_records_the_search_and_the_generation_side_by_side(
         "generate",
         "cite",
     ]
+
+
+# --- the semantic answer cache ----------------------------------------------
+
+
+def cached_service(
+    results: list[SearchResult], answer: str, threshold: float = 0.9
+) -> tuple[GenerationService, StubSearchService, FakeGenerator]:
+    """A GenerationService with a reachable cache in front of it.
+
+    The threshold is passed rather than defaulted because the shipped one is
+    unreachable on purpose -- a test using the default would assert that
+    nothing ever hits, which is already covered in `test_cache.py` and is not
+    what these are about.
+    """
+    search = StubSearchService(results)
+    generator = FakeGenerator(answer=answer, prompt_tokens=100, completion_tokens=20)
+    cache: SemanticCache[Answer] = SemanticCache(fingerprint="fp", threshold=threshold)
+    return (
+        GenerationService(search, generator, cache=cache),  # type: ignore[arg-type]
+        search,
+        generator,
+    )
+
+
+def test_the_same_question_twice_only_reaches_the_model_once(
+    results: list[SearchResult],
+) -> None:
+    generation, _, generator = cached_service(results, "The wall went up in 1961 [1].")
+    generation.ask("why did the wall go up?")
+    generation.ask("what made them build the wall?")
+
+    assert len(generator.calls) == 1
+
+
+def test_a_cache_hit_says_which_question_it_was_written_for(
+    results: list[SearchResult],
+) -> None:
+    """The disclosure. Without it the reader cannot tell that the answer in
+    front of them was composed for somebody else's wording."""
+    generation, _, _ = cached_service(results, "The wall went up in 1961 [1].")
+    generation.ask("why did the wall go up?")
+    second = generation.ask("what made them build the wall?")
+
+    assert second.cached_from == "why did the wall go up?"
+    assert second.question == "what made them build the wall?"
+
+
+def test_a_fresh_answer_discloses_nothing(results: list[SearchResult]) -> None:
+    generation, _, _ = cached_service(results, "The wall went up in 1961 [1].")
+
+    assert generation.ask("why did the wall go up?").cached_from == ""
+
+
+def test_a_cache_hit_costs_nothing_and_says_so(results: list[SearchResult]) -> None:
+    """Serving a stored answer buys no tokens, so it must report none.
+
+    Carrying the original's counts forward would bill a run twice for words
+    bought once, and cost per question is a headline number in every phase.
+    """
+    generation, _, _ = cached_service(results, "The wall went up in 1961 [1].")
+    first = generation.ask("why did the wall go up?")
+    second = generation.ask("what made them build the wall?")
+
+    assert (first.prompt_tokens, first.completion_tokens) == (100, 20)
+    assert (second.prompt_tokens, second.completion_tokens) == (0, 0)
+    assert second.cached_tokens == 0
+
+
+def test_a_cache_hit_serves_the_sources_the_answer_was_written_from(
+    results: list[SearchResult],
+) -> None:
+    """The [1] in the text points at what the writer was shown, so the citation
+    list must be the stored one. Renumbering it onto whatever the new question
+    happened to retrieve would attach the answer's claims to chunks nobody
+    wrote it from -- the confidently-wrong failure, arriving sideways."""
+    generation, search, _ = cached_service(results, "The wall went up in 1961 [1].")
+    generation.ask("why did the wall go up?")
+    search._results = [result("Vienna")]
+    second = generation.ask("what made them build the wall?")
+
+    assert [c.result.title for c in second.citations] == ["Berlin"]
+
+
+def test_a_different_question_still_reaches_the_model(
+    results: list[SearchResult],
+) -> None:
+    generation, search, generator = cached_service(
+        results, "The wall went up in 1961 [1]."
+    )
+    generation.ask("why did the wall go up?")
+    search.vector = [0.0, 1.0, 0.0]
+    second = generation.ask("what was the Marshall Plan?")
+
+    assert len(generator.calls) == 2
+    assert second.cached_from == ""
+
+
+def test_the_cache_is_off_without_a_vector(results: list[SearchResult]) -> None:
+    """`answer_from` with no vector is the eval runner's path, and it must not
+    cache: three of the eval's conversation controls are byte-identical to
+    golden questions, and serving them the earlier answer would destroy what
+    they were written to measure."""
+    generation, _, generator = cached_service(results, "The wall went up in 1961 [1].")
+    generation.answer_from("why?", results)
+    generation.answer_from("why?", results)
+
+    assert len(generator.calls) == 2
+
+
+def test_the_trace_says_whether_the_cache_was_consulted_and_what_it_said(
+    results: list[SearchResult],
+) -> None:
+    generation, _, _ = cached_service(results, "The wall went up in 1961 [1].")
+    miss = Trace()
+    generation.ask("why did the wall go up?", trace=miss)
+    hit = Trace()
+    generation.ask("what made them build the wall?", trace=hit)
+
+    assert [s.note for s in miss.spans if s.name == "cache"] == ["miss"]
+    assert [s.name for s in hit.spans if s.depth == 0] == ["cache"]
+    assert [s.note for s in hit.spans if s.name == "cache"] == ["hit at 1.0000"]
+
+
+def test_a_cache_hit_does_not_claim_the_gate_ran(results: list[SearchResult]) -> None:
+    """`revised` is a firing rate for the groundedness gate. The gate did not
+    run on a hit, so counting one would measure history rather than the gate."""
+    search = StubSearchService(results)
+    generator = FakeGenerator(answer="The wall went up in 1961 [1].")
+    verifier = FakeGenerator(
+        answer=CHECKED.format("The wall went up in August 1961 [1].")
+    )
+    cache: SemanticCache[Answer] = SemanticCache(fingerprint="fp", threshold=0.9)
+    generation = GenerationService(
+        search,  # type: ignore[arg-type]
+        generator,
+        verifier=verifier,
+        cache=cache,
+    )
+    first = generation.ask("why did the wall go up?")
+    second = generation.ask("what made them build the wall?")
+
+    assert first.revised is True
+    assert second.revised is False
+    assert second.draft == ""
+    assert second.text == first.text

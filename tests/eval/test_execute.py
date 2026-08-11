@@ -50,6 +50,15 @@ class StubSearch:
     ) -> list[SearchResult]:
         return self._results[: k or len(self._results)]
 
+    def search_with_vector(
+        self,
+        question: str,
+        k: int | None = None,
+        min_score: float | None = None,
+        trace: Trace | None = None,
+    ) -> tuple[list[SearchResult], list[float]]:
+        return self.search(question, k, min_score, trace), [1.0, 0.0, 0.0]
+
 
 def passage() -> SearchResult:
     return SearchResult(

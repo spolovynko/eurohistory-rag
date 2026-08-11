@@ -300,6 +300,18 @@
     font-style: italic;
   }
 
+  /* Deliberately not quiet. `.rewritten` is a note about how the question was
+     read; this is a note that the answer below was written for somebody else's
+     question, which is a claim about the grounding and has to be as visible as
+     the answer it qualifies. */
+  .cached {
+    margin: .45rem 0 0;
+    padding: .4rem .6rem;
+    font-size: .87rem;
+    border-left: 3px solid var(--rule);
+    background: var(--sunken, transparent);
+  }
+
   button.ghost {
     background: none;
     border: 1px solid var(--rule);

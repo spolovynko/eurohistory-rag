@@ -3,7 +3,7 @@
 import json
 import logging
 import time
-from collections.abc import AsyncIterator, Iterator
+from collections.abc import AsyncIterator, Iterator, Sequence
 from contextlib import asynccontextmanager
 from dataclasses import asdict
 from importlib.resources import files
@@ -290,6 +290,13 @@ class AskResponse(BaseModel):
     # else", and it is the only place a wrong rewrite is visible at all. Phase 8
     # shipped a switch nobody could see was off; this is the same rule. D-098.
     standalone: str = ""
+    # The question this answer was originally written for, when it came from the
+    # semantic cache; empty when the model wrote it just now. Same argument as
+    # `standalone` one line up and the same rule: the system did something the
+    # reader did not ask for, so the reader is told. An undisclosed hit would
+    # make this a product that quietly answers a question you did not put to it,
+    # which is the opposite of what grounding is for. Phase 31.
+    cached_from: str = ""
 
 
 # What a client sends in `Accept` to be given the answer as it is written. HTTP
@@ -317,6 +324,7 @@ def _answer_events(
     results: list[SearchResult],
     used: Configuration,
     trace: Trace,
+    vector: Sequence[float] | None = None,
 ) -> Iterator[str]:
     """The answer as a stream of events: sources, then text, then the rest.
 
@@ -340,7 +348,9 @@ def _answer_events(
         [SearchHit.from_result(result).model_dump() for result in results],
     )
     try:
-        for piece in service.stream_from(standalone, results, trace=trace):
+        for piece in service.stream_from(
+            standalone, results, trace=trace, vector=vector
+        ):
             if isinstance(piece, str):
                 yield _sse("token", piece)
             else:
@@ -357,6 +367,7 @@ def _answer_events(
                             for citation in piece.citations
                         ],
                         configuration=used.model_copy(update={"model": piece.model}),
+                        cached_from=piece.cached_from,
                     ).model_dump(),
                 )
     except CeilingExceeded as refused:
@@ -654,11 +665,23 @@ def create_app() -> FastAPI:
                 [Turn(user=t.user, assistant=t.assistant) for t in request.history],
                 trace=trace,
             )
-            results = service.search(standalone, k=request.k, trace=trace)
+            # The vector comes back with the results because the answer cache is
+            # keyed on it. /ask is the only caller that gets it: the eval runner
+            # deliberately does not, so a run can never be served an answer
+            # written for one of its own earlier questions. Phase 31.
+            results, vector = service.search_with_vector(
+                standalone, k=request.k, trace=trace
+            )
             if streaming:
                 return StreamingResponse(
                     _answer_events(
-                        service, request.question, standalone, results, used, trace
+                        service,
+                        request.question,
+                        standalone,
+                        results,
+                        used,
+                        trace,
+                        vector,
                     ),
                     media_type=SSE_TYPE,
                     # Buffering proxies are the one thing that can undo this
@@ -666,7 +689,9 @@ def create_app() -> FastAPI:
                     # is complete restores exactly the blank screen we removed.
                     headers={"Cache-Control": "no-store", "X-Accel-Buffering": "no"},
                 )
-            answer = service.answer_from(standalone, results, trace=trace)
+            answer = service.answer_from(
+                standalone, results, trace=trace, vector=vector
+            )
         except (VectorStoreUnavailable, GenerationUnavailable) as error:
             # Two different failures, one message: the caller can do nothing
             # differently about a dead Qdrant than about a dead OpenAI.
@@ -687,6 +712,7 @@ def create_app() -> FastAPI:
             # was asked for. They agree, and reporting the requested one would
             # hide the day they stop agreeing.
             configuration=used.model_copy(update={"model": answer.model}),
+            cached_from=answer.cached_from,
         )
 
     @app.get("/runs", summary="Every evaluation run saved on disk")

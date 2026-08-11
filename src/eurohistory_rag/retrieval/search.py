@@ -261,7 +261,28 @@ class SearchService:
         min_score: float | None = None,
         trace: Trace | None = None,
     ) -> list[SearchResult]:
-        """The best chunks for this question, best first.
+        """The best chunks for this question, best first."""
+        return self.search_with_vector(question, k, min_score, trace)[0]
+
+    def search_with_vector(
+        self,
+        question: str,
+        k: int | None = None,
+        min_score: float | None = None,
+        trace: Trace | None = None,
+    ) -> tuple[list[SearchResult], list[float]]:
+        """The best chunks, and the vector the question was turned into.
+
+        The vector is handed back for one caller: the semantic answer cache,
+        which needs the question's *meaning* as a key and would otherwise embed
+        the same string a second time -- a second API call, a second round trip,
+        and a second chance for the two vectors to disagree. Returning the one
+        that was already made is free and is the same vector retrieval used,
+        which is the stronger argument of the two.
+
+        Empty on an empty question, in both halves. `search` is the same call
+        with the vector dropped, so there is one implementation and no way for
+        the two to drift apart.
 
         `min_score` is off by default on purpose. A cut-off looks obviously
         useful and is impossible to choose honestly today: a strong match scores
@@ -279,7 +300,7 @@ class SearchService:
         """
         question = question.strip()
         if not question:
-            return []
+            return [], []
 
         if trace is None:
             trace = Trace()
@@ -374,7 +395,7 @@ class SearchService:
             period,
             len(thinned),
         )
-        return thinned
+        return thinned, vector
 
     def _rerank(self, question: str, results: list[SearchResult]) -> list[SearchResult]:
         """Reorder candidates by cross-encoder score, best first.

@@ -24,8 +24,9 @@ from eurohistory_rag.api.main import create_app
 from eurohistory_rag.core.config import get_settings
 from eurohistory_rag.core.spend import CeilingExceeded
 from eurohistory_rag.core.trace import Trace
+from eurohistory_rag.generation.cache import SemanticCache
 from eurohistory_rag.generation.client import Completion
-from eurohistory_rag.generation.service import GenerationService
+from eurohistory_rag.generation.service import Answer, GenerationService
 from eurohistory_rag.retrieval.rerank import RerankUnavailable
 from eurohistory_rag.retrieval.search import SearchResult
 from eurohistory_rag.retrieval.vectorstore import VectorStoreUnavailable
@@ -66,6 +67,15 @@ class StubSearchService:
         self.questions.append((question, k))
         return self._results[: k or len(self._results)]
 
+    def search_with_vector(
+        self,
+        question: str,
+        k: int | None = None,
+        min_score: float | None = None,
+        trace: Trace | None = None,
+    ) -> tuple[list[SearchResult], list[float]]:
+        return self.search(question, k, min_score, trace), [1.0, 0.0, 0.0]
+
 
 class UnavailableSearchService:
     """Stands in for a search whose vector store is down."""
@@ -77,6 +87,15 @@ class UnavailableSearchService:
         min_score: float | None = None,
         trace: Trace | None = None,
     ) -> list[SearchResult]:
+        raise VectorStoreUnavailable("connection refused")
+
+    def search_with_vector(
+        self,
+        question: str,
+        k: int | None = None,
+        min_score: float | None = None,
+        trace: Trace | None = None,
+    ) -> tuple[list[SearchResult], list[float]]:
         raise VectorStoreUnavailable("connection refused")
 
 
@@ -732,10 +751,59 @@ def test_ask_answers_402_when_the_day_is_spent() -> None:
     app = create_app()
     app.dependency_overrides[get_generation_service] = lambda: GenerationService(
         StubSearchService([result("30030:1:0")]),  # type: ignore[arg-type]
-        RefusingGenerator(),  # type: ignore[arg-type]
+        RefusingGenerator(),
     )
     with TestClient(app) as spent:
         response = spent.post("/ask", json={"question": "how much?"})
 
     assert response.status_code == 402
     assert "daily ceiling" in response.json()["detail"]
+
+
+def test_ask_tells_the_reader_when_the_answer_came_off_the_shelf() -> None:
+    """The disclosure, end to end.
+
+    False unless `cached_from` survives the whole path -- service, response
+    model, JSON. Phase 8 shipped a reranker that was unreachable while 337
+    tests passed, every one of them true whether or not the feature ran; this
+    one is not.
+    """
+    cache: SemanticCache[Answer] = SemanticCache(fingerprint="fp", threshold=0.9)
+    app = create_app()
+    app.dependency_overrides[get_generation_service] = lambda: GenerationService(
+        StubSearchService([result("30030:1:0")]),  # type: ignore[arg-type]
+        FakeGenerator(answer="The Marshall Plan rebuilt Europe [1]."),
+        cache=cache,
+    )
+    with TestClient(app) as client:
+        first = client.post("/ask", json={"question": "what was the Marshall Plan?"})
+        second = client.post("/ask", json={"question": "what did Marshall aid do?"})
+
+    assert first.json()["cached_from"] == ""
+    assert second.json()["cached_from"] == "what was the Marshall Plan?"
+    assert second.json()["answer"] == first.json()["answer"]
+
+
+def test_a_streamed_cache_hit_is_disclosed_too() -> None:
+    """The page reads the streaming shape, so a disclosure that only worked on
+    the JSON path would be absent exactly where a human is looking."""
+    cache: SemanticCache[Answer] = SemanticCache(fingerprint="fp", threshold=0.9)
+    app = create_app()
+    app.dependency_overrides[get_generation_service] = lambda: GenerationService(
+        StubSearchService([result("30030:1:0")]),  # type: ignore[arg-type]
+        FakeGenerator(answer="The Marshall Plan rebuilt Europe [1]."),
+        cache=cache,
+    )
+    headers = {"accept": "text/event-stream"}
+    with TestClient(app) as client:
+        client.post("/ask", json={"question": "what was the Marshall Plan?"})
+        streamed = client.post(
+            "/ask", json={"question": "what did Marshall aid do?"}, headers=headers
+        )
+
+    done = [
+        json.loads(line[6:])
+        for line in streamed.text.splitlines()
+        if line.startswith("data: ") and "cached_from" in line
+    ]
+    assert done and done[0]["cached_from"] == "what was the Marshall Plan?"
