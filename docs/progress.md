@@ -374,7 +374,7 @@ differs, and the prediction did not say so).
 **CI had never been green and now is (D-093).** Twelve tests were passing by
 reading the developer's real OpenAI key off `.env`; CI has no `.env`, so runs 2
 and 3 failed at `pytest` while lint and types passed. Fixed in the tests, not in
-the workflow. **Observed green on `06420ae`** — run 4, the first green build
+the workflow. **Observed green on `9a2780a`** — run 4, the first green build
 since Phase 17 and the first ever to include the front end.
 
 **Phase 19 — configurable retrieval and generation (D-092).** Model, reranker,
@@ -1621,7 +1621,7 @@ almost every message will be about a number.
 - **A stronger reranker is untested**, carried from Phase 8. `L12`, a working
   `bge-v2-m3`, or a hosted model is one config line; D-071 says probe by hand
   first.
-- **The commit history is mislabelled.** `9089b2e` carries a logging message and
+- **The commit history is mislabelled.** `7a7fbbd` carries a logging message and
   holds most of Phase 9's code, swept up by `git add -A`.
 - **`numpy` and `tzdata`** are declared in `pyproject.toml` and imported
   nowhere. Carried from Phase 8.
@@ -3467,7 +3467,7 @@ first is the largest in this project's history of them:
 
 1. **Phase 27 never happened.** It was opened and archived after 56 messages
    with no code, no command and no prediction — `docs/notes/phase-27-archived-chat.md`
-   says so in its own header. `HEAD` was `6ba2fc4`, Phase 25, with Phase 26
+   says so in its own header. `HEAD` was `426d1e1`, Phase 25, with Phase 26
    uncommitted in the working tree. **Queue 27 is still owed.**
 2. **There are no corrected refusal figures.** Refusals for `2026-08-09T1341Z`
    are **9 of 106**, unchanged, and still a count of one exact phrase. Nothing
@@ -3501,7 +3501,7 @@ first is the largest in this project's history of them:
 
 **Carried into the next phase, and corrected after the fact.** This note first
 said the tree held three uncommitted phases and that 26 and 28 should be
-committed separately. **They were not.** Commit `85d649a`, "phase progress",
+committed separately. **They were not.** Commit `259596d`, "phase progress",
 was made by hand at 13:33 while this phase was still being built, and it
 bundles Phase 26's `max_per_article` and run `2026-08-10T0752Z` together with
 Phase 28's half-finished tracing — plus `docs/project-phases.md`, 972 lines
@@ -3594,8 +3594,8 @@ figures cost zero model calls, which is what D-068's "records store raw
 observations, not verdicts" buys.
 
 **The session found the repository moving underneath it, which is worth carrying
-forward.** A concurrent Phase 28 chat committed Phase 26 (`85d649a`), then built,
-ran, gated and committed **tracing as D-101** (`df6d2cc`) — including a 27th eval
+forward.** A concurrent Phase 28 chat committed Phase 26 (`259596d`), then built,
+ran, gated and committed **tracing as D-101** (`8c08b74`) — including a 27th eval
 run — while this session was still reading. It took the number D-101 that this
 phase had reserved, so **Phase 27 is D-102** and the queue order is unchanged.
 The population change forced the recount that cost prediction 1. **Two chats in

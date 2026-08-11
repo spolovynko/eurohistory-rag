@@ -1,7 +1,7 @@
 {
   "run_id": "2026-08-09T1126Z",
   "started_at": "2026-08-09T11:26:11+00:00",
-  "git_sha": "6a59f9d",
+  "git_sha": "d2c2b6b",
   "embedding_model": "text-embedding-3-small",
   "generation_model": "gpt-4.1-mini",
   "collection": "chunks",

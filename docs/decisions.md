@@ -3039,7 +3039,7 @@ zero coverage@5, the top result was either the same article at a different
 section or a different article covering the same material. The four
 worst-scoring questions all produced correct, fully cited answers.
 
-**The run.** `eval/runs/2026-08-06T1703Z`, 60 questions, git `f359442`+,
+**The run.** `eval/runs/2026-08-06T1703Z`, 60 questions, git `8c429db`+,
 54,903 points, k=5, reranker on, hybrid off, verifier off.
 
 ```
@@ -4741,8 +4741,8 @@ table and sixty-cell strip. **513 tests pass with Docker stopped. $0.00.**
 
 ### D-093 — CI had never been green, and the reason was twelve tests reading a real API key
 
-**Observed before any Phase 20 code.** Three CI runs exist. Run 1 (`9681e93`,
-Phase 17) passed. Runs 2 and 3 (`8a76908`, `c9bfc8f`) failed, both at `pytest`,
+**Observed before any Phase 20 code.** Three CI runs exist. Run 1 (`6917637`,
+Phase 17) passed. Runs 2 and 3 (`5b48e9b`, `0136298`) failed, both at `pytest`,
 both after lint and types passed.
 
 **The cause.** `Settings` requires `openai_api_key` and `wikipedia_user_agent`,
@@ -4935,7 +4935,7 @@ generation code.
 
 **One miss in the prediction, and it is worth recording.** The prediction listed
 the `meta.json` fields that would differ as "run_id, started_at and note".
-`git_sha` also differs — `1f8ea1b` against `c9bfc8f` — because the baseline was
+`git_sha` also differs — `ecb9e50` against `0136298` — because the baseline was
 run two phases ago. It is deliberately not a comparability field, so it changed
 nothing about the verdict, but the enumeration was incomplete and saying so is
 cheaper than pretending it was not.
@@ -6829,7 +6829,7 @@ The numbers in the verdict are therefore reported as *observation*, and the
 prediction sealed here is for the paid run only, which has not started.
 
 **The before is already on disk and this phase costs half what was budgeted.**
-`git diff 22f537c..HEAD` over `retrieval/`, `eval/`, `generation/` and
+`git diff 0074423..HEAD` over `retrieval/`, `eval/`, `generation/` and
 `pipeline/` is **empty** — Phase 25 touched `api/`, `core/` and tests only. So
 `2026-08-09T1341Z` was produced by the code that runs today and is a valid
 before. One paid run, not two: **~$0.15, not $0.28.** No Silver rebuild, no
@@ -7127,7 +7127,7 @@ itself; the one paid item is the gate D-089 owes, priced below.
 #### Three corrections to the record, before the premise
 
 **1. Phase 27 does not exist, and Phase 26 is not committed.** `HEAD` is
-`6ba2fc4`, which is Phase 25 (D-099). `max_per_article`, the run
+`426d1e1`, which is Phase 25 (D-099). `max_per_article`, the run
 `2026-08-10T0752Z` and `gate-D-100.txt` — all of Phase 26, D-100 — are sitting
 uncommitted in the working tree. Phase 27 (the refusal metric and the claim
 splitter) was opened and archived after 56 messages with **no code written, no
@@ -9027,7 +9027,7 @@ directories, 109 unique decision numbers across 160 headings, 839 tests. No
 tree.
 
 One thing that is *not* a contradiction and is recorded so it is not re-derived:
-the baseline's `meta.json` carries `git_sha: 4249275`, which is Phase 31's
+the baseline's `meta.json` carries `git_sha: 90dee65`, which is Phase 31's
 commit. The run was made during Phase 32, before Phase 32 committed.
 
 ### The finding that changes the numbers below, found before predicting them
